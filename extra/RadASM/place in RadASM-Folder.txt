@@ -1,0 +1,1 @@
+Copy UASM64.ini to \RadASM\ folder

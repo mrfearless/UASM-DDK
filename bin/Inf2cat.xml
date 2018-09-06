@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Copyright, Microsoft Corporation, All rights reserved.-->
+<ProjectSchemaDefinitions xmlns="http://schemas.microsoft.com/build/2009/properties" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+  <Rule Name="Inf2Cat" PageTemplate="tool" DisplayName="Inf2Cat"  Order="140">
+    <Rule.Categories>
+      <Category Name="General">
+        <Category.DisplayName>
+          <sys:String>General</sys:String>
+        </Category.DisplayName>
+      </Category>
+      <Category Name="Command Line" Subtype="CommandLine">
+        <Category.DisplayName>
+          <sys:String>Command Line</sys:String>
+        </Category.DisplayName>
+      </Category>
+    </Rule.Categories>
+    <Rule.DataSource>
+      <DataSource Persistence="ProjectFile" Label="" HasConfigurationCondition="true"/>
+    </Rule.DataSource>
+    <BoolProperty Name="EnableInf2cat" DisplayName="Run Inf2Cat" Description="Run the Inf2Cat tool on any .inf, .inx, or .inv files in the project" Category="General" F1Keyword="driver.inf2cat.properties"/>
+    <StringListProperty Name="Inf2CatWindowsVersionList" DisplayName="Windows Version List" Description="Comma separated list of windows versions supported by the .inf file.  (/os:WindowsVersionList)" Category="General" Switch="/os:" F1Keyword="driver.inf2cat.properties"/>
+    <StringListProperty Name="Inf2CatIncludePageHashes" DisplayName="Include Page Hashes" Description="Include page hashes with files. Optionally followed by a list of files.  (/pageHashes[:file1][,file2]...])" Category="General" Switch="/pageHashes:" F1Keyword="driver.inf2cat.properties"/>
+    <StringListProperty Name="Inf2CatAddPEAttribute" DisplayName="Add PE Attribute" Description="Add PE catalog attribute to files. Optionally followed by a list of files.  (/pe[:file1[,file2]...])" Category="General" Switch="/pe:" F1Keyword="driver.inf2cat.properties"/>
+    <StringListProperty Name="Inf2CatAddDrm" DisplayName="Add Drm" Description="Add Drm level catalog attribute to files. Optionally followed by a list of files. (/drm[:file1[,file2]...])" Category="General" Switch="/drm:" F1Keyword="driver.inf2cat.properties"/>
+    <BoolProperty Name="Inf2CatVerbose" Category="General" DisplayName="Verbose" Description="Enable verbose tool output.    (/VERBOSE)" Switch="VERBOSE" F1Keyword="driver.inf2cat.properties"/>
+    <BoolProperty Name="Inf2CatNoCatalog" Category="General" DisplayName="No Catalog" Description="Prevents the creation any catalog files.  (/nocat)" Switch="/nocat" F1Keyword="driver.inf2cat.properties"/>
+    <BoolProperty Name="Inf2CatUseLocalTime" Category="General" DisplayName="Use Local Time" Description="Use local time zone while verifying INF DriverVer directive. By default UTC is used.  (/uselocaltime)" Switch="/uselocaltime" F1Keyword="driver.inf2cat.properties"/>
+    <StringProperty Name="AdditionalOptions" Category="Command Line" F1Keyword="vc.project.AdditionalOptionsPage" DisplayName="Additional Options" Description="Additional Options">
+      <StringProperty.DataSource>
+        <DataSource Persistence="ProjectFile" ItemType="ClCompile" Label="" HasConfigurationCondition="true" PersistedName="Inf2CatAdditionalOptions" />
+      </StringProperty.DataSource>
+    </StringProperty>
+  </Rule>
+</ProjectSchemaDefinitions>
