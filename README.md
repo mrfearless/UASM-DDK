@@ -6,7 +6,7 @@ Driver Development Kit for x64 UASM assembler
 
 # UASM-DDK Setup
 
-* Download and install [UASM](http://www.terraspace.co.uk/uasm.html)
+* Download and install [UASM](http://www.terraspace.co.uk/uasm.html) 
 * Download and install [UASM-with-RadASM](https://github.com/mrfearless/UASM-with-RadASM) 
 * Download the latest release of [UASM-DDK](https://github.com/mrfearless/UASM-DDK/releases). The latest release can be found via the [releases](https://github.com/mrfearless/UASM-DDK/releases) section of this Github repository as
 `Source code (zip)`

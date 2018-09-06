@@ -5,7 +5,7 @@ Driver x64
 [*BEGINDEF*]
 [MakeDef]
 Menu=1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-1=0,O,$C\sign.bat
+1=0,O,$C\testsign.bat
 2=3,O,$B\UASM64.EXE /c -win64 -Zp8 /win64 /D_WIN64 /Cp /nologo /W2 /I"$I",2
 3=16,O,$B\LINK.EXE /RELEASE /VERSION:"10.0" /DRIVER /ENTRY:"DriverEntry" /MACHINE:X64 /SUBSYSTEM:NATIVE /MERGE:"_TEXT=.text;_PAGE=PAGE" /OPT:REF /INCREMENTAL:NO /OPT:ICF /SECTION:INIT|d /LIBPATH:"$L" /OUT:"$16",3
 4=
@@ -409,14 +409,14 @@ Declaring wide string data with dw will only happen with OPTION LITERALS:ON and 
 
 [*ENDTXT*]
 [*BEGINTXT*]
-sign.bat
-makecert -r -pe -ss PrivateCertStore -n CN="KMDF64 Test" "Driver64Template.cer"
-stampinf.exe -f "Driver64Template.inf" -d 06/09/2018 -v 1.0.0.0 
-inf2cat.exe /driver:"M:\radasm\UASM64\Projects\Driver Projects\Driver64Template" /os:"7_x64"
-signtool sign /v /a /s PrivateCertStore /n "KMDF64 Test" /t http://timestamp.verisign.com/scripts/timstamp.dll "Driver64Template.cat"
-signtool sign /v /a /s PrivateCertStore /n "KMDF64 Test" /t http://timestamp.verisign.com/scripts/timstamp.dll "Driver64Template.sys"
-signtool verify /v /kp /c "Driver64Template.cat" "Driver64Template.inf"
-signtool verify /v /kp "Driver64Template.sys"
+testsign.bat
+\UASM\bin\makecert -r -pe -ss PrivateCertStore -n CN="KMDF64 Test" "Driver64Template.cer"
+\UASM\bin\stampinf.exe -f "Driver64Template.inf" -d 06/09/2018 -v 1.0.0.0 
+\UASM\bin\inf2cat.exe /driver:"M:\radasm\UASM64\Projects\Driver Projects\Driver64Template" /os:"7_x64"
+\UASM\bin\signtool sign /v /a /s PrivateCertStore /n "KMDF64 Test" /t http://timestamp.verisign.com/scripts/timstamp.dll "Driver64Template.cat"
+\UASM\bin\signtool sign /v /a /s PrivateCertStore /n "KMDF64 Test" /t http://timestamp.verisign.com/scripts/timstamp.dll "Driver64Template.sys"
+\UASM\bin\signtool verify /v /kp /c "Driver64Template.cat" "Driver64Template.inf"
+\UASM\bin\signtool verify /v /kp "Driver64Template.sys"
 [*ENDTXT*]
 [*ENDPRO*]
 [*BEGINTXT*]
