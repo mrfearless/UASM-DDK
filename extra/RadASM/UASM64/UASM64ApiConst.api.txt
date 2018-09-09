@@ -1,0 +1,8 @@
+;------------------------------------------------------------------------------
+; UASM-DDK Additions 
+;
+; http://github.com/mrfearless/UASM-DDK
+;
+; Paste this text at end of \Radasm\Uasm64\UASM64ApiConst.api to add to Radasm
+;
+;------------------------------------------------------------------------------

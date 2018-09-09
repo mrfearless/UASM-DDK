@@ -4,60 +4,21 @@
 
 ifndef _WDMDDK_
   _WDMDDK_ equ <>
-  ifndef _NTDDK_
-    _WDM_INCLUDED_ equ <>
-    _DDK_DRIVER_ equ <>
-    NO_INTERLOCKED_INTRINSICS equ <>
-  endif
-  _NTDDK_ equ <>
-  _STRSAFE_USE_SECURE_CRT equ 0
-  ifndef RC_INVOKED
-    if _MSC_VER lt 1300
-      .err <Compiler version not supported by Windows DDK>
-    endif
-  endif
-  NT_INCLUDED equ <>
-  _CTYPE_DISABLE_MACROS equ <>
-  if _MSC_VER ge 1200
-    ;#pragma warning ( push )
-  endif
-  ;#pragma warning ( disable : 4115 )
-  ;#pragma warning ( disable : 4201 )
-  ;#pragma warning ( disable : 4214 )
-  ;#pragma warning ( disable : 4365 )
-  ;#pragma warning ( disable : 4668 )
-  ;#pragma warning ( disable : 4820 )
-  include excpt.inc
-  include ntdef.inc
-  include ntstatus.inc
-  include bugcodes.inc
-  include ntiologc.inc
-  include winapifamily.inc
-  __drv_Mode_impl proto fastcall :WDM_INCLUDED
-  ifdef __cplusplus
-    ;extern "C"
-    ;{
-  endif
-  PACCESS_STATE typedef ptr _ACCESS_STATE
+
+  PACCESS_STATE typedef ptr ACCESS_STATE
   
   PCALLBACK_OBJECT typedef ptr _CALLBACK_OBJECT
   
-  if defined(_NTHAL_INCLUDED_)
-    PEPROCESS typedef ptr _KPROCESS
-    
-    PETHREAD typedef ptr _ETHREAD
-    
-  elseif defined(_NTIFS_INCLUDED_)
-    PEPROCESS typedef ptr _KPROCESS
-    
-    PETHREAD typedef ptr _KTHREAD
-    
-  else
-    PEPROCESS typedef ptr _EPROCESS
-    
-    PETHREAD typedef ptr _ETHREAD
-    
-  endif
+  PEPROCESS typedef ptr _KPROCESS
+  ;PETHREAD typedef ptr _ETHREAD
+  PKAFFINITY_EX typedef ptr _KAFFINITY_EX
+
+  PEPROCESS typedef ptr _KPROCESS
+  PETHREAD typedef ptr _KTHREAD
+
+  ;PEPROCESS typedef ptr _EPROCESS
+  ;PETHREAD typedef ptr _ETHREAD
+  
   PIO_TIMER typedef ptr _IO_TIMER
   
   PKINTERRUPT typedef ptr _KINTERRUPT
@@ -70,13 +31,9 @@ ifndef _WDMDDK_
   
   POBJECT_TYPE typedef ptr _OBJECT_TYPE
   
-  PSECURITY_QUALITY_OF_SERVICE typedef ptr _SECURITY_QUALITY_OF_SERVICE
   
   PCONTEXT typedef ptr _CONTEXT
   
-  PIO_STACK_LOCATION typedef ptr _IO_STACK_LOCATION
-  
-  PVPB typedef ptr _VPB
   
   PFILE_GET_QUOTA_INFORMATION typedef ptr _FILE_GET_QUOTA_INFORMATION
   
@@ -138,12 +95,12 @@ ifndef _WDMDDK_
     LockQueueUnusedSpare16 equ 16
     LockQueueMaximumLock equ ( LockQueueUnusedSpare16 + 1 )
 
-  KSPIN_LOCK_QUEUE struct
-    Next POINTER ?
-    Lock_ PKSPIN_LOCK ?
-  KSPIN_LOCK_QUEUE ends
-
-  PKSPIN_LOCK_QUEUE typedef ptr KSPIN_LOCK_QUEUE
+    IFNDEF KSPIN_LOCK_QUEUE
+    KSPIN_LOCK_QUEUE STRUCT
+        Next    ULONG ?
+    KSPIN_LOCK_QUEUE ends
+    ENDIF
+    PKSPIN_LOCK_QUEUE typedef ptr KSPIN_LOCK_QUEUE
   
   KLOCK_QUEUE_HANDLE struct
     LockQueue KSPIN_LOCK_QUEUE <>
@@ -153,31 +110,31 @@ ifndef _WDMDDK_
   PKLOCK_QUEUE_HANDLE typedef ptr KLOCK_QUEUE_HANDLE
   
   KPROFILE_SOURCE typedef SDWORD
-  ProfileTime = 0
-  ProfileAlignmentFixup = 1
-  ProfileTotalIssues = 2
-  ProfilePipelineDry = 3
-  ProfileLoadInstructions = 4
-  ProfilePipelineFrozen = 5
-  ProfileBranchInstructions = 6
-  ProfileTotalNonissues = 7
-  ProfileDcacheMisses = 8
-  ProfileIcacheMisses = 9
-  ProfileCacheMisses = 10
-  ProfileBranchMispredictions = 11
-  ProfileStoreInstructions = 12
-  ProfileFpInstructions = 13
-  ProfileIntegerInstructions = 14
-  Profile2Issue = 15
-  Profile3Issue = 16
-  Profile4Issue = 17
-  ProfileSpecialInstructions = 18
-  ProfileTotalCycles = 19
-  ProfileIcacheIssues = 20
-  ProfileDcacheAccesses = 21
-  ProfileMemoryBarrierCycles = 22
-  ProfileLoadLinkedIssues = 23
-  ProfileMaximum = 24
+  ProfileTime EQU 0
+  ProfileAlignmentFixup EQU 1
+  ProfileTotalIssues EQU 2
+  ProfilePipelineDry EQU 3
+  ProfileLoadInstructions EQU 4
+  ProfilePipelineFrozen EQU 5
+  ProfileBranchInstructions EQU 6
+  ProfileTotalNonissues EQU 7
+  ProfileDcacheMisses EQU 8
+  ProfileIcacheMisses EQU 9
+  ProfileCacheMisses EQU 10
+  ProfileBranchMispredictions EQU 11
+  ProfileStoreInstructions EQU 12
+  ProfileFpInstructions EQU 13
+  ProfileIntegerInstructions EQU 14
+  Profile2Issue EQU 15
+  Profile3Issue EQU 16
+  Profile4Issue EQU 17
+  ProfileSpecialInstructions EQU 18
+  ProfileTotalCycles EQU 19
+  ProfileIcacheIssues EQU 20
+  ProfileDcacheAccesses EQU 21
+  ProfileMemoryBarrierCycles EQU 22
+  ProfileLoadLinkedIssues EQU 23
+  ProfileMaximum EQU 24
   
   DPC_WATCHDOG_GLOBAL_TRIAGE_BLOCK_SIGNATURE equ 0AEBECEDEh
   DPC_WATCHDOG_GLOBAL_TRIAGE_BLOCK_REVISION_1 equ 1h
@@ -191,23 +148,51 @@ ifndef _WDMDDK_
   DPC_WATCHDOG_GLOBAL_TRIAGE_BLOCK ends
 
   PDPC_WATCHDOG_GLOBAL_TRIAGE_BLOCK typedef ptr DPC_WATCHDOG_GLOBAL_TRIAGE_BLOCK
-  
 
-  XSTATE_CONTEXT struct
-    Mask_ ULONG64 ?
-    Length_ DWORD ?
-    Reserved1 DWORD ?
-    Area PXSAVE_AREA ?
-    if defined(_X86_)
-      Reserved2 DWORD ?
-    endif
-    Buffer PVOID ?
-    if defined(_X86_)
-      Reserved3 DWORD ?
-    endif
-  XSTATE_CONTEXT ends
 
-  PXSTATE_CONTEXT typedef ptr XSTATE_CONTEXT
+    XSAVE_AREA_HEADER STRUCT
+        Mask_ UINT64 ?
+        CompactionMask UINT64 ?
+        Reserved2 UINT64 6 dup (?)
+    XSAVE_AREA_HEADER ENDS
+    PXSAVE_AREA_HEADER TYPEDEF PTR XSAVE_AREA_HEADER
+
+    XSAVE_FORMAT STRUCT
+        ControlWord UINT16 ?
+        StatusWord UINT16 ?
+        TagWord UINT8 ?
+        Reserved1 UINT8 ?
+        ErrorOpcode UINT16 ?
+        ErrorOffset ULONG32 ?
+        ErrorSelector UINT16 ?
+        Reserved2 UINT16 ?
+        DataOffset ULONG32 ?
+        DataSelector UINT16 ?
+        Reserved3 UINT16 ?
+        MxCsr ULONG32 ?
+        MxCsr_Mask ULONG32 ?
+        FloatRegisters M128A 8 dup (<>)
+        XmmRegisters M128A 16 dup (<>)
+        Reserved4 UINT8 96 dup (?)
+    XSAVE_FORMAT ENDS
+    PXSAVE_FORMAT TYPEDEF PTR XSAVE_FORMAT
+
+    XSAVE_AREA STRUCT
+        LegacyState XSAVE_FORMAT <>
+        Header XSAVE_AREA_HEADER <>
+    XSAVE_AREA ENDS
+    PXSAVE_AREA TYPEDEF PTR XSAVE_AREA  
+
+    XSTATE_CONTEXT STRUCT
+        Mask_ ULONG64 ?
+        Length_ DWORD ?
+        Reserved1 DWORD ?
+        Area PXSAVE_AREA ?
+        Reserved2 DWORD ?
+        Buffer PVOID ?
+        Reserved3 DWORD ?
+    XSTATE_CONTEXT ENDS
+    PXSTATE_CONTEXT typedef ptr XSTATE_CONTEXT
   
 
   ifdef _AMD64_
@@ -727,7 +712,7 @@ ifndef _WDMDDK_
 
 
   PACCESS_TOKEN typedef PVOID
-  PSECURITY_DESCRIPTOR typedef PVOID
+
   PSID typedef PVOID
   PCLAIMS_BLOB typedef PVOID
   ACCESS_MASK typedef DWORD
@@ -738,9 +723,6 @@ ifndef _WDMDDK_
   WRITE_OWNER equ 00080000h
   SYNCHRONIZE equ 00100000h
   STANDARD_RIGHTS_REQUIRED equ 000F0000h
-  STANDARD_RIGHTS_READ equ <( READ_CONTROL )>
-  STANDARD_RIGHTS_WRITE equ <( READ_CONTROL )>
-  STANDARD_RIGHTS_EXECUTE equ <( READ_CONTROL )>
   STANDARD_RIGHTS_ALL equ 001F0000h
   SPECIFIC_RIGHTS_ALL equ 0000FFFFh
   ACCESS_SYSTEM_SECURITY equ 01000000h
@@ -757,7 +739,7 @@ ifndef _WDMDDK_
   GENERIC_MAPPING ends
 
   PGENERIC_MAPPING typedef ptr GENERIC_MAPPING
-  include pshpack4.inc
+
   LUID_AND_ATTRIBUTES struct
     Luid LUID <>
     Attributes DWORD ?
@@ -769,7 +751,7 @@ ifndef _WDMDDK_
   LUID_AND_ATTRIBUTES ANYSIZE_ARRAY dup (<>)
   LUID_AND_ATTRIBUTES_ARRAY ends
   PLUID_AND_ATTRIBUTES_ARRAY typedef ptr LUID_AND_ATTRIBUTES_ARRAY
-  include poppack.inc
+
   ACL_REVISION equ 2
   ACL_REVISION_DS equ 4
   ACL_REVISION1 equ 1
@@ -841,10 +823,10 @@ ifndef _WDMDDK_
   SE_DELEGATE_SESSION_USER_IMPERSONATE_PRIVILEGE equ 36
   SE_MAX_WELL_KNOWN_PRIVILEGE equ <( SE_DELEGATE_SESSION_USER_IMPERSONATE_PRIVILEGE )>
   SECURITY_IMPERSONATION_LEVEL typedef SDWORD
-  SecurityAnonymous = 0
-  SecurityIdentification = 1
-  SecurityImpersonation = 2
-  SecurityDelegation = 3
+  SecurityAnonymous EQU 0
+  SecurityIdentification EQU 1
+  SecurityImpersonation EQU 2
+  SecurityDelegation EQU 3
   
   PSECURITY_IMPERSONATION_LEVEL typedef ptr SECURITY_IMPERSONATION_LEVEL
   
@@ -896,48 +878,46 @@ ifndef _WDMDDK_
     ifndef _NTLSA_AUDIT_
       _NTLSA_AUDIT_ equ <>
       SE_ADT_PARAMETER_TYPE typedef SDWORD
-      SeAdtParmTypeNone = 0 
-      SeAdtParmTypeString = 1
-      SeAdtParmTypeFileSpec = 2
-      SeAdtParmTypeUlong = 3
-      SeAdtParmTypeSid = 4
-      SeAdtParmTypeLogonId = 5
-      SeAdtParmTypeNoLogonId = 6
-      SeAdtParmTypeAccessMask = 7
-      SeAdtParmTypePrivs = 8
-      SeAdtParmTypeObjectTypes = 9
-      SeAdtParmTypeHexUlong = 10
-      SeAdtParmTypePtr = 11
-      SeAdtParmTypeTime = 12
-      SeAdtParmTypeGuid = 13
-      SeAdtParmTypeLuid = 14
-      SeAdtParmTypeHexInt64 = 15
-      SeAdtParmTypeStringList = 16
-      SeAdtParmTypeSidList = 17
-      SeAdtParmTypeDuration = 18
-      SeAdtParmTypeUserAccountControl = 19
-      SeAdtParmTypeNoUac = 20
-      SeAdtParmTypeMessage = 21
-      SeAdtParmTypeDateTime = 22
-      SeAdtParmTypeSockAddr = 23
-      SeAdtParmTypeSD = 24
-      SeAdtParmTypeLogonHours = 25
-      SeAdtParmTypeLogonIdNoSid = 26
-      SeAdtParmTypeUlongNoConv = 27
-      SeAdtParmTypeSockAddrNoPort = 28
-      SeAdtParmTypeAccessReason = 29
-      SeAdtParmTypeStagingReason = 30
-      SeAdtParmTypeResourceAttribute = 31
-      SeAdtParmTypeClaims = 32
-      SeAdtParmTypeLogonIdAsSid = 33
-      SeAdtParmTypeMultiSzString = 34
-      SeAdtParmTypeLogonIdEx = 35
+      SeAdtParmTypeNone EQU 0 
+      SeAdtParmTypeString EQU 1
+      SeAdtParmTypeFileSpec EQU 2
+      SeAdtParmTypeUlong EQU 3
+      SeAdtParmTypeSid EQU 4
+      SeAdtParmTypeLogonId EQU 5
+      SeAdtParmTypeNoLogonId EQU 6
+      SeAdtParmTypeAccessMask EQU 7
+      SeAdtParmTypePrivs EQU 8
+      SeAdtParmTypeObjectTypes EQU 9
+      SeAdtParmTypeHexUlong EQU 10
+      SeAdtParmTypePtr EQU 11
+      SeAdtParmTypeTime EQU 12
+      SeAdtParmTypeGuid EQU 13
+      SeAdtParmTypeLuid EQU 14
+      SeAdtParmTypeHexInt64 EQU 15
+      SeAdtParmTypeStringList EQU 16
+      SeAdtParmTypeSidList EQU 17
+      SeAdtParmTypeDuration EQU 18
+      SeAdtParmTypeUserAccountControl EQU 19
+      SeAdtParmTypeNoUac EQU 20
+      SeAdtParmTypeMessage EQU 21
+      SeAdtParmTypeDateTime EQU 22
+      SeAdtParmTypeSockAddr EQU 23
+      SeAdtParmTypeSD EQU 24
+      SeAdtParmTypeLogonHours EQU 25
+      SeAdtParmTypeLogonIdNoSid EQU 26
+      SeAdtParmTypeUlongNoConv EQU 27
+      SeAdtParmTypeSockAddrNoPort EQU 28
+      SeAdtParmTypeAccessReason EQU 29
+      SeAdtParmTypeStagingReason EQU 30
+      SeAdtParmTypeResourceAttribute EQU 31
+      SeAdtParmTypeClaims EQU 32
+      SeAdtParmTypeLogonIdAsSid EQU 33
+      SeAdtParmTypeMultiSzString EQU 34
+      SeAdtParmTypeLogonIdEx EQU 35
       
       PSE_ADT_PARAMETER_TYPE typedef ptr SE_ADT_PARAMETER_TYPE
       
-      ifndef GUID_DEFINED
-        include guiddef.inc
-      endif
+
       SE_ADT_OBJECT_TYPE struct
         ObjectType GUID <>
         Flags WORD ?
@@ -1153,17 +1133,11 @@ ifndef _WDMDDK_
   FILE_ATTRIBUTE_OFFLINE equ 00001000h
   FILE_ATTRIBUTE_NOT_CONTENT_INDEXED equ 00002000h
   FILE_ATTRIBUTE_ENCRYPTED equ 00004000h
-  if (_WIN32_WINNT ge _WIN32_WINNT_WIN8)
+
     FILE_ATTRIBUTE_INTEGRITY_STREAM equ 00008000h
-  endif
-  FILE_ATTRIBUTE_VIRTUAL equ 00010000h
-  if (_WIN32_WINNT ge _WIN32_WINNT_WIN8)
+    FILE_ATTRIBUTE_VIRTUAL equ 00010000h
     FILE_ATTRIBUTE_NO_SCRUB_DATA equ 00020000h
-  endif
-  if (_WIN32_WINNT gt _WIN32_WINNT_WINBLUE or (_WIN32_WINNT eq _WIN32_WINNT_WINBLUE and defined(WINBLUE_KBSPRING14)))
     FILE_ATTRIBUTE_EA equ 00040000h
-  endif
-  if (_WIN32_WINNT ge _WIN32_WINNT_WIN10_RS2)
     FILE_ATTRIBUTE_PINNED equ 00080000h
     FILE_ATTRIBUTE_UNPINNED equ 00100000h
     FILE_ATTRIBUTE_RECALL_ON_OPEN equ 00040000h
@@ -1171,25 +1145,12 @@ ifndef _WDMDDK_
     TREE_CONNECT_ATTRIBUTE_PRIVACY equ 00004000h
     TREE_CONNECT_ATTRIBUTE_INTEGRITY equ 00008000h
     TREE_CONNECT_ATTRIBUTE_GLOBAL equ 00000004h
-  endif
-  if (_WIN32_WINNT ge _WIN32_WINNT_WIN10_RS3)
     FILE_ATTRIBUTE_STRICTLY_SEQUENTIAL equ 20000000h
-  endif
-  if (_WIN32_WINNT lt _WIN32_WINNT_WIN8)
     FILE_ATTRIBUTE_VALID_FLAGS equ 00007fb7h
     FILE_ATTRIBUTE_VALID_SET_FLAGS equ 000031a7h
-  elseif (_WIN32_WINNT lt _WIN32_WINNT_WIN10_RS2)
-    FILE_ATTRIBUTE_VALID_FLAGS equ 0002ffb7h
-    FILE_ATTRIBUTE_VALID_SET_FLAGS equ 000231a7h
-  elseif (_WIN32_WINNT lt _WIN32_WINNT_WIN10_RS3)
-    FILE_ATTRIBUTE_VALID_FLAGS equ 005affb7h
-    FILE_ATTRIBUTE_VALID_SET_FLAGS equ 001a31a7h
     FILE_ATTRIBUTE_VALID_KERNEL_SET_FLAGS equ 005a31a7h
-  else
-    FILE_ATTRIBUTE_VALID_FLAGS equ 005affb7h
-    FILE_ATTRIBUTE_VALID_SET_FLAGS equ 001a31a7h
-    FILE_ATTRIBUTE_VALID_KERNEL_SET_FLAGS equ 005a31a7h
-  endif
+
+
   FILE_SUPERSEDE equ 00000000h
   FILE_OPEN equ 00000001h
   FILE_CREATE equ 00000002h
@@ -1213,13 +1174,11 @@ ifndef _WDMDDK_
   FILE_OPEN_BY_FILE_ID equ 00002000h
   FILE_OPEN_FOR_BACKUP_INTENT equ 00004000h
   FILE_NO_COMPRESSION equ 00008000h
-  if (NTDDI_VERSION ge NTDDI_WIN7)
+
     FILE_OPEN_REQUIRING_OPLOCK equ 00010000h
     FILE_DISALLOW_EXCLUSIVE equ 00020000h
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
     FILE_SESSION_AWARE equ 00040000h
-  endif
+
   FILE_RESERVE_OPFILTER equ 00100000h
   FILE_OPEN_REPARSE_POINT equ 00200000h
   FILE_OPEN_NO_RECALL equ 00400000h
@@ -1234,12 +1193,12 @@ ifndef _WDMDDK_
   FILE_OVERWRITTEN equ 00000003h
   FILE_EXISTS equ 00000004h
   FILE_DOES_NOT_EXIST equ 00000005h
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
+
     FILE_QUERY_RESTART_SCAN equ 00000001h
     FILE_QUERY_RETURN_SINGLE_ENTRY equ 00000002h
     FILE_QUERY_INDEX_SPECIFIED equ 00000004h
     FILE_QUERY_RETURN_ON_DISK_ENTRIES_ONLY equ 00000008h
-  endif
+
   FILE_WRITE_TO_END_OF_FILE equ 0ffffffffh
   FILE_USE_FILE_POINTER_POSITION equ 0fffffffeh
   FILE_BYTE_ALIGNMENT equ 00000000h
@@ -1268,48 +1227,48 @@ ifndef _WDMDDK_
   FILE_CHARACTERISTIC_CSV equ 00010000h
   FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL equ 00020000h
   FILE_PORTABLE_DEVICE equ 00040000h
-  IO_STATUS_BLOCK struct
-    union DUMMYUNIONNAME_0
-      Status NTSTATUS ?
-      Pointer_ PVOID ?
-    ends
-    Information ULONG_PTR ?
-  IO_STATUS_BLOCK ends
-
-  PIO_STATUS_BLOCK typedef ptr IO_STATUS_BLOCK
+    
+    IFNDEF IO_STATUS_BLOCK
+    IO_STATUS_BLOCK STRUCT
+    	Status			NTSTATUS	?
+    	Information		ULONG_PTR	?
+    IO_STATUS_BLOCK ENDS
+    ENDIF
+    PIO_STATUS_BLOCK typedef ptr IO_STATUS_BLOCK
   
-  IO_STATUS_BLOCK32 struct
+    IFNDEF 
+    IO_STATUS_BLOCK32 struct
     Status NTSTATUS ?
     Information DWORD ?
-  IO_STATUS_BLOCK32 ends
-
-  PIO_STATUS_BLOCK32 typedef ptr IO_STATUS_BLOCK32
+    IO_STATUS_BLOCK32 ends
+    ENDIF
+    PIO_STATUS_BLOCK32 typedef ptr IO_STATUS_BLOCK32
   
   proto_PIO_APC_ROUTINE typedef proto stdcall :PVOID, :PIO_STATUS_BLOCK, :DWORD
   PIO_APC_ROUTINE typedef ptr proto_PIO_APC_ROUTINE
   PIO_APC_ROUTINE_DEFINED equ <>
   IO_SESSION_EVENT typedef SDWORD
-  IoSessionEventIgnore = 0 
-  IoSessionEventCreated = 1
-  IoSessionEventTerminated = 2
-  IoSessionEventConnected = 3
-  IoSessionEventDisconnected = 4
-  IoSessionEventLogon = 5
-  IoSessionEventLogoff = 6
-  IoSessionEventMax = 7
+  IoSessionEventIgnore EQU 0 
+  IoSessionEventCreated EQU 1
+  IoSessionEventTerminated EQU 2
+  IoSessionEventConnected EQU 3
+  IoSessionEventDisconnected EQU 4
+  IoSessionEventLogon EQU 5
+  IoSessionEventLogoff EQU 6
+  IoSessionEventMax EQU 7
   
   PIO_SESSION_EVENT typedef ptr IO_SESSION_EVENT
   
   IO_SESSION_STATE typedef SDWORD
-  IoSessionStateCreated = 1 
-  IoSessionStateInitialized = 2
-  IoSessionStateConnected = 3
-  IoSessionStateDisconnected = 4
-  IoSessionStateDisconnectedLoggedOn = 5
-  IoSessionStateLoggedOn = 6
-  IoSessionStateLoggedOff = 7
-  IoSessionStateTerminated = 8
-  IoSessionStateMax = 9
+  IoSessionStateCreated EQU 1 
+  IoSessionStateInitialized EQU 2
+  IoSessionStateConnected EQU 3
+  IoSessionStateDisconnected EQU 4
+  IoSessionStateDisconnectedLoggedOn EQU 5
+  IoSessionStateLoggedOn EQU 6
+  IoSessionStateLoggedOff EQU 7
+  IoSessionStateTerminated EQU 8
+  IoSessionStateMax EQU 9
   
   PIO_SESSION_STATE typedef ptr IO_SESSION_STATE
   
@@ -1330,84 +1289,84 @@ ifndef _WDMDDK_
   PIO_SESSION_CONNECT_INFO typedef ptr IO_SESSION_CONNECT_INFO
   
   FILE_INFORMATION_CLASS typedef SDWORD
-  FileDirectoryInformation = 1 
-  FileFullDirectoryInformation = 2
-  FileBothDirectoryInformation = 3
-  FileBasicInformation = 4
-  FileStandardInformation = 5
-  FileInternalInformation = 6
-  FileEaInformation = 7
-  FileAccessInformation = 8
-  FileNameInformation = 9
-  FileRenameInformation = 10
-  FileLinkInformation = 11
-  FileNamesInformation = 12
-  FileDispositionInformation = 13
-  FilePositionInformation = 14
-  FileFullEaInformation = 15
-  FileModeInformation = 16
-  FileAlignmentInformation = 17
-  FileAllInformation = 18
-  FileAllocationInformation = 19
-  FileEndOfFileInformation = 20
-  FileAlternateNameInformation = 21
-  FileStreamInformation = 22
-  FilePipeInformation = 23
-  FilePipeLocalInformation = 24
-  FilePipeRemoteInformation = 25
-  FileMailslotQueryInformation = 26
-  FileMailslotSetInformation = 27
-  FileCompressionInformation = 28
-  FileObjectIdInformation = 29
-  FileCompletionInformation = 30
-  FileMoveClusterInformation = 31
-  FileQuotaInformation = 32
-  FileReparsePointInformation = 33
-  FileNetworkOpenInformation = 34
-  FileAttributeTagInformation = 35
-  FileTrackingInformation = 36
-  FileIdBothDirectoryInformation = 37
-  FileIdFullDirectoryInformation = 38
-  FileValidDataLengthInformation = 39
-  FileShortNameInformation = 40
-  FileIoCompletionNotificationInformation = 41
-  FileIoStatusBlockRangeInformation = 42
-  FileIoPriorityHintInformation = 43
-  FileSfioReserveInformation = 44
-  FileSfioVolumeInformation = 45
-  FileHardLinkInformation = 46
-  FileProcessIdsUsingFileInformation = 47
-  FileNormalizedNameInformation = 48
-  FileNetworkPhysicalNameInformation = 49
-  FileIdGlobalTxDirectoryInformation = 50
-  FileIsRemoteDeviceInformation = 51
-  FileUnusedInformation = 52
-  FileNumaNodeInformation = 53
-  FileStandardLinkInformation = 54
-  FileRemoteProtocolInformation = 55
-  FileRenameInformationBypassAccessCheck = 56
-  FileLinkInformationBypassAccessCheck = 57
-  FileVolumeNameInformation = 58
-  FileIdInformation = 59
-  FileIdExtdDirectoryInformation = 60
-  FileReplaceCompletionInformation = 61
-  FileHardLinkFullIdInformation = 62
-  FileIdExtdBothDirectoryInformation = 63
-  FileDispositionInformationEx = 64
-  FileRenameInformationEx = 65
-  FileRenameInformationExBypassAccessCheck = 66
-  FileDesiredStorageClassInformation = 67
-  FileStatInformation = 68
-  FileMemoryPartitionInformation = 69
-  FileStatLxInformation = 70
-  FileCaseSensitiveInformation = 71
-  FileMaximumInformation = 72
+  FileDirectoryInformation EQU 1 
+  FileFullDirectoryInformation EQU 2
+  FileBothDirectoryInformation EQU 3
+  FileBasicInformation EQU 4
+  FileStandardInformation EQU 5
+  FileInternalInformation EQU 6
+  FileEaInformation EQU 7
+  FileAccessInformation EQU 8
+  FileNameInformation EQU 9
+  FileRenameInformation EQU 10
+  FileLinkInformation EQU 11
+  FileNamesInformation EQU 12
+  FileDispositionInformation EQU 13
+  FilePositionInformation EQU 14
+  FileFullEaInformation EQU 15
+  FileModeInformation EQU 16
+  FileAlignmentInformation EQU 17
+  FileAllInformation EQU 18
+  FileAllocationInformation EQU 19
+  FileEndOfFileInformation EQU 20
+  FileAlternateNameInformation EQU 21
+  FileStreamInformation EQU 22
+  FilePipeInformation EQU 23
+  FilePipeLocalInformation EQU 24
+  FilePipeRemoteInformation EQU 25
+  FileMailslotQueryInformation EQU 26
+  FileMailslotSetInformation EQU 27
+  FileCompressionInformation EQU 28
+  FileObjectIdInformation EQU 29
+  FileCompletionInformation EQU 30
+  FileMoveClusterInformation EQU 31
+  FileQuotaInformation EQU 32
+  FileReparsePointInformation EQU 33
+  FileNetworkOpenInformation EQU 34
+  FileAttributeTagInformation EQU 35
+  FileTrackingInformation EQU 36
+  FileIdBothDirectoryInformation EQU 37
+  FileIdFullDirectoryInformation EQU 38
+  FileValidDataLengthInformation EQU 39
+  FileShortNameInformation EQU 40
+  FileIoCompletionNotificationInformation EQU 41
+  FileIoStatusBlockRangeInformation EQU 42
+  FileIoPriorityHintInformation EQU 43
+  FileSfioReserveInformation EQU 44
+  FileSfioVolumeInformation EQU 45
+  FileHardLinkInformation EQU 46
+  FileProcessIdsUsingFileInformation EQU 47
+  FileNormalizedNameInformation EQU 48
+  FileNetworkPhysicalNameInformation EQU 49
+  FileIdGlobalTxDirectoryInformation EQU 50
+  FileIsRemoteDeviceInformation EQU 51
+  FileUnusedInformation EQU 52
+  FileNumaNodeInformation EQU 53
+  FileStandardLinkInformation EQU 54
+  FileRemoteProtocolInformation EQU 55
+  FileRenameInformationBypassAccessCheck EQU 56
+  FileLinkInformationBypassAccessCheck EQU 57
+  FileVolumeNameInformation EQU 58
+  FileIdInformation EQU 59
+  FileIdExtdDirectoryInformation EQU 60
+  FileReplaceCompletionInformation EQU 61
+  FileHardLinkFullIdInformation EQU 62
+  FileIdExtdBothDirectoryInformation EQU 63
+  FileDispositionInformationEx EQU 64
+  FileRenameInformationEx EQU 65
+  FileRenameInformationExBypassAccessCheck EQU 66
+  FileDesiredStorageClassInformation EQU 67
+  FileStatInformation EQU 68
+  FileMemoryPartitionInformation EQU 69
+  FileStatLxInformation EQU 70
+  FileCaseSensitiveInformation EQU 71
+  FileMaximumInformation EQU 72
   
   PFILE_INFORMATION_CLASS typedef ptr FILE_INFORMATION_CLASS
   
   DIRECTORY_NOTIFY_INFORMATION_CLASS typedef SDWORD
-  DirectoryNotifyInformation = 1 
-  DirectoryNotifyExtendedInformation = 2
+  DirectoryNotifyInformation EQU 1 
+  DirectoryNotifyExtendedInformation EQU 2
   
   PDIRECTORY_NOTIFY_INFORMATION_CLASS typedef ptr DIRECTORY_NOTIFY_INFORMATION_CLASS
   
@@ -1431,7 +1390,7 @@ ifndef _WDMDDK_
 
   PFILE_STANDARD_INFORMATION typedef ptr FILE_STANDARD_INFORMATION
   
-  if (_WIN32_WINNT ge _WIN32_WINNT_WINTHRESHOLD)
+
     FILE_STANDARD_INFORMATION_EX struct
       AllocationSize LARGE_INTEGER <>
       EndOfFile LARGE_INTEGER <>
@@ -1443,8 +1402,7 @@ ifndef _WDMDDK_
     FILE_STANDARD_INFORMATION_EX ends
 
     PFILE_STANDARD_INFORMATION_EX typedef ptr FILE_STANDARD_INFORMATION_EX
-    
-  endif
+
   FILE_POSITION_INFORMATION struct
     CurrentByteOffset LARGE_INTEGER <>
   FILE_POSITION_INFORMATION ends
@@ -1493,12 +1451,12 @@ ifndef _WDMDDK_
   PFILE_SFIO_VOLUME_INFORMATION typedef ptr FILE_SFIO_VOLUME_INFORMATION
   
   IO_PRIORITY_HINT typedef SDWORD
-  IoPriorityVeryLow = 0 
-  IoPriorityLow = 1
-  IoPriorityNormal = 2
-  IoPriorityHigh = 3
-  IoPriorityCritical = 4
-  MaxIoPriorityTypes = 5
+  IoPriorityVeryLow EQU 0 
+  IoPriorityLow EQU 1
+  IoPriorityNormal EQU 2
+  IoPriorityHigh EQU 3
+  IoPriorityCritical EQU 4
+  MaxIoPriorityTypes EQU 5
   
   FILE_IO_PRIORITY_HINT_INFORMATION struct
     PriorityHint IO_PRIORITY_HINT ?
@@ -1548,7 +1506,7 @@ ifndef _WDMDDK_
 
   PFILE_IOSTATUSBLOCK_RANGE_INFORMATION typedef ptr FILE_IOSTATUSBLOCK_RANGE_INFORMATION
   
-  if (_WIN32_WINNT ge _WIN32_WINNT_WIN10_RS3)
+
     FILE_MEMORY_PARTITION_INFORMATION struct
       OwnerPartitionHandle ULONG_PTR ?
       union Flags
@@ -1561,32 +1519,32 @@ ifndef _WDMDDK_
     FILE_MEMORY_PARTITION_INFORMATION ends
 
     PFILE_MEMORY_PARTITION_INFORMATION typedef ptr FILE_MEMORY_PARTITION_INFORMATION
-    
-  endif
+
   FS_INFORMATION_CLASS typedef SDWORD
-  FileFsVolumeInformation = 1 
-  FileFsLabelInformation = 2
-  FileFsSizeInformation = 3
-  FileFsDeviceInformation = 4
-  FileFsAttributeInformation = 5
-  FileFsControlInformation = 6
-  FileFsFullSizeInformation = 7
-  FileFsObjectIdInformation = 8
-  FileFsDriverPathInformation = 9
-  FileFsVolumeFlagsInformation = 10
-  FileFsSectorSizeInformation = 11
-  FileFsDataCopyInformation = 12
-  FileFsMetadataSizeInformation = 13
-  FileFsMaximumInformation = 14
+  FileFsVolumeInformation EQU 1 
+  FileFsLabelInformation EQU 2
+  FileFsSizeInformation EQU 3
+  FileFsDeviceInformation EQU 4
+  FileFsAttributeInformation EQU 5
+  FileFsControlInformation EQU 6
+  FileFsFullSizeInformation EQU 7
+  FileFsObjectIdInformation EQU 8
+  FileFsDriverPathInformation EQU 9
+  FileFsVolumeFlagsInformation EQU 10
+  FileFsSectorSizeInformation EQU 11
+  FileFsDataCopyInformation EQU 12
+  FileFsMetadataSizeInformation EQU 13
+  FileFsMaximumInformation EQU 14
   
   PFS_INFORMATION_CLASS typedef ptr FS_INFORMATION_CLASS
   
-  FILE_FS_DEVICE_INFORMATION struct
-    DeviceType DEVICE_TYPE ?
-    Characteristics DWORD ?
-  FILE_FS_DEVICE_INFORMATION ends
-
-  PFILE_FS_DEVICE_INFORMATION typedef ptr FILE_FS_DEVICE_INFORMATION
+    IFNDEF FILE_FS_DEVICE_INFORMATION
+    FILE_FS_DEVICE_INFORMATION STRUCT		; sizeof = 8
+    	DeviceType			DWORD	?	; 00h DEVICE_TYPE
+    	Characteristics		DWORD	?	; 04h
+    FILE_FS_DEVICE_INFORMATION ENDS
+    ENDIF
+    PFILE_FS_DEVICE_INFORMATION typedef ptr FILE_FS_DEVICE_INFORMATION
   
   FILE_SEGMENT_ELEMENT union
     Buffer PVOID64 ?
@@ -1595,61 +1553,57 @@ ifndef _WDMDDK_
 
   PFILE_SEGMENT_ELEMENT typedef ptr FILE_SEGMENT_ELEMENT
   
-  if (NTDDI_VERSION ge NTDDI_WIN8)
+
     FLUSH_FLAGS_FILE_DATA_ONLY equ 00000001h
     FLUSH_FLAGS_NO_SYNC equ 00000002h
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
+
+
     FLUSH_FLAGS_FILE_DATA_SYNC_ONLY equ 00000004h
-  endif
+
   INTERFACE_TYPE typedef SDWORD
-  InterfaceTypeUndefined = - 1 
-  Internal = 2
-  Isa = 3
-  Eisa = 4
-  MicroChannel = 5
-  TurboChannel = 6
-  PCIBus = 7
-  VMEBus = 8
-  NuBus = 9
-  PCMCIABus = 10
-  CBus = 11
-  MPIBus = 12
-  MPSABus = 13
-  ProcessorInternal = 14
-  InternalPowerBus = 15
-  PNPISABus = 16
-  PNPBus = 17
-  Vmcs = 18
-  ACPIBus = 19
-  MaximumInterfaceType = 20
+  InterfaceTypeUndefined EQU - 1 
+  Internal EQU 2
+  Isa EQU 3
+  Eisa EQU 4
+  MicroChannel EQU 5
+  TurboChannel EQU 6
+  PCIBus EQU 7
+  VMEBus EQU 8
+  NuBus EQU 9
+  PCMCIABus EQU 10
+  CBus EQU 11
+  MPIBus EQU 12
+  MPSABus EQU 13
+  ProcessorInternal EQU 14
+  InternalPowerBus EQU 15
+  PNPISABus EQU 16
+  PNPBus EQU 17
+  Vmcs EQU 18
+  ACPIBus EQU 19
+  MaximumInterfaceType EQU 20
   
   PINTERFACE_TYPE typedef ptr INTERFACE_TYPE
   
   DMA_WIDTH typedef SDWORD
-  Width8Bits = 0
-  Width16Bits = 1
-  Width32Bits = 2
-  Width64Bits = 3
-  WidthNoWrap = 4
-  MaximumDmaWidth = 5
+  Width8Bits EQU 0
+  Width16Bits EQU 1
+  Width32Bits EQU 2
+  Width64Bits EQU 3
+  WidthNoWrap EQU 4
+  MaximumDmaWidth EQU 5
   
   PDMA_WIDTH typedef ptr DMA_WIDTH
   
   DMA_SPEED typedef SDWORD
-  Compatible = 0
-  TypeA = 1
-  TypeB = 2
-  TypeC = 3
-  TypeF = 4
-  MaximumDmaSpeed = 5
+  Compatible EQU 0
+  TypeA EQU 1
+  TypeB EQU 2
+  TypeC EQU 3
+  TypeF EQU 4
+  MaximumDmaSpeed EQU 5
   
   PDMA_SPEED typedef ptr DMA_SPEED
   
-  proto_PINTERFACE_REFERENCE typedef proto fastcall :PVOID
-  PINTERFACE_REFERENCE typedef ptr proto_PINTERFACE_REFERENCE
-  proto_PINTERFACE_DEREFERENCE typedef proto fastcall :PVOID
-  PINTERFACE_DEREFERENCE typedef ptr proto_PINTERFACE_DEREFERENCE
   IO_ERROR_LOG_PACKET struct
     MajorFunctionCode BYTE ?
     RetryCount BYTE ?
@@ -1684,62 +1638,61 @@ ifndef _WDMDDK_
   ERROR_LOG_MESSAGE_LIMIT_SIZE equ <( ERROR_LOG_LIMIT_SIZE + IO_ERROR_LOG_MESSAGE_HEADER_LENGTH )>
   IO_ERROR_LOG_MESSAGE_LENGTH equ ( ( PORT_MAXIMUM_MESSAGE_LENGTH gt ERROR_LOG_MESSAGE_LIMIT_SIZE ) ? ERROR_LOG_MESSAGE_LIMIT_SIZE : PORT_MAXIMUM_MESSAGE_LENGTH )
   ERROR_LOG_MAXIMUM_SIZE equ <( IO_ERROR_LOG_MESSAGE_LENGTH - IO_ERROR_LOG_MESSAGE_HEADER_LENGTH )>
-  ifdef _WIN64
+
     PORT_MAXIMUM_MESSAGE_LENGTH equ 512
-  else
-    PORT_MAXIMUM_MESSAGE_LENGTH equ 256
-  endif
-  KEY_QUERY_VALUE equ 0001h
-  KEY_SET_VALUE equ 0002h
-  KEY_CREATE_SUB_KEY equ 0004h
-  KEY_ENUMERATE_SUB_KEYS equ 0008h
-  KEY_NOTIFY equ 0010h
-  KEY_CREATE_LINK equ 0020h
-  KEY_WOW64_32KEY equ 0200h
-  KEY_WOW64_64KEY equ 0100h
-  KEY_WOW64_RES equ 0300h
-  KEY_READ equ <( ( STANDARD_RIGHTS_READ or KEY_QUERY_VALUE or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY ) and ( not SYNCHRONIZE ) )>
-  KEY_WRITE equ <( ( STANDARD_RIGHTS_WRITE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY ) and ( not SYNCHRONIZE ) )>
-  KEY_EXECUTE equ <( ( KEY_READ ) and ( not SYNCHRONIZE ) )>
-  KEY_ALL_ACCESS equ <( ( STANDARD_RIGHTS_ALL or KEY_QUERY_VALUE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY or KEY_CREATE_LINK ) and ( not SYNCHRONIZE ) )>
-  REG_OPTION_RESERVED equ 00000000h
-  REG_OPTION_NON_VOLATILE equ 00000000h
-  REG_OPTION_VOLATILE equ 00000001h
-  REG_OPTION_CREATE_LINK equ 00000002h
-  REG_OPTION_BACKUP_RESTORE equ 00000004h
-  REG_OPTION_OPEN_LINK equ 00000008h
-  REG_OPTION_DONT_VIRTUALIZE equ 00000010h
-  REG_LEGAL_OPTION equ <( REG_OPTION_RESERVED or REG_OPTION_NON_VOLATILE or REG_OPTION_VOLATILE or REG_OPTION_CREATE_LINK or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK or REG_OPTION_DONT_VIRTUALIZE )>
-  REG_OPEN_LEGAL_OPTION equ <( REG_OPTION_RESERVED or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK or REG_OPTION_DONT_VIRTUALIZE )>
-  REG_CREATED_NEW_KEY equ 00000001h
-  REG_OPENED_EXISTING_KEY equ 00000002h
-  REG_STANDARD_FORMAT equ 1
-  REG_LATEST_FORMAT equ 2
-  REG_NO_COMPRESSION equ 4
-  REG_WHOLE_HIVE_VOLATILE equ 00000001h
-  REG_REFRESH_HIVE equ 00000002h
-  REG_NO_LAZY_FLUSH equ 00000004h
-  REG_FORCE_RESTORE equ 00000008h
-  REG_APP_HIVE equ 00000010h
-  REG_PROCESS_PRIVATE equ 00000020h
-  REG_START_JOURNAL equ 00000040h
-  REG_HIVE_EXACT_FILE_GROWTH equ 00000080h
-  REG_HIVE_NO_RM equ 00000100h
-  REG_HIVE_SINGLE_LOG equ 00000200h
-  REG_BOOT_HIVE equ 00000400h
-  REG_LOAD_HIVE_OPEN_HANDLE equ 00000800h
-  REG_FLUSH_HIVE_FILE_GROWTH equ 00001000h
-  REG_OPEN_READ_ONLY equ 00002000h
-  REG_IMMUTABLE equ 00004000h
-  REG_APP_HIVE_OPEN_READ_ONLY equ <( REG_OPEN_READ_ONLY )>
-  REG_FORCE_UNLOAD equ 1
-  REG_UNLOAD_LEGAL_FLAGS equ <( REG_FORCE_UNLOAD )>
-  REG_NOTIFY_CHANGE_NAME equ 00000001h
-  REG_NOTIFY_CHANGE_ATTRIBUTES equ 00000002h
-  REG_NOTIFY_CHANGE_LAST_SET equ 00000004h
-  REG_NOTIFY_CHANGE_SECURITY equ 00000008h
-  REG_NOTIFY_THREAD_AGNOSTIC equ 10000000h
-  REG_LEGAL_CHANGE_FILTER equ <( REG_NOTIFY_CHANGE_NAME or REG_NOTIFY_CHANGE_ATTRIBUTES or REG_NOTIFY_CHANGE_LAST_SET or REG_NOTIFY_CHANGE_SECURITY or REG_NOTIFY_THREAD_AGNOSTIC )>
+
+    KEY_QUERY_VALUE                 equ 0001h
+    KEY_SET_VALUE                   equ 0002h
+    KEY_CREATE_SUB_KEY              equ 0004h
+    KEY_ENUMERATE_SUB_KEYS          equ 0008h
+    KEY_NOTIFY                      equ 0010h
+    KEY_CREATE_LINK                 equ 0020h
+    KEY_WOW64_32KEY                 equ 0200h
+    KEY_WOW64_64KEY                 equ 0100h
+    KEY_WOW64_RES                   equ 0300h
+    KEY_READ	                    equ (STANDARD_RIGHTS_READ or KEY_QUERY_VALUE or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY) AND NOT SYNCHRONIZE
+    KEY_WRITE	                    equ (STANDARD_RIGHTS_WRITE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY) AND NOT SYNCHRONIZE
+    KEY_EXECUTE	                    equ KEY_READ AND NOT SYNCHRONIZE
+    KEY_ALL_ACCESS	                equ (STANDARD_RIGHTS_ALL or KEY_QUERY_VALUE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY or KEY_CREATE_LINK) AND NOT SYNCHRONIZE
+    REG_OPTION_RESERVED             equ 00000000h
+    REG_OPTION_NON_VOLATILE         equ 00000000h
+    REG_OPTION_VOLATILE             equ 00000001h
+    REG_OPTION_CREATE_LINK          equ 00000002h
+    REG_OPTION_BACKUP_RESTORE       equ 00000004h
+    REG_OPTION_OPEN_LINK            equ 00000008h
+    REG_OPTION_DONT_VIRTUALIZE      equ 00000010h
+    REG_LEGAL_OPTION                equ (REG_OPTION_RESERVED or REG_OPTION_NON_VOLATILE or REG_OPTION_VOLATILE or REG_OPTION_CREATE_LINK or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK or REG_OPTION_DONT_VIRTUALIZE)
+    REG_OPEN_LEGAL_OPTION           equ (REG_OPTION_RESERVED or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK or REG_OPTION_DONT_VIRTUALIZE)
+    REG_CREATED_NEW_KEY             equ 00000001h
+    REG_OPENED_EXISTING_KEY         equ 00000002h
+    REG_STANDARD_FORMAT             equ 1
+    REG_LATEST_FORMAT               equ 2
+    REG_NO_COMPRESSION              equ 4
+    REG_WHOLE_HIVE_VOLATILE         equ 00000001h
+    REG_REFRESH_HIVE                equ 00000002h
+    REG_NO_LAZY_FLUSH               equ 00000004h
+    REG_FORCE_RESTORE               equ 00000008h
+    REG_APP_HIVE                    equ 00000010h
+    REG_PROCESS_PRIVATE             equ 00000020h
+    REG_START_JOURNAL               equ 00000040h
+    REG_HIVE_EXACT_FILE_GROWTH      equ 00000080h
+    REG_HIVE_NO_RM                  equ 00000100h
+    REG_HIVE_SINGLE_LOG             equ 00000200h
+    REG_BOOT_HIVE                   equ 00000400h
+    REG_LOAD_HIVE_OPEN_HANDLE       equ 00000800h
+    REG_FLUSH_HIVE_FILE_GROWTH      equ 00001000h
+    REG_OPEN_READ_ONLY              equ 00002000h
+    REG_IMMUTABLE                   equ 00004000h
+    REG_APP_HIVE_OPEN_READ_ONLY     equ REG_OPEN_READ_ONLY
+    REG_FORCE_UNLOAD                equ 1
+    REG_UNLOAD_LEGAL_FLAGS          equ REG_FORCE_UNLOAD
+    REG_NOTIFY_CHANGE_NAME          equ 00000001h
+    REG_NOTIFY_CHANGE_ATTRIBUTES    equ 00000002h
+    REG_NOTIFY_CHANGE_LAST_SET      equ 00000004h
+    REG_NOTIFY_CHANGE_SECURITY      equ 00000008h
+    REG_NOTIFY_THREAD_AGNOSTIC      equ 10000000h
+    REG_LEGAL_CHANGE_FILTER         equ (REG_NOTIFY_CHANGE_NAME or REG_NOTIFY_CHANGE_ATTRIBUTES or REG_NOTIFY_CHANGE_LAST_SET or REG_NOTIFY_CHANGE_SECURITY or REG_NOTIFY_THREAD_AGNOSTIC)
+
   KEY_BASIC_INFORMATION struct
     LastWriteTime LARGE_INTEGER <>
     TitleIndex DWORD ?
@@ -1777,17 +1730,17 @@ ifndef _WDMDDK_
   PKEY_FULL_INFORMATION typedef ptr KEY_FULL_INFORMATION
   
   KEY_INFORMATION_CLASS typedef SDWORD
-  KeyBasicInformation = 0
-  KeyNodeInformation = 1
-  KeyFullInformation = 2
-  KeyNameInformation = 3
-  KeyCachedInformation = 4
-  KeyFlagsInformation = 5
-  KeyVirtualizationInformation = 6
-  KeyHandleTagsInformation = 7
-  KeyTrustInformation = 8
-  KeyLayerInformation = 9
-  MaxKeyInfoClass = 10
+  KeyBasicInformation EQU 0
+  KeyNodeInformation EQU 1
+  KeyFullInformation EQU 2
+  KeyNameInformation EQU 3
+  KeyCachedInformation EQU 4
+  KeyFlagsInformation EQU 5
+  KeyVirtualizationInformation EQU 6
+  KeyHandleTagsInformation EQU 7
+  KeyTrustInformation EQU 8
+  KeyLayerInformation EQU 9
+  MaxKeyInfoClass EQU 10
   
   KEY_WRITE_TIME_INFORMATION struct
     LastWriteTime LARGE_INTEGER <>
@@ -1808,83 +1761,94 @@ ifndef _WDMDDK_
   PKEY_CONTROL_FLAGS_INFORMATION typedef ptr KEY_CONTROL_FLAGS_INFORMATION
   
   KEY_SET_VIRTUALIZATION_INFORMATION struct
-    KEY_SET_VIRTUALIZATION_INFORMATION_??0 record VirtualTarget_??0:1, VirtualStore_??0:1, VirtualSource_??0:1, Reserved_??0:29
+    KEY_SET_VIRTUALIZATION_INFORMATION_??0 record VirtualTarget_??10:1, VirtualStore_??10:1, VirtualSource_??10:1, Reservedvz_??0:29
     KEY_SET_VIRTUALIZATION_INFORMATION_??0 <>
   KEY_SET_VIRTUALIZATION_INFORMATION ends
 
   PKEY_SET_VIRTUALIZATION_INFORMATION typedef ptr KEY_SET_VIRTUALIZATION_INFORMATION
   
   KEY_SET_INFORMATION_CLASS typedef SDWORD
-  KeyWriteTimeInformation = 0
-  KeyWow64FlagsInformation = 1
-  KeyControlFlagsInformation = 2
-  KeySetVirtualizationInformation = 3
-  KeySetDebugInformation = 4
-  KeySetHandleTagsInformation = 5
-  KeySetLayerInformation = 6
-  MaxKeySetInfoClass = 7
+  KeyWriteTimeInformation EQU 0
+  KeyWow64FlagsInformation EQU 1
+  KeyControlFlagsInformation EQU 2
+  KeySetVirtualizationInformation EQU 3
+  KeySetDebugInformation EQU 4
+  KeySetHandleTagsInformation EQU 5
+  KeySetLayerInformation EQU 6
+  MaxKeySetInfoClass EQU 7
   
-  KEY_VALUE_BASIC_INFORMATION struct
-    TitleIndex DWORD ?
-    Type_ DWORD ?
-    NameLength DWORD ?
-    Name_ WCHAR 1 dup (?)
-  KEY_VALUE_BASIC_INFORMATION ends
-
-  PKEY_VALUE_BASIC_INFORMATION typedef ptr KEY_VALUE_BASIC_INFORMATION
   
-  KEY_VALUE_FULL_INFORMATION struct
-    TitleIndex DWORD ?
-    Type_ DWORD ?
-    DataOffset DWORD ?
-    DataLength DWORD ?
-    NameLength DWORD ?
-    Name_ WCHAR 1 dup (?)
-  KEY_VALUE_FULL_INFORMATION ends
+   IFNDEF KEY_VALUE_BASIC_INFORMATION
+    KEY_VALUE_BASIC_INFORMATION STRUCT	; sizeof = 10h
+    	TitleIndex	DWORD	?	; 00h
+    	dwType		DWORD	?	; 04h (original field name Type)
+    	NameLength	DWORD	?	; 08h
+    	woName		WORD	?	; 0Ch Variable size (original field name Name)
+    				WORD	?	; padding
+    KEY_VALUE_BASIC_INFORMATION ENDS
+    ENDIF
+    PKEY_VALUE_BASIC_INFORMATION typedef PTR KEY_VALUE_BASIC_INFORMATION
+    
+    IFNDEF KEY_VALUE_FULL_INFORMATION
+    KEY_VALUE_FULL_INFORMATION STRUCT	; sizeof = 18h
+    	TitleIndex	DWORD	?	; 00h
+    	dwType		DWORD	?	; 04h (original field name Type)
+    	DataOffset	DWORD	?	; 08h
+    	DataLength	DWORD	?	; 0Ch
+    	NameLength	DWORD	?	; 10h
+    	woName		WORD	?	; 14h Variable size  (original field name Name)
+    				WORD	?	; 16h padding
+    	;Data[1];            // Variable size data not declared
+    KEY_VALUE_FULL_INFORMATION ENDS
+    ENDIF
+    PKEY_VALUE_FULL_INFORMATION typedef PTR KEY_VALUE_FULL_INFORMATION
+    
+    IFNDEF KEY_VALUE_PARTIAL_INFORMATION
+    KEY_VALUE_PARTIAL_INFORMATION STRUCT	; sizeof = 10h
+    	TitleIndex	DWORD	?
+    	dwType		DWORD	?	; original field name Type
+    	DataLength	DWORD	?
+    	Data		BYTE	?	; Variable size
+    KEY_VALUE_PARTIAL_INFORMATION ENDS
+    ENDIF
+    PKEY_VALUE_PARTIAL_INFORMATION typedef PTR KEY_VALUE_PARTIAL_INFORMATION
+    
+    IFNDEF KEY_VALUE_PARTIAL_INFORMATION_ALIGN64
+    KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 STRUCT	; sizeof = 0Ch
+    	dwType		DWORD	?	; original field name Type
+    	DataLength	DWORD	?
+    	Data		BYTE	?	; Variable size
+    KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 ENDS
+    ENDIF
+    PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 typedef PTR KEY_VALUE_PARTIAL_INFORMATION_ALIGN64
+    
+    IFNDEF KEY_VALUE_ENTRY
+    KEY_VALUE_ENTRY STRUCT	; sizeof = 10h
+    	ValueName	PUNICODE_STRING	?	; PTR UNICODE_STRING
+    	DataLength	DWORD	?
+    	DataOffset	DWORD	?
+    	dwType		DWORD	?	; original field name Type
+    KEY_VALUE_ENTRY ENDS
+    ENDIF
+    PKEY_VALUE_ENTRY typedef PTR KEY_VALUE_ENTRY
 
-  PKEY_VALUE_FULL_INFORMATION typedef ptr KEY_VALUE_FULL_INFORMATION
-  
-  KEY_VALUE_PARTIAL_INFORMATION struct
-    TitleIndex DWORD ?
-    Type_ DWORD ?
-    DataLength DWORD ?
-    Data BYTE 1 dup (?)
-  KEY_VALUE_PARTIAL_INFORMATION ends
 
-  PKEY_VALUE_PARTIAL_INFORMATION typedef ptr KEY_VALUE_PARTIAL_INFORMATION
-  
-  KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 struct
-    Type_ DWORD ?
-    DataLength DWORD ?
-    Data BYTE 1 dup (?)
-  KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 ends
-
-  PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 typedef ptr KEY_VALUE_PARTIAL_INFORMATION_ALIGN64
   
   KEY_VALUE_LAYER_INFORMATION struct
-    KEY_VALUE_LAYER_INFORMATION_??1 record IsTombstone_??1:1, Reserved_??1:31
+    KEY_VALUE_LAYER_INFORMATION_??1 record IsTombstonekvl_??1:1, Reservedkvl_??1:31
     KEY_VALUE_LAYER_INFORMATION_??1 <>
   KEY_VALUE_LAYER_INFORMATION ends
 
   PKEY_VALUE_LAYER_INFORMATION typedef ptr KEY_VALUE_LAYER_INFORMATION
-  
-  KEY_VALUE_ENTRY struct
-    ValueName PUNICODE_STRING ?
-    DataLength DWORD ?
-    DataOffset DWORD ?
-    Type_ DWORD ?
-  KEY_VALUE_ENTRY ends
 
-  PKEY_VALUE_ENTRY typedef ptr KEY_VALUE_ENTRY
-  
   KEY_VALUE_INFORMATION_CLASS typedef SDWORD
-  KeyValueBasicInformation = 0
-  KeyValueFullInformation = 1
-  KeyValuePartialInformation = 2
-  KeyValueFullInformationAlign64 = 3
-  KeyValuePartialInformationAlign64 = 4
-  KeyValueLayerInformation = 5
-  MaxKeyValueInfoClass = 6
+  KeyValueBasicInformation EQU 0
+  KeyValueFullInformation EQU 1
+  KeyValuePartialInformation EQU 2
+  KeyValueFullInformationAlign64 EQU 3
+  KeyValuePartialInformationAlign64 EQU 4
+  KeyValueLayerInformation EQU 5
+  MaxKeyValueInfoClass EQU 6
   
   KEY_TRUST_INFORMATION struct
     KEY_TRUST_INFORMATION_??2 record TrustedKey_??2:1, Reserved_??2:31
@@ -1915,8 +1879,8 @@ ifndef _WDMDDK_
   DUPLICATE_SAME_ACCESS equ 00000002h
   DUPLICATE_SAME_ATTRIBUTES equ 00000004h
   SECTION_INHERIT typedef SDWORD
-  ViewShare = 1 
-  ViewUnmap = 2 
+  ViewShare EQU 1 
+  ViewUnmap EQU 2 
   
   SECTION_QUERY equ 0001h
   SECTION_MAP_WRITE equ 0002h
@@ -1966,11 +1930,9 @@ ifndef _WDMDDK_
   MEM_PRIVATE equ 00020000h
   MEM_MAPPED equ 00040000h
   PROCESS_DUP_HANDLE equ 0040h
-  if (NTDDI_VERSION ge NTDDI_VISTA)
+
     PROCESS_ALL_ACCESS equ ( STANDARD_RIGHTS_REQUIRED or SYNCHRONIZE or 0FFFFh )
-  else
-    PROCESS_ALL_ACCESS equ ( STANDARD_RIGHTS_REQUIRED or SYNCHRONIZE or 0FFFh )
-  endif
+
   THREAD_TERMINATE equ 0001h
   THREAD_SUSPEND_RESUME equ 0002h
   THREAD_ALERT equ 0004h
@@ -1980,35 +1942,16 @@ ifndef _WDMDDK_
   THREAD_SET_LIMITED_INFORMATION equ 0400h
   THREAD_QUERY_LIMITED_INFORMATION equ 0800h
   THREAD_RESUME equ 1000h
-  if (NTDDI_VERSION ge NTDDI_VISTA)
+
     THREAD_ALL_ACCESS equ ( STANDARD_RIGHTS_REQUIRED or SYNCHRONIZE or 0FFFFh )
-  else
-    THREAD_ALL_ACCESS equ ( STANDARD_RIGHTS_REQUIRED or SYNCHRONIZE or 3FFh )
-  endif
+
   CLIENT_ID struct
     UniqueProcess HANDLE ?
     UniqueThread HANDLE ?
   CLIENT_ID ends
 
   PCLIENT_ID typedef ptr CLIENT_ID
-  NtCurrentProcess macro 
-   exitm <- 1 >
-  endm
-  ZwCurrentProcess macro 
-   exitm <NtCurrentProcess ( ) >
-  endm
-  NtCurrentThread macro 
-   exitm <- 2 >
-  endm
-  ZwCurrentThread macro 
-   exitm <NtCurrentThread ( ) >
-  endm
-  NtCurrentSession macro 
-   exitm <- 3 >
-  endm
-  ZwCurrentSession macro 
-   exitm <NtCurrentSession ( ) >
-  endm
+
   DEFINE_GUID GUID_MAX_POWER_SAVINGS, 0A1841308h, 3541h, 4FABh, 0BCh, 81h, 0F7h, 15h, 56h, 0F2h, 0Bh, 4Ah 
   DEFINE_GUID GUID_MIN_POWER_SAVINGS, 8C5E7FDAh, 0E8BFh, 4A96h, 9Ah, 85h, 0A6h, 0E2h, 3Ah, 8Ch, 63h, 5Ch 
   DEFINE_GUID GUID_TYPICAL_POWER_SAVINGS, 381B4222h, 0F694h, 41F0h, 96h, 85h, 0FFh, 5Bh, 0B2h, 60h, 0DFh, 2Eh 
@@ -2245,54 +2188,54 @@ ifndef _WDMDDK_
   ifndef _PO_DDK_
     _PO_DDK_ equ <>
     SYSTEM_POWER_STATE typedef SDWORD
-    PowerSystemUnspecified = 0 
-    PowerSystemWorking = 1 
-    PowerSystemSleeping1 = 2 
-    PowerSystemSleeping2 = 3 
-    PowerSystemSleeping3 = 4 
-    PowerSystemHibernate = 5 
-    PowerSystemShutdown = 6 
-    PowerSystemMaximum = 7 
+    PowerSystemUnspecified EQU 0 
+    PowerSystemWorking EQU 1 
+    PowerSystemSleeping1 EQU 2 
+    PowerSystemSleeping2 EQU 3 
+    PowerSystemSleeping3 EQU 4 
+    PowerSystemHibernate EQU 5 
+    PowerSystemShutdown EQU 6 
+    PowerSystemMaximum EQU 7 
     
     PSYSTEM_POWER_STATE typedef ptr SYSTEM_POWER_STATE
     
     POWER_SYSTEM_MAXIMUM equ 7
     POWER_ACTION typedef SDWORD
-    PowerActionNone = 0 
-    PowerActionReserved = 1
-    PowerActionSleep = 2
-    PowerActionHibernate = 3
-    PowerActionShutdown = 4
-    PowerActionShutdownReset = 5
-    PowerActionShutdownOff = 6
-    PowerActionWarmEject = 7
-    PowerActionDisplayOff = 8
+    PowerActionNone EQU 0 
+    PowerActionReserved EQU 1
+    PowerActionSleep EQU 2
+    PowerActionHibernate EQU 3
+    PowerActionShutdown EQU 4
+    PowerActionShutdownReset EQU 5
+    PowerActionShutdownOff EQU 6
+    PowerActionWarmEject EQU 7
+    PowerActionDisplayOff EQU 8
     
     PPOWER_ACTION typedef ptr POWER_ACTION
     
     DEVICE_POWER_STATE typedef SDWORD
-    PowerDeviceUnspecified = 0 
-    PowerDeviceD0 = 1
-    PowerDeviceD1 = 2
-    PowerDeviceD2 = 3
-    PowerDeviceD3 = 4
-    PowerDeviceMaximum = 5
+    PowerDeviceUnspecified EQU 0 
+    PowerDeviceD0 EQU 1
+    PowerDeviceD1 EQU 2
+    PowerDeviceD2 EQU 3
+    PowerDeviceD3 EQU 4
+    PowerDeviceMaximum EQU 5
     
     PDEVICE_POWER_STATE typedef ptr DEVICE_POWER_STATE
     
     MONITOR_DISPLAY_STATE typedef SDWORD
-    PowerMonitorOff = 0 
-    PowerMonitorOn = 1
-    PowerMonitorDim = 2
+    PowerMonitorOff EQU 0 
+    PowerMonitorOn EQU 1
+    PowerMonitorDim EQU 2
     
     PMONITOR_DISPLAY_STATE typedef ptr MONITOR_DISPLAY_STATE
     
     USER_ACTIVITY_PRESENCE typedef SDWORD
-    PowerUserPresent = 0 
-    PowerUserNotPresent = 1
-    PowerUserInactive = 2
-    PowerUserMaximum = 3
-    PowerUserInvalid = PowerUserMaximum 
+    PowerUserPresent EQU 0 
+    PowerUserNotPresent EQU 1
+    PowerUserInactive EQU 2
+    PowerUserMaximum EQU 3
+    PowerUserInvalid EQU PowerUserMaximum 
     
     PUSER_ACTIVITY_PRESENCE typedef ptr USER_ACTIVITY_PRESENCE
     
@@ -2304,12 +2247,12 @@ ifndef _WDMDDK_
     PPOWER_STATE typedef ptr POWER_STATE
     
     POWER_STATE_TYPE typedef SDWORD
-    SystemPowerState = 0 
-    DevicePowerState = 1
+    SystemPowerState EQU 0 
+    DevicePowerState EQU 1
     
     PPOWER_STATE_TYPE typedef ptr POWER_STATE_TYPE
     
-    if (NTDDI_VERSION ge NTDDI_VISTA)
+
       SYSTEM_POWER_STATE_CONTEXT struct
         union DUMMYUNIONNAME_2
           struct DUMMYSTRUCTNAME_3
@@ -2321,9 +2264,8 @@ ifndef _WDMDDK_
       SYSTEM_POWER_STATE_CONTEXT ends
 
       PSYSTEM_POWER_STATE_CONTEXT typedef ptr SYSTEM_POWER_STATE_CONTEXT
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN7)
+
+
       COUNTED_REASON_CONTEXT struct
         Version DWORD ?
         Flags DWORD ?
@@ -2339,8 +2281,7 @@ ifndef _WDMDDK_
       COUNTED_REASON_CONTEXT ends
 
       PCOUNTED_REASON_CONTEXT typedef ptr COUNTED_REASON_CONTEXT
-      
-    endif
+
     IOCTL_QUERY_DEVICE_POWER_STATE equ CTL_CODE ( FILE_DEVICE_BATTERY , 0h , METHOD_BUFFERED , FILE_READ_ACCESS )
     IOCTL_SET_DEVICE_WAKE equ CTL_CODE ( FILE_DEVICE_BATTERY , 1h , METHOD_BUFFERED , FILE_WRITE_ACCESS )
     IOCTL_CANCEL_DEVICE_WAKE equ CTL_CODE ( FILE_DEVICE_BATTERY , 2h , METHOD_BUFFERED , FILE_WRITE_ACCESS )
@@ -2352,8 +2293,8 @@ ifndef _WDMDDK_
     EXECUTION_STATE typedef DWORD
     PEXECUTION_STATE typedef ptr DWORD
     LATENCY_TIME typedef SDWORD
-    LT_DONT_CARE = 0
-    LT_LOWEST_LATENCY = 1
+    LT_DONT_CARE EQU 0
+    LT_LOWEST_LATENCY EQU 1
     
     DIAGNOSTIC_REASON_VERSION equ 0
     DIAGNOSTIC_REASON_SIMPLE_STRING equ 00000001h
@@ -2364,14 +2305,13 @@ ifndef _WDMDDK_
     POWER_REQUEST_CONTEXT_SIMPLE_STRING equ <DIAGNOSTIC_REASON_SIMPLE_STRING>
     POWER_REQUEST_CONTEXT_DETAILED_STRING equ <DIAGNOSTIC_REASON_DETAILED_STRING>
     POWER_REQUEST_TYPE typedef SDWORD
-    PowerRequestDisplayRequired = 0
-    PowerRequestSystemRequired = 1
-    PowerRequestAwayModeRequired = 2
-    PowerRequestExecutionRequired = 3
+    PowerRequestDisplayRequired EQU 0
+    PowerRequestSystemRequired EQU 1
+    PowerRequestAwayModeRequired EQU 2
+    PowerRequestExecutionRequired EQU 3
     
     PPOWER_REQUEST_TYPE typedef ptr POWER_REQUEST_TYPE
-    
-    if (NTDDI_VERSION ge NTDDI_WINXP)
+
       PDCAP_D0_SUPPORTED equ 00000001h
       PDCAP_D1_SUPPORTED equ 00000002h
       PDCAP_D2_SUPPORTED equ 00000004h
@@ -2393,110 +2333,109 @@ ifndef _WDMDDK_
       CM_POWER_DATA ends
 
       PCM_POWER_DATA typedef ptr CM_POWER_DATA
-      
-    endif
+
     POWER_INFORMATION_LEVEL typedef SDWORD
-    SystemPowerPolicyAc = 0
-    SystemPowerPolicyDc = 1
-    VerifySystemPolicyAc = 2
-    VerifySystemPolicyDc = 3
-    SystemPowerCapabilities = 4
-    SystemBatteryState = 5
-    SystemPowerStateHandler = 6
-    ProcessorStateHandler = 7
-    SystemPowerPolicyCurrent = 8
-    AdministratorPowerPolicy = 9
-    SystemReserveHiberFile = 10
-    ProcessorInformation = 11
-    SystemPowerInformation = 12
-    ProcessorStateHandler2 = 13
-    LastWakeTime = 14
-    LastSleepTime = 15
-    SystemExecutionState = 16
-    SystemPowerStateNotifyHandler = 17
-    ProcessorPowerPolicyAc = 18
-    ProcessorPowerPolicyDc = 19
-    VerifyProcessorPowerPolicyAc = 20
-    VerifyProcessorPowerPolicyDc = 21
-    ProcessorPowerPolicyCurrent = 22
-    SystemPowerStateLogging = 23
-    SystemPowerLoggingEntry = 24
-    SetPowerSettingValue = 25
-    NotifyUserPowerSetting = 26
-    PowerInformationLevelUnused0 = 27
-    SystemMonitorHiberBootPowerOff = 28
-    SystemVideoState = 29
-    TraceApplicationPowerMessage = 30
-    TraceApplicationPowerMessageEnd = 31
-    ProcessorPerfStates = 32
-    ProcessorIdleStates = 33
-    ProcessorCap = 34
-    SystemWakeSource = 35
-    SystemHiberFileInformation = 36
-    TraceServicePowerMessage = 37
-    ProcessorLoad = 38
-    PowerShutdownNotification = 39
-    MonitorCapabilities = 40
-    SessionPowerInit = 41
-    SessionDisplayState = 42
-    PowerRequestCreate = 43
-    PowerRequestAction = 44
-    GetPowerRequestList = 45
-    ProcessorInformationEx = 46
-    NotifyUserModeLegacyPowerEvent = 47
-    GroupPark = 48
-    ProcessorIdleDomains = 49
-    WakeTimerList = 50
-    SystemHiberFileSize = 51
-    ProcessorIdleStatesHv = 52
-    ProcessorPerfStatesHv = 53
-    ProcessorPerfCapHv = 54
-    ProcessorSetIdle = 55
-    LogicalProcessorIdling = 56
-    UserPresence = 57
-    PowerSettingNotificationName = 58
-    GetPowerSettingValue = 59
-    IdleResiliency = 60
-    SessionRITState = 61
-    SessionConnectNotification = 62
-    SessionPowerCleanup = 63
-    SessionLockState = 64
-    SystemHiberbootState = 65
-    PlatformInformation = 66
-    PdcInvocation = 67
-    MonitorInvocation = 68
-    FirmwareTableInformationRegistered = 69
-    SetShutdownSelectedTime = 70
-    SuspendResumeInvocation = 71
-    PlmPowerRequestCreate = 72
-    ScreenOff = 73
-    CsDeviceNotification = 74
-    PlatformRole = 75
-    LastResumePerformance = 76
-    DisplayBurst = 77
-    ExitLatencySamplingPercentage = 78
-    RegisterSpmPowerSettings = 79
-    PlatformIdleStates = 80
-    ProcessorIdleVeto = 81
-    PlatformIdleVeto = 82
-    SystemBatteryStatePrecise = 83
-    ThermalEvent = 84
-    PowerRequestActionInternal = 85
-    BatteryDeviceState = 86
-    PowerInformationInternal = 87
-    ThermalStandby = 88
-    SystemHiberFileType = 89
-    PhysicalPowerButtonPress = 90
-    QueryPotentialDripsConstraint = 91
-    EnergyTrackerCreate = 92
-    EnergyTrackerQuery = 93
-    UpdateBlackBoxRecorder = 94
-    PowerInformationLevelMaximum = 95
+    SystemPowerPolicyAc EQU 0
+    SystemPowerPolicyDc EQU 1
+    VerifySystemPolicyAc EQU 2
+    VerifySystemPolicyDc EQU 3
+    SystemPowerCapabilities EQU 4
+    SystemBatteryState EQU 5
+    SystemPowerStateHandler EQU 6
+    ProcessorStateHandler EQU 7
+    SystemPowerPolicyCurrent EQU 8
+    AdministratorPowerPolicy EQU 9
+    SystemReserveHiberFile EQU 10
+    ProcessorInformation EQU 11
+    SystemPowerInformation EQU 12
+    ProcessorStateHandler2 EQU 13
+    LastWakeTime EQU 14
+    LastSleepTime EQU 15
+    SystemExecutionState EQU 16
+    SystemPowerStateNotifyHandler EQU 17
+    ProcessorPowerPolicyAc EQU 18
+    ProcessorPowerPolicyDc EQU 19
+    VerifyProcessorPowerPolicyAc EQU 20
+    VerifyProcessorPowerPolicyDc EQU 21
+    ProcessorPowerPolicyCurrent EQU 22
+    SystemPowerStateLogging EQU 23
+    SystemPowerLoggingEntry EQU 24
+    SetPowerSettingValue EQU 25
+    NotifyUserPowerSetting EQU 26
+    PowerInformationLevelUnused0 EQU 27
+    SystemMonitorHiberBootPowerOff EQU 28
+    SystemVideoState EQU 29
+    TraceApplicationPowerMessage EQU 30
+    TraceApplicationPowerMessageEnd EQU 31
+    ProcessorPerfStates EQU 32
+    ProcessorIdleStates EQU 33
+    ProcessorCap EQU 34
+    SystemWakeSource EQU 35
+    SystemHiberFileInformation EQU 36
+    TraceServicePowerMessage EQU 37
+    ProcessorLoad EQU 38
+    PowerShutdownNotification EQU 39
+    MonitorCapabilities EQU 40
+    SessionPowerInit EQU 41
+    SessionDisplayState EQU 42
+    PowerRequestCreate EQU 43
+    PowerRequestAction EQU 44
+    GetPowerRequestList EQU 45
+    ProcessorInformationEx EQU 46
+    NotifyUserModeLegacyPowerEvent EQU 47
+    GroupPark EQU 48
+    ProcessorIdleDomains EQU 49
+    WakeTimerList EQU 50
+    SystemHiberFileSize EQU 51
+    ProcessorIdleStatesHv EQU 52
+    ProcessorPerfStatesHv EQU 53
+    ProcessorPerfCapHv EQU 54
+    ProcessorSetIdle EQU 55
+    LogicalProcessorIdling EQU 56
+    UserPresence EQU 57
+    PowerSettingNotificationName EQU 58
+    GetPowerSettingValue EQU 59
+    IdleResiliency EQU 60
+    SessionRITState EQU 61
+    SessionConnectNotification EQU 62
+    SessionPowerCleanup EQU 63
+    SessionLockState EQU 64
+    SystemHiberbootState EQU 65
+    PlatformInformation EQU 66
+    PdcInvocation EQU 67
+    MonitorInvocation EQU 68
+    FirmwareTableInformationRegistered EQU 69
+    SetShutdownSelectedTime EQU 70
+    SuspendResumeInvocation EQU 71
+    PlmPowerRequestCreate EQU 72
+    ScreenOff EQU 73
+    CsDeviceNotification EQU 74
+    PlatformRole EQU 75
+    LastResumePerformance EQU 76
+    DisplayBurst EQU 77
+    ExitLatencySamplingPercentage EQU 78
+    RegisterSpmPowerSettings EQU 79
+    PlatformIdleStates EQU 80
+    ProcessorIdleVeto EQU 81
+    PlatformIdleVeto EQU 82
+    SystemBatteryStatePrecise EQU 83
+    ThermalEvent EQU 84
+    PowerRequestActionInternal EQU 85
+    BatteryDeviceState EQU 86
+    PowerInformationInternal EQU 87
+    ThermalStandby EQU 88
+    SystemHiberFileType EQU 89
+    PhysicalPowerButtonPress EQU 90
+    QueryPotentialDripsConstraint EQU 91
+    EnergyTrackerCreate EQU 92
+    EnergyTrackerQuery EQU 93
+    UpdateBlackBoxRecorder EQU 94
+    PowerInformationLevelMaximum EQU 95
     
     POWER_USER_PRESENCE_TYPE typedef SDWORD
-    UserNotPresent = 0 
-    UserPresent = 1 
-    UserUnknown = 0ffh 
+    UserNotPresent EQU 0 
+    UserPresent EQU 1 
+    UserUnknown EQU 0ffh 
     
     PPOWER_USER_PRESENCE_TYPE typedef ptr POWER_USER_PRESENCE_TYPE
     
@@ -2543,57 +2482,57 @@ ifndef _WDMDDK_
     PPOWER_IDLE_RESILIENCY typedef ptr POWER_IDLE_RESILIENCY
     
     POWER_MONITOR_REQUEST_REASON typedef SDWORD
-    MonitorRequestReasonUnknown = 0
-    MonitorRequestReasonPowerButton = 1
-    MonitorRequestReasonRemoteConnection = 2
-    MonitorRequestReasonScMonitorpower = 3
-    MonitorRequestReasonUserInput = 4
-    MonitorRequestReasonAcDcDisplayBurst = 5
-    MonitorRequestReasonUserDisplayBurst = 6
-    MonitorRequestReasonPoSetSystemState = 7
-    MonitorRequestReasonSetThreadExecutionState = 8
-    MonitorRequestReasonFullWake = 9
-    MonitorRequestReasonSessionUnlock = 10
-    MonitorRequestReasonScreenOffRequest = 11
-    MonitorRequestReasonIdleTimeout = 12
-    MonitorRequestReasonPolicyChange = 13
-    MonitorRequestReasonSleepButton = 14
-    MonitorRequestReasonLid = 15
-    MonitorRequestReasonBatteryCountChange = 16
-    MonitorRequestReasonGracePeriod = 17
-    MonitorRequestReasonPnP = 18
-    MonitorRequestReasonDP = 19
-    MonitorRequestReasonSxTransition = 20
-    MonitorRequestReasonSystemIdle = 21
-    MonitorRequestReasonNearProximity = 22
-    MonitorRequestReasonThermalStandby = 23
-    MonitorRequestReasonResumePdc = 24
-    MonitorRequestReasonResumeS4 = 25
-    MonitorRequestReasonTerminal = 26
-    MonitorRequestReasonPdcSignal = 27
-    MonitorRequestReasonAcDcDisplayBurstSuppressed = 28
-    MonitorRequestReasonSystemStateEntered = 29
-    MonitorRequestReasonWinrt = 30
-    MonitorRequestReasonUserInputKeyboard = 31
-    MonitorRequestReasonUserInputMouse = 32
-    MonitorRequestReasonUserInputTouch = 33
-    MonitorRequestReasonUserInputPen = 34
-    MonitorRequestReasonUserInputAccelerometer = 35
-    MonitorRequestReasonUserInputHid = 36
-    MonitorRequestReasonUserInputPoUserPresent = 37
-    MonitorRequestReasonUserInputSessionSwitch = 38
-    MonitorRequestReasonUserInputInitialization = 39
-    MonitorRequestReasonPdcSignalWindowsMobilePwrNotif = 40
-    MonitorRequestReasonPdcSignalWindowsMobileShell = 41
-    MonitorRequestReasonPdcSignalHeyCortana = 42
-    MonitorRequestReasonPdcSignalHolographicShell = 43
-    MonitorRequestReasonPdcSignalFingerprint = 44
-    MonitorRequestReasonMax = 45
+    MonitorRequestReasonUnknown EQU 0
+    MonitorRequestReasonPowerButton EQU 1
+    MonitorRequestReasonRemoteConnection EQU 2
+    MonitorRequestReasonScMonitorpower EQU 3
+    MonitorRequestReasonUserInput EQU 4
+    MonitorRequestReasonAcDcDisplayBurst EQU 5
+    MonitorRequestReasonUserDisplayBurst EQU 6
+    MonitorRequestReasonPoSetSystemState EQU 7
+    MonitorRequestReasonSetThreadExecutionState EQU 8
+    MonitorRequestReasonFullWake EQU 9
+    MonitorRequestReasonSessionUnlock EQU 10
+    MonitorRequestReasonScreenOffRequest EQU 11
+    MonitorRequestReasonIdleTimeout EQU 12
+    MonitorRequestReasonPolicyChange EQU 13
+    MonitorRequestReasonSleepButton EQU 14
+    MonitorRequestReasonLid EQU 15
+    MonitorRequestReasonBatteryCountChange EQU 16
+    MonitorRequestReasonGracePeriod EQU 17
+    MonitorRequestReasonPnP EQU 18
+    MonitorRequestReasonDP EQU 19
+    MonitorRequestReasonSxTransition EQU 20
+    MonitorRequestReasonSystemIdle EQU 21
+    MonitorRequestReasonNearProximity EQU 22
+    MonitorRequestReasonThermalStandby EQU 23
+    MonitorRequestReasonResumePdc EQU 24
+    MonitorRequestReasonResumeS4 EQU 25
+    MonitorRequestReasonTerminal EQU 26
+    MonitorRequestReasonPdcSignal EQU 27
+    MonitorRequestReasonAcDcDisplayBurstSuppressed EQU 28
+    MonitorRequestReasonSystemStateEntered EQU 29
+    MonitorRequestReasonWinrt EQU 30
+    MonitorRequestReasonUserInputKeyboard EQU 31
+    MonitorRequestReasonUserInputMouse EQU 32
+    MonitorRequestReasonUserInputTouch EQU 33
+    MonitorRequestReasonUserInputPen EQU 34
+    MonitorRequestReasonUserInputAccelerometer EQU 35
+    MonitorRequestReasonUserInputHid EQU 36
+    MonitorRequestReasonUserInputPoUserPresent EQU 37
+    MonitorRequestReasonUserInputSessionSwitch EQU 38
+    MonitorRequestReasonUserInputInitialization EQU 39
+    MonitorRequestReasonPdcSignalWindowsMobilePwrNotif EQU 40
+    MonitorRequestReasonPdcSignalWindowsMobileShell EQU 41
+    MonitorRequestReasonPdcSignalHeyCortana EQU 42
+    MonitorRequestReasonPdcSignalHolographicShell EQU 43
+    MonitorRequestReasonPdcSignalFingerprint EQU 44
+    MonitorRequestReasonMax EQU 45
     
     POWER_MONITOR_REQUEST_TYPE typedef SDWORD
-    MonitorRequestTypeOff = 0
-    MonitorRequestTypeOnAndPresent = 1
-    MonitorRequestTypeToggleOn = 2
+    MonitorRequestTypeOff EQU 0
+    MonitorRequestTypeOnAndPresent EQU 1
+    MonitorRequestTypeToggleOn EQU 2
     
     POWER_MONITOR_INVOCATION struct
       Console BOOLEAN ?
@@ -2611,10 +2550,10 @@ ifndef _WDMDDK_
     PRESUME_PERFORMANCE typedef ptr RESUME_PERFORMANCE
     
     SYSTEM_POWER_CONDITION typedef SDWORD
-    PoAc = 0
-    PoDc = 1
-    PoHot = 2
-    PoConditionMaximum = 3
+    PoAc EQU 0
+    PoDc EQU 1
+    PoHot EQU 2
+    PoConditionMaximum EQU 3
     
     SET_POWER_SETTING_VALUE struct
       Version DWORD ?
@@ -2642,16 +2581,16 @@ ifndef _WDMDDK_
     PAPPLICATIONLAUNCH_SETTING_VALUE typedef ptr APPLICATIONLAUNCH_SETTING_VALUE
     
     POWER_PLATFORM_ROLE typedef SDWORD
-    PlatformRoleUnspecified = 0 
-    PlatformRoleDesktop = 1
-    PlatformRoleMobile = 2
-    PlatformRoleWorkstation = 3
-    PlatformRoleEnterpriseServer = 4
-    PlatformRoleSOHOServer = 5
-    PlatformRoleAppliancePC = 6
-    PlatformRolePerformanceServer = 7
-    PlatformRoleSlate = 8
-    PlatformRoleMaximum = 9
+    PlatformRoleUnspecified EQU 0 
+    PlatformRoleDesktop EQU 1
+    PlatformRoleMobile EQU 2
+    PlatformRoleWorkstation EQU 3
+    PlatformRoleEnterpriseServer EQU 4
+    PlatformRoleSOHOServer EQU 5
+    PlatformRoleAppliancePC EQU 6
+    PlatformRolePerformanceServer EQU 7
+    PlatformRoleSlate EQU 8
+    PlatformRoleMaximum EQU 9
     
     PPOWER_PLATFORM_ROLE typedef ptr POWER_PLATFORM_ROLE
     
@@ -2659,30 +2598,25 @@ ifndef _WDMDDK_
     POWER_PLATFORM_ROLE_V1_MAX equ ( PlatformRolePerformanceServer + 1 )
     POWER_PLATFORM_ROLE_V2 equ 00000002h
     POWER_PLATFORM_ROLE_V2_MAX equ ( PlatformRoleSlate + 1 )
-    if (NTDDI_VERSION ge NTDDI_WIN8)
+
       POWER_PLATFORM_ROLE_VERSION equ <POWER_PLATFORM_ROLE_V2>
       POWER_PLATFORM_ROLE_VERSION_MAX equ <POWER_PLATFORM_ROLE_V2_MAX>
-    else
-      POWER_PLATFORM_ROLE_VERSION equ <POWER_PLATFORM_ROLE_V1>
-      POWER_PLATFORM_ROLE_VERSION_MAX equ <POWER_PLATFORM_ROLE_V1_MAX>
-    endif
+
     POWER_PLATFORM_INFORMATION struct
       AoAc BOOLEAN ?
     POWER_PLATFORM_INFORMATION ends
 
     PPOWER_PLATFORM_INFORMATION typedef ptr POWER_PLATFORM_INFORMATION
-    
-    if (NTDDI_VERSION ge NTDDI_WINXP) or  not defined(_BATCLASS_)
+
       BATTERY_REPORTING_SCALE struct
         Granularity DWORD ?
         Capacity DWORD ?
       BATTERY_REPORTING_SCALE ends
 
       PBATTERY_REPORTING_SCALE typedef ptr BATTERY_REPORTING_SCALE
-      
-    endif
+
   endif
-  NtPowerInformation proto stdcall :POWER_INFORMATION_LEVEL, :PVOID, :DWORD, :PVOID, :DWORD
+
   REG_NONE equ 0
   REG_SZ equ 1
   REG_EXPAND_SZ equ 2
@@ -2722,25 +2656,25 @@ ifndef _WDMDDK_
   SERVICE_ERROR_SEVERE equ 00000002h
   SERVICE_ERROR_CRITICAL equ 00000003h
   SERVICE_NODE_TYPE typedef SDWORD
-  DriverType = SERVICE_KERNEL_DRIVER 
-  FileSystemType = SERVICE_FILE_SYSTEM_DRIVER 
-  Win32ServiceOwnProcess = SERVICE_WIN32_OWN_PROCESS 
-  Win32ServiceShareProcess = SERVICE_WIN32_SHARE_PROCESS 
-  AdapterType = SERVICE_ADAPTER 
-  RecognizerType = SERVICE_RECOGNIZER_DRIVER 
+  DriverType EQU SERVICE_KERNEL_DRIVER 
+  FileSystemType EQU SERVICE_FILE_SYSTEM_DRIVER 
+  Win32ServiceOwnProcess EQU SERVICE_WIN32_OWN_PROCESS 
+  Win32ServiceShareProcess EQU SERVICE_WIN32_SHARE_PROCESS 
+  AdapterType EQU SERVICE_ADAPTER 
+  RecognizerType EQU SERVICE_RECOGNIZER_DRIVER 
   
   SERVICE_LOAD_TYPE typedef SDWORD
-  BootLoad = SERVICE_BOOT_START 
-  SystemLoad = SERVICE_SYSTEM_START 
-  AutoLoad = SERVICE_AUTO_START 
-  DemandLoad = SERVICE_DEMAND_START 
-  DisableLoad = SERVICE_DISABLED 
+  BootLoad EQU SERVICE_BOOT_START 
+  SystemLoad EQU SERVICE_SYSTEM_START 
+  AutoLoad EQU SERVICE_AUTO_START 
+  DemandLoad EQU SERVICE_DEMAND_START 
+  DisableLoad EQU SERVICE_DISABLED 
   
   SERVICE_ERROR_TYPE typedef SDWORD
-  IgnoreError = SERVICE_ERROR_IGNORE 
-  NormalError = SERVICE_ERROR_NORMAL 
-  SevereError = SERVICE_ERROR_SEVERE 
-  CriticalError = SERVICE_ERROR_CRITICAL 
+  IgnoreError EQU SERVICE_ERROR_IGNORE 
+  NormalError EQU SERVICE_ERROR_NORMAL 
+  SevereError EQU SERVICE_ERROR_SEVERE 
+  CriticalError EQU SERVICE_ERROR_CRITICAL 
   
   CM_SERVICE_NETWORK_BOOT_LOAD equ 00000001h
   CM_SERVICE_VIRTUAL_DISK_BOOT_LOAD equ 00000002h
@@ -2751,135 +2685,138 @@ ifndef _WDMDDK_
   CM_SERVICE_VERIFIER_BOOT_LOAD equ 00000040h
   CM_SERVICE_WINPE_BOOT_LOAD equ 00000080h
   CM_SERVICE_VALID_PROMOTION_MASK equ <( CM_SERVICE_NETWORK_BOOT_LOAD or CM_SERVICE_VIRTUAL_DISK_BOOT_LOAD or CM_SERVICE_USB_DISK_BOOT_LOAD or CM_SERVICE_SD_DISK_BOOT_LOAD or CM_SERVICE_USB3_DISK_BOOT_LOAD or CM_SERVICE_MEASURED_BOOT_LOAD or CM_SERVICE_VERIFIER_BOOT_LOAD or CM_SERVICE_WINPE_BOOT_LOAD )>
-  CM_RESOURCE_TYPE typedef DWORD
-  CmResourceTypeNull equ 0
-  CmResourceTypePort equ 1
-  CmResourceTypeInterrupt equ 2
-  CmResourceTypeMemory equ 3
-  CmResourceTypeDma equ 4
-  CmResourceTypeDeviceSpecific equ 5
-  CmResourceTypeBusNumber equ 6
-  CmResourceTypeMemoryLarge equ 7
-  CmResourceTypeNonArbitrated equ 128
-  CmResourceTypeConfigData equ 128
-  CmResourceTypeDevicePrivate equ 129
-  CmResourceTypePcCardConfig equ 130
-  CmResourceTypeMfCardConfig equ 131
-  CmResourceTypeConnection equ 132
-  CM_SHARE_DISPOSITION typedef SDWORD
-  CmResourceShareUndetermined = 0 
-  CmResourceShareDeviceExclusive = 1
-  CmResourceShareDriverExclusive = 2
-  CmResourceShareShared = 3
   
-  CM_RESOURCE_INTERRUPT_LEVEL_SENSITIVE equ 00h
-  CM_RESOURCE_INTERRUPT_LATCHED equ 01h
-  CM_RESOURCE_INTERRUPT_MESSAGE equ 02h
-  CM_RESOURCE_INTERRUPT_POLICY_INCLUDED equ 04h
-  CM_RESOURCE_INTERRUPT_SECONDARY_INTERRUPT equ 10h
-  CM_RESOURCE_INTERRUPT_WAKE_HINT equ 20h
-  CM_RESOURCE_INTERRUPT_LEVEL_LATCHED_BITS equ 0001h
-  CM_RESOURCE_INTERRUPT_MESSAGE_TOKEN equ - 2
-  CM_RESOURCE_MEMORY_READ_WRITE equ 0000h
-  CM_RESOURCE_MEMORY_READ_ONLY equ 0001h
-  CM_RESOURCE_MEMORY_WRITE_ONLY equ 0002h
-  CM_RESOURCE_MEMORY_WRITEABILITY_MASK equ 0003h
-  CM_RESOURCE_MEMORY_PREFETCHABLE equ 0004h
-  CM_RESOURCE_MEMORY_COMBINEDWRITE equ 0008h
-  CM_RESOURCE_MEMORY_24 equ 0010h
-  CM_RESOURCE_MEMORY_CACHEABLE equ 0020h
-  CM_RESOURCE_MEMORY_WINDOW_DECODE equ 0040h
-  CM_RESOURCE_MEMORY_BAR equ 0080h
-  CM_RESOURCE_MEMORY_COMPAT_FOR_INACCESSIBLE_RANGE equ 0100h
-  CM_RESOURCE_MEMORY_LARGE equ 0E00h
-  CM_RESOURCE_MEMORY_LARGE_40 equ 0200h
-  CM_RESOURCE_MEMORY_LARGE_48 equ 0400h
-  CM_RESOURCE_MEMORY_LARGE_64 equ 0800h
-  CM_RESOURCE_MEMORY_LARGE_40_MAXLEN equ 000000FFFFFFFF00h
-  CM_RESOURCE_MEMORY_LARGE_48_MAXLEN equ 0000FFFFFFFF0000h
-  CM_RESOURCE_MEMORY_LARGE_64_MAXLEN equ 0FFFFFFFF00000000h
-  CM_RESOURCE_PORT_MEMORY equ 0000h
-  CM_RESOURCE_PORT_IO equ 0001h
-  CM_RESOURCE_PORT_10_BIT_DECODE equ 0004h
-  CM_RESOURCE_PORT_12_BIT_DECODE equ 0008h
-  CM_RESOURCE_PORT_16_BIT_DECODE equ 0010h
-  CM_RESOURCE_PORT_POSITIVE_DECODE equ 0020h
-  CM_RESOURCE_PORT_PASSIVE_DECODE equ 0040h
-  CM_RESOURCE_PORT_WINDOW_DECODE equ 0080h
-  CM_RESOURCE_PORT_BAR equ 0100h
-  CM_RESOURCE_DMA_8 equ 0000h
-  CM_RESOURCE_DMA_16 equ 0001h
-  CM_RESOURCE_DMA_32 equ 0002h
-  CM_RESOURCE_DMA_8_AND_16 equ 0004h
-  CM_RESOURCE_DMA_BUS_MASTER equ 0008h
-  CM_RESOURCE_DMA_TYPE_A equ 0010h
-  CM_RESOURCE_DMA_TYPE_B equ 0020h
-  CM_RESOURCE_DMA_TYPE_F equ 0040h
-  CM_RESOURCE_DMA_V3 equ 0080h
-  DMAV3_TRANFER_WIDTH_8 equ 00h
-  DMAV3_TRANFER_WIDTH_16 equ 01h
-  DMAV3_TRANFER_WIDTH_32 equ 02h
-  DMAV3_TRANFER_WIDTH_64 equ 03h
-  DMAV3_TRANFER_WIDTH_128 equ 04h
-  DMAV3_TRANFER_WIDTH_256 equ 05h
-  CM_RESOURCE_CONNECTION_CLASS_GPIO equ 01h
-  CM_RESOURCE_CONNECTION_CLASS_SERIAL equ 02h
-  CM_RESOURCE_CONNECTION_CLASS_FUNCTION_CONFIG equ 03h
-  CM_RESOURCE_CONNECTION_TYPE_GPIO_IO equ 02h
-  CM_RESOURCE_CONNECTION_TYPE_SERIAL_I2C equ 01h
-  CM_RESOURCE_CONNECTION_TYPE_SERIAL_SPI equ 02h
-  CM_RESOURCE_CONNECTION_TYPE_SERIAL_UART equ 03h
-  CM_RESOURCE_CONNECTION_TYPE_FUNCTION_CONFIG equ 01h
-  include pshpack4.inc
-  CM_PARTIAL_RESOURCE_DESCRIPTOR struct
+  
+    CM_RESOURCE_TYPE typedef DWORD
+    CmResourceTypeNull equ 0
+    CmResourceTypePort equ 1
+    CmResourceTypeInterrupt equ 2
+    CmResourceTypeMemory equ 3
+    CmResourceTypeDma equ 4
+    CmResourceTypeDeviceSpecific equ 5
+    CmResourceTypeBusNumber equ 6
+    CmResourceTypeMemoryLarge equ 7
+    CmResourceTypeNonArbitrated equ 128
+    CmResourceTypeConfigData equ 128
+    CmResourceTypeDevicePrivate equ 129
+    CmResourceTypePcCardConfig equ 130
+    CmResourceTypeMfCardConfig equ 131
+    CmResourceTypeConnection equ 132
+    CM_SHARE_DISPOSITION typedef SDWORD
+    CmResourceShareUndetermined EQU 0 
+    CmResourceShareDeviceExclusive EQU 1
+    CmResourceShareDriverExclusive EQU 2
+    CmResourceShareShared EQU 3
+    
+    CM_RESOURCE_INTERRUPT_LEVEL_SENSITIVE equ 00h
+    CM_RESOURCE_INTERRUPT_LATCHED equ 01h
+    CM_RESOURCE_INTERRUPT_MESSAGE equ 02h
+    CM_RESOURCE_INTERRUPT_POLICY_INCLUDED equ 04h
+    CM_RESOURCE_INTERRUPT_SECONDARY_INTERRUPT equ 10h
+    CM_RESOURCE_INTERRUPT_WAKE_HINT equ 20h
+    CM_RESOURCE_INTERRUPT_LEVEL_LATCHED_BITS equ 0001h
+    CM_RESOURCE_INTERRUPT_MESSAGE_TOKEN equ - 2
+    CM_RESOURCE_MEMORY_READ_WRITE equ 0000h
+    CM_RESOURCE_MEMORY_READ_ONLY equ 0001h
+    CM_RESOURCE_MEMORY_WRITE_ONLY equ 0002h
+    CM_RESOURCE_MEMORY_WRITEABILITY_MASK equ 0003h
+    CM_RESOURCE_MEMORY_PREFETCHABLE equ 0004h
+    CM_RESOURCE_MEMORY_COMBINEDWRITE equ 0008h
+    CM_RESOURCE_MEMORY_24 equ 0010h
+    CM_RESOURCE_MEMORY_CACHEABLE equ 0020h
+    CM_RESOURCE_MEMORY_WINDOW_DECODE equ 0040h
+    CM_RESOURCE_MEMORY_BAR equ 0080h
+    CM_RESOURCE_MEMORY_COMPAT_FOR_INACCESSIBLE_RANGE equ 0100h
+    CM_RESOURCE_MEMORY_LARGE equ 0E00h
+    CM_RESOURCE_MEMORY_LARGE_40 equ 0200h
+    CM_RESOURCE_MEMORY_LARGE_48 equ 0400h
+    CM_RESOURCE_MEMORY_LARGE_64 equ 0800h
+    CM_RESOURCE_MEMORY_LARGE_40_MAXLEN equ 000000FFFFFFFF00h
+    CM_RESOURCE_MEMORY_LARGE_48_MAXLEN equ 0000FFFFFFFF0000h
+    CM_RESOURCE_MEMORY_LARGE_64_MAXLEN equ 0FFFFFFFF00000000h
+    CM_RESOURCE_PORT_MEMORY equ 0000h
+    CM_RESOURCE_PORT_IO equ 0001h
+    CM_RESOURCE_PORT_10_BIT_DECODE equ 0004h
+    CM_RESOURCE_PORT_12_BIT_DECODE equ 0008h
+    CM_RESOURCE_PORT_16_BIT_DECODE equ 0010h
+    CM_RESOURCE_PORT_POSITIVE_DECODE equ 0020h
+    CM_RESOURCE_PORT_PASSIVE_DECODE equ 0040h
+    CM_RESOURCE_PORT_WINDOW_DECODE equ 0080h
+    CM_RESOURCE_PORT_BAR equ 0100h
+    CM_RESOURCE_DMA_8 equ 0000h
+    CM_RESOURCE_DMA_16 equ 0001h
+    CM_RESOURCE_DMA_32 equ 0002h
+    CM_RESOURCE_DMA_8_AND_16 equ 0004h
+    CM_RESOURCE_DMA_BUS_MASTER equ 0008h
+    CM_RESOURCE_DMA_TYPE_A equ 0010h
+    CM_RESOURCE_DMA_TYPE_B equ 0020h
+    CM_RESOURCE_DMA_TYPE_F equ 0040h
+    CM_RESOURCE_DMA_V3 equ 0080h
+    DMAV3_TRANFER_WIDTH_8 equ 00h
+    DMAV3_TRANFER_WIDTH_16 equ 01h
+    DMAV3_TRANFER_WIDTH_32 equ 02h
+    DMAV3_TRANFER_WIDTH_64 equ 03h
+    DMAV3_TRANFER_WIDTH_128 equ 04h
+    DMAV3_TRANFER_WIDTH_256 equ 05h
+    CM_RESOURCE_CONNECTION_CLASS_GPIO equ 01h
+    CM_RESOURCE_CONNECTION_CLASS_SERIAL equ 02h
+    CM_RESOURCE_CONNECTION_CLASS_FUNCTION_CONFIG equ 03h
+    CM_RESOURCE_CONNECTION_TYPE_GPIO_IO equ 02h
+    CM_RESOURCE_CONNECTION_TYPE_SERIAL_I2C equ 01h
+    CM_RESOURCE_CONNECTION_TYPE_SERIAL_SPI equ 02h
+    CM_RESOURCE_CONNECTION_TYPE_SERIAL_UART equ 03h
+    CM_RESOURCE_CONNECTION_TYPE_FUNCTION_CONFIG equ 01h
+  
+    IFNDEF CM_PARTIAL_RESOURCE_DESCRIPTOR
+    CM_PARTIAL_RESOURCE_DESCRIPTOR struct
     Type_ BYTE ?
     ShareDisposition BYTE ?
     Flags WORD ?
     union u
       struct Generic
-        Start PHYSICAL_ADDRESS ?
+        Start PHYSICAL_ADDRESS <>
         Length_ DWORD ?
       ends
       struct Port
-        Start PHYSICAL_ADDRESS ?
+        Start PHYSICAL_ADDRESS <>
         Length_ DWORD ?
       ends
       struct Interrupt
-        if defined(NT_PROCESSOR_GROUPS)
-          Level WORD ?
-          Group_ WORD ?
-        else
+        ;if defined(NT_PROCESSOR_GROUPS)
+        ;  Level WORD ?
+        ;  Group_ WORD ?
+        ;else
           Level DWORD ?
-        endif
+        ;endif
         Vector DWORD ?
         Affinity KAFFINITY ?
       ends
       struct MessageInterrupt
         union DUMMYUNIONNAME_6
           struct Raw
-            if defined(NT_PROCESSOR_GROUPS)
-              Group_ WORD ?
-            else
+            ;if defined(NT_PROCESSOR_GROUPS)
+            ;  Group_ WORD ?
+            ;else
               Reserved WORD ?
-            endif
+            ;endif
             MessageCount WORD ?
             Vector DWORD ?
             Affinity KAFFINITY ?
           ends
           struct Translated
-            if defined(NT_PROCESSOR_GROUPS)
-              Level WORD ?
-              Group_ WORD ?
-            else
+            ;if defined(NT_PROCESSOR_GROUPS)
+            ;  Level WORD ?
+            ;  Group_ WORD ?
+            ;else
               Level DWORD ?
-            endif
+            ;endif
             Vector DWORD ?
             Affinity KAFFINITY ?
           ends
         ends
       ends
       struct Memory
-        Start PHYSICAL_ADDRESS ?
+        Start PHYSICAL_ADDRESS <>
         Length_ DWORD ?
       ends
       struct Dma
@@ -2909,15 +2846,15 @@ ifndef _WDMDDK_
         Reserved2 DWORD ?
       ends
       struct Memory40
-        Start PHYSICAL_ADDRESS ?
+        Start PHYSICAL_ADDRESS <>
         Length40 DWORD ?
       ends
       struct Memory48
-        Start PHYSICAL_ADDRESS ?
+        Start PHYSICAL_ADDRESS <>
         Length48 DWORD ?
       ends
       struct Memory64
-        Start PHYSICAL_ADDRESS ?
+        Start PHYSICAL_ADDRESS <>
         Length64 DWORD ?
       ends
       struct Connection
@@ -2929,34 +2866,36 @@ ifndef _WDMDDK_
         IdHighPart DWORD ?
       ends
     ends
-  CM_PARTIAL_RESOURCE_DESCRIPTOR ends
-
-  PCM_PARTIAL_RESOURCE_DESCRIPTOR typedef ptr CM_PARTIAL_RESOURCE_DESCRIPTOR
+    CM_PARTIAL_RESOURCE_DESCRIPTOR ends
+    ENDIF
+    PCM_PARTIAL_RESOURCE_DESCRIPTOR typedef ptr CM_PARTIAL_RESOURCE_DESCRIPTOR
   
-  include poppack.inc
-  CM_PARTIAL_RESOURCE_LIST struct
-    Version WORD ?
-    Revision WORD ?
-    Count DWORD ?
-    PartialDescriptors CM_PARTIAL_RESOURCE_DESCRIPTOR 1 dup (<>)
-  CM_PARTIAL_RESOURCE_LIST ends
-
-  PCM_PARTIAL_RESOURCE_LIST typedef ptr CM_PARTIAL_RESOURCE_LIST
-  
-  CM_FULL_RESOURCE_DESCRIPTOR struct
-    InterfaceType INTERFACE_TYPE ?
-    BusNumber DWORD ?
-    PartialResourceList CM_PARTIAL_RESOURCE_LIST <>
-  CM_FULL_RESOURCE_DESCRIPTOR ends
-
-  PCM_FULL_RESOURCE_DESCRIPTOR typedef ptr CM_FULL_RESOURCE_DESCRIPTOR
-  
-  CM_RESOURCE_LIST struct
-    Count DWORD ?
-    List CM_FULL_RESOURCE_DESCRIPTOR 1 dup (<>)
-  CM_RESOURCE_LIST ends
-
-  PCM_RESOURCE_LIST typedef ptr CM_RESOURCE_LIST
+    IFNDEF CM_PARTIAL_RESOURCE_LIST
+    CM_PARTIAL_RESOURCE_LIST struct
+        Version WORD ?
+        Revision WORD ?
+        Count DWORD ?
+        PartialDescriptors CM_PARTIAL_RESOURCE_DESCRIPTOR 1 dup (<>)
+    CM_PARTIAL_RESOURCE_LIST ends
+    ENDIF
+    PCM_PARTIAL_RESOURCE_LIST typedef ptr CM_PARTIAL_RESOURCE_LIST
+    
+    IFNDEF CM_FULL_RESOURCE_DESCRIPTOR
+    CM_FULL_RESOURCE_DESCRIPTOR struct
+        InterfaceType INTERFACE_TYPE ?
+        BusNumber DWORD ?
+        PartialResourceList CM_PARTIAL_RESOURCE_LIST <>
+    CM_FULL_RESOURCE_DESCRIPTOR ends
+    ENDIF
+    PCM_FULL_RESOURCE_DESCRIPTOR typedef ptr CM_FULL_RESOURCE_DESCRIPTOR
+    
+    IFNDEF CM_RESOURCE_LIST
+    CM_RESOURCE_LIST struct
+        Count DWORD ?
+        List CM_FULL_RESOURCE_DESCRIPTOR 1 dup (<>)
+    CM_RESOURCE_LIST ends
+    ENDIF
+    PCM_RESOURCE_LIST typedef ptr CM_RESOURCE_LIST
   
   DEVICE_FLAGS struct
     DEVICE_FLAGS_??4 record Failed_??4:1, ReadOnly_??4:1, Removable_??4:1, ConsoleIn_??4:1, ConsoleOut_??4:1, Input_??4:1, Output_??4:1
@@ -2981,7 +2920,7 @@ ifndef _WDMDDK_
 
   PCM_ROM_BLOCK typedef ptr CM_ROM_BLOCK
   
-  include pshpack1.inc
+
   CM_INT13_DRIVE_PARAMETER struct
     DriveSelect WORD ?
     MaxCylinders DWORD ?
@@ -3123,7 +3062,7 @@ ifndef _WDMDDK_
 
   PCM_PNP_BIOS_INSTALLATION_CHECK typedef ptr CM_PNP_BIOS_INSTALLATION_CHECK
   
-  include poppack.inc
+
   EISA_FUNCTION_ENABLED equ 80h
   EISA_FREE_FORM_DATA equ 40h
   EISA_HAS_PORT_INIT_ENTRY equ 20h
@@ -3251,47 +3190,50 @@ ifndef _WDMDDK_
   IO_RESOURCE_PREFERRED equ 01h
   IO_RESOURCE_DEFAULT equ 02h
   IO_RESOURCE_ALTERNATIVE equ 08h
-  if defined(NT_PROCESSOR_GROUPS)
-    IRQ_DEVICE_POLICY typedef WORD
-    PIRQ_DEVICE_POLICY typedef ptr WORD
-    _IRQ_DEVICE_POLICY_USHORT typedef SDWORD
-    IrqPolicyMachineDefault = 0 
-    IrqPolicyAllCloseProcessors = 1 
-    IrqPolicyOneCloseProcessor = 2 
-    IrqPolicyAllProcessorsInMachine = 3 
-    IrqPolicyAllProcessorsInGroup = 3 
-    IrqPolicySpecifiedProcessors = 4 
-    IrqPolicySpreadMessagesAcrossAllProcessors = 5 
-    IrqPolicyAllProcessorsInMachineWhenSteered = 6 
-    IrqPolicyAllProcessorsInGroupWhenSteered = 6 
-    
-  else
+;  if defined(NT_PROCESSOR_GROUPS)
+;    IRQ_DEVICE_POLICY typedef WORD
+;    PIRQ_DEVICE_POLICY typedef ptr WORD
+;    _IRQ_DEVICE_POLICY_USHORT typedef SDWORD
+;    IrqPolicyMachineDefault EQU 0 
+;    IrqPolicyAllCloseProcessors EQU 1 
+;    IrqPolicyOneCloseProcessor EQU 2 
+;    IrqPolicyAllProcessorsInMachine EQU 3 
+;    IrqPolicyAllProcessorsInGroup EQU 3 
+;    IrqPolicySpecifiedProcessors EQU 4 
+;    IrqPolicySpreadMessagesAcrossAllProcessors EQU 5 
+;    IrqPolicyAllProcessorsInMachineWhenSteered EQU 6 
+;    IrqPolicyAllProcessorsInGroupWhenSteered EQU 6 
+;    
+;  else
     IRQ_DEVICE_POLICY typedef SDWORD
-    IrqPolicyMachineDefault = 0 
-    IrqPolicyAllCloseProcessors = 1
-    IrqPolicyOneCloseProcessor = 2
-    IrqPolicyAllProcessorsInMachine = 3
-    IrqPolicySpecifiedProcessors = 4
-    IrqPolicySpreadMessagesAcrossAllProcessors = 5
-    IrqPolicyAllProcessorsInMachineWhenSteered = 6
+    IrqPolicyMachineDefault EQU 0 
+    IrqPolicyAllCloseProcessors EQU 1
+    IrqPolicyOneCloseProcessor EQU 2
+    IrqPolicyAllProcessorsInMachine EQU 3
+    IrqPolicySpecifiedProcessors EQU 4
+    IrqPolicySpreadMessagesAcrossAllProcessors EQU 5
+    IrqPolicyAllProcessorsInMachineWhenSteered EQU 6
     
     PIRQ_DEVICE_POLICY typedef ptr IRQ_DEVICE_POLICY
     
-  endif
+;  endif
   IRQ_PRIORITY typedef SDWORD
-  IrqPriorityUndefined = 0 
-  IrqPriorityLow = 1
-  IrqPriorityNormal = 2
-  IrqPriorityHigh = 3
+  IrqPriorityUndefined EQU 0 
+  IrqPriorityLow EQU 1
+  IrqPriorityNormal EQU 2
+  IrqPriorityHigh EQU 3
   
   PIRQ_PRIORITY typedef ptr IRQ_PRIORITY
   
   IRQ_GROUP_POLICY typedef SDWORD
-  GroupAffinityAllGroupZero = 0 
-  GroupAffinityDontCare = 1
+  GroupAffinityAllGroupZero EQU 0 
+  GroupAffinityDontCare EQU 1
   
   PIRQ_GROUP_POLICY typedef ptr IRQ_GROUP_POLICY
   
+  IRQ_DEVICE_POLICY typedef SDWORD
+  
+  IFNDEF IO_RESOURCE_DESCRIPTOR
   IO_RESOURCE_DESCRIPTOR struct
     Option_ BYTE ?
     Type_ BYTE ?
@@ -3303,24 +3245,24 @@ ifndef _WDMDDK_
       struct Port
         Length_ DWORD ?
         Alignment DWORD ?
-        MinimumAddress PHYSICAL_ADDRESS ?
-        MaximumAddress PHYSICAL_ADDRESS ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
       ends
       struct Memory
         Length_ DWORD ?
         Alignment DWORD ?
-        MinimumAddress PHYSICAL_ADDRESS ?
-        MaximumAddress PHYSICAL_ADDRESS ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
       ends
       struct Interrupt
         MinimumVector DWORD ?
         MaximumVector DWORD ?
-        if defined(NT_PROCESSOR_GROUPS)
+        ;if defined(NT_PROCESSOR_GROUPS)
+        ;  AffinityPolicy IRQ_DEVICE_POLICY ?
+        ;  Group_ WORD ?
+        ;else
           AffinityPolicy IRQ_DEVICE_POLICY ?
-          Group_ WORD ?
-        else
-          AffinityPolicy IRQ_DEVICE_POLICY ?
-        endif
+        ;endif
         PriorityPolicy IRQ_PRIORITY ?
         TargetedProcessors KAFFINITY ?
       ends
@@ -3337,8 +3279,8 @@ ifndef _WDMDDK_
       struct Generic
         Length_ DWORD ?
         Alignment DWORD ?
-        MinimumAddress PHYSICAL_ADDRESS ?
-        MaximumAddress PHYSICAL_ADDRESS ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
       ends
       struct DevicePrivate
         Data DWORD 3 dup (?)
@@ -3357,20 +3299,20 @@ ifndef _WDMDDK_
       struct Memory40
         Length40 DWORD ?
         Alignment40 DWORD ?
-        MinimumAddress PHYSICAL_ADDRESS ?
-        MaximumAddress PHYSICAL_ADDRESS ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
       ends
       struct Memory48
         Length48 DWORD ?
         Alignment48 DWORD ?
-        MinimumAddress PHYSICAL_ADDRESS ?
-        MaximumAddress PHYSICAL_ADDRESS ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
       ends
       struct Memory64
         Length64 DWORD ?
         Alignment64 DWORD ?
-        MinimumAddress PHYSICAL_ADDRESS ?
-        MaximumAddress PHYSICAL_ADDRESS ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
       ends
       struct Connection
         Class BYTE ?
@@ -3382,6 +3324,7 @@ ifndef _WDMDDK_
       ends
     ends
   IO_RESOURCE_DESCRIPTOR ends
+  ENDIF
 
   PIO_RESOURCE_DESCRIPTOR typedef ptr IO_RESOURCE_DESCRIPTOR
   
@@ -3406,48 +3349,12 @@ ifndef _WDMDDK_
 
   PIO_RESOURCE_REQUIREMENTS_LIST typedef ptr IO_RESOURCE_REQUIREMENTS_LIST
   
-  ifdef _MAC
-    ifndef _INC_STRING
-      include string.inc
-    endif
-  else
-    include string.inc
-  endif
-  ifndef _SLIST_HEADER_
-    _SLIST_HEADER_ equ <>
-    if defined(_WIN64)
-      ;#pragma warning ( push )
-      ;#pragma warning ( disable : 4324 )
-      Next typedef ptr DECLSPEC_ALIGN
-      
-      ;}
-      ;#pragma warning ( pop )
-    else
-      SLIST_ENTRY typedef _SINGLE_LIST_ENTRY
-      PSLIST_ENTRY typedef ptr _SINGLE_LIST_ENTRY
-      
-    endif
-    if defined(_AMD64_)
-      Alignment typedef DECLSPEC_ALIGN
-      
-      ;}
-      HeaderX64 struct
-        HeaderX64_??10 record Depth_??10:16, Sequence_??10:48, Reserved_??10:4, NextEntry_??10:60
-        HeaderX64_??10 <>
-      HeaderX64 ends
 
-      ;}
-    elseif defined(_ARM64_)
-      Alignment typedef DECLSPEC_ALIGN
-      
-      ;}
-      HeaderArm64 struct
-        HeaderArm64_??11 record Depth_??11:16, Sequence_??11:48, Reserved_??11:4, NextEntry_??11:60
-        HeaderArm64_??11 <>
-      HeaderArm64 ends
 
-      ;}
-    elseif defined(_X86_)
+      SLIST_ENTRY typedef SINGLE_LIST_ENTRY
+      PSLIST_ENTRY typedef ptr SINGLE_LIST_ENTRY
+      
+
       SLIST_HEADER union
         Alignment QWORD ?
         struct DUMMYSTRUCTNAME_7
@@ -3458,72 +3365,9 @@ ifndef _WDMDDK_
       SLIST_HEADER ends
 
       PSLIST_HEADER typedef ptr SLIST_HEADER
-      
-    elseif defined(_ARM_)
-      SLIST_HEADER union
-        Alignment QWORD ?
-        struct DUMMYSTRUCTNAME_8
-          Next SLIST_ENTRY <>
-          Depth WORD ?
-          Reserved WORD ?
-        ends
-      SLIST_HEADER ends
 
-      PSLIST_HEADER typedef ptr SLIST_HEADER
-      
-    endif
-  endif
-  proto_RtlAssert typedef proto stdcall :PVOID, :PVOID, :DWORD, :PSTR
-  externdef stdcall _imp__RtlAssert@16: ptr proto_RtlAssert
-  RtlAssert equ <_imp__RtlAssert@16>
-  if DBG
-    ASSERT macro exp
-     exitm <( ( ! ( exp ) ) ? ( RtlAssert ( # exp , __FILE__ , __LINE__ , NULL ) , FALSE ) : TRUE ) >
-    endm
-    ASSERTMSG macro msg,exp
-     exitm <( ( ! ( exp ) ) ? ( RtlAssert ( # exp , __FILE__ , __LINE__ , msg ) , FALSE ) : TRUE ) >
-    endm
-    RTL_SOFT_ASSERT macro _exp
-     exitm <( ( ! ( _exp ) ) ? ( DbgPrint ( "%s(%d): Soft assertion failed",0Ah,"   Expression: %s",0Ah,0 , __FILE__ , __LINE__ , # _exp ) , FALSE ) : TRUE ) >
-    endm
-    RTL_SOFT_ASSERTMSG macro _msg,_exp
-     exitm <( ( ! ( _exp ) ) ? ( DbgPrint ( "%s(%d): Soft assertion failed",0Ah,"   Expression: %s",0Ah,"   Message: %s",0Ah,0 , __FILE__ , __LINE__ , # _exp , ( _msg ) ) , FALSE ) : TRUE ) >
-    endm
-    RTL_VERIFY equ <ASSERT>
-    RTL_VERIFYMSG equ <ASSERTMSG>
-    RTL_SOFT_VERIFY equ <RTL_SOFT_ASSERT>
-    RTL_SOFT_VERIFYMSG equ <RTL_SOFT_ASSERTMSG>
-  else
-    ASSERT macro exp
-     exitm <0 >
-    endm
-    ASSERTMSG macro msg,exp
-     exitm <0 >
-    endm
-    RTL_SOFT_ASSERT macro _exp
-     exitm <0 >
-    endm
-    RTL_SOFT_ASSERTMSG macro _msg,_exp
-     exitm <0 >
-    endm
-    RTL_VERIFY macro exp
-     exitm <( ( exp ) ? TRUE : FALSE ) >
-    endm
-    RTL_VERIFYMSG macro msg,exp
-     exitm <( ( exp ) ? TRUE : FALSE ) >
-    endm
-    RTL_SOFT_VERIFY macro _exp
-     exitm <( ( _exp ) ? TRUE : FALSE ) >
-    endm
-    RTL_SOFT_VERIFYMSG macro msg,_exp
-     exitm <( ( _exp ) ? TRUE : FALSE ) >
-    endm
-  endif
-  if  not defined(MIDL_PASS) and  not defined(SORTPP_PASS)
-    ;#pragma warning ( push )
-    ;#pragma warning ( disable : 4714 )
-    ;#pragma warning ( disable : 4793 )
-    include specstrings.inc
+
+
     FAST_FAIL_LEGACY_GS_VIOLATION equ 0
     FAST_FAIL_VTGUARD_CHECK_FAILURE equ 1
     FAST_FAIL_STACK_COOKIE_CHECK_FAILURE equ 2
@@ -3579,109 +3423,36 @@ ifndef _WDMDDK_
     FAST_FAIL_ADMINLESS_ACCESS_DENIED equ 55
     FAST_FAIL_UNEXPECTED_CALL equ 56
     FAST_FAIL_INVALID_FAST_FAIL_CODE equ 0FFFFFFFFh
-    if _MSC_VER ge 1610
-      __fastfail proto fastcall :DWORD
-      ;#pragma intrinsic ( __fastfail )
-    endif
-    if _MSC_VER ge 1610
+
+
       RtlFailFast proto fastcall :DWORD
-    endif
-    if  not defined(_MSC_FULL_VER) or (_MSC_FULL_VER lt 161030716) or defined(_M_CEE_PURE) or defined(_M_CEE_SAFE)
-      if  not defined(NO_KERNEL_LIST_ENTRY_CHECKS)
-        NO_KERNEL_LIST_ENTRY_CHECKS equ <>
-      endif
-    endif
-    InitializeListHead32 macro ListHead
-     exitm <( ( ListHead ) - Flink = ( ListHead ) - Blink = PtrToUlong ( ( ListHead ) ) ) >
-    endm
+
     RTL_STATIC_LIST_HEAD macro x
      exitm <LIST_ENTRY x = { and x , and x } >
     endm
     InitializeListHead proto fastcall :PLIST_ENTRY
     IsListEmpty proto fastcall :ptr LIST_ENTRY
     RemoveEntryListUnsafe proto fastcall :PLIST_ENTRY
-    if defined(NO_KERNEL_LIST_ENTRY_CHECKS)
       RemoveEntryList proto fastcall :PLIST_ENTRY
       RemoveHeadList proto fastcall :PLIST_ENTRY
       RemoveTailList proto fastcall :PLIST_ENTRY
       InsertTailList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY
       InsertHeadList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY
       AppendTailList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY
-    else
-      FatalListEntryError proto fastcall :PVOID, :PVOID, :PVOID
-      RtlpCheckListEntry proto fastcall :PLIST_ENTRY
-      RemoveEntryList proto fastcall :PLIST_ENTRY
-      RemoveHeadList proto fastcall :PLIST_ENTRY
-      if DBG
-      endif
-      RemoveTailList proto fastcall :PLIST_ENTRY
-      if DBG
-      endif
-      InsertTailList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY
-      if DBG
-      endif
-      InsertHeadList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY
-      if DBG
-      endif
-      AppendTailList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY
-    endif
     PopEntryList proto fastcall :PSINGLE_LIST_ENTRY
     PushEntryList proto fastcall :PSINGLE_LIST_ENTRY, :PSINGLE_LIST_ENTRY
-    ;#pragma warning ( pop )
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlIntegerToUnicodeString typedef proto stdcall :DWORD, :DWORD, :PUNICODE_STRING
-    externdef stdcall _imp__RtlIntegerToUnicodeString@12: ptr proto_RtlIntegerToUnicodeString
-    RtlIntegerToUnicodeString equ <_imp__RtlIntegerToUnicodeString@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlInt64ToUnicodeString typedef proto stdcall :QWORD, :DWORD, :PUNICODE_STRING
-    externdef stdcall _imp__RtlInt64ToUnicodeString@12: ptr proto_RtlInt64ToUnicodeString
-    RtlInt64ToUnicodeString equ <_imp__RtlInt64ToUnicodeString@12>
-  endif
-  ifdef _WIN64
-    RtlIntPtrToUnicodeString macro Value,Base,String
-     exitm <RtlInt64ToUnicodeString ( Value , Base , String ) >
-    endm
-  else
-    RtlIntPtrToUnicodeString macro Value,Base,String
-     exitm <RtlIntegerToUnicodeString ( Value , Base , String ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlUnicodeStringToInteger typedef proto stdcall :PCUNICODE_STRING, :DWORD, :PULONG
-    externdef stdcall _imp__RtlUnicodeStringToInteger@12: ptr proto_RtlUnicodeStringToInteger
-    RtlUnicodeStringToInteger equ <_imp__RtlUnicodeStringToInteger@12>
-  endif
-  if  not defined(BLDR_KERNEL_RUNTIME)
-    RtlUnicodeStringToInt64 proto fastcall :PCUNICODE_STRING, :DWORD, :PLONG64, :ptr PWSTR
-  endif
-  ifdef _NTSYSTEM_
+
+ 
+
     NLS_MB_CODE_PAGE_TAG equ <NlsMbCodePageTag>
     NLS_MB_OEM_CODE_PAGE_TAG equ <NlsMbOemCodePageTag>
-  else
-    NLS_MB_CODE_PAGE_TAG equ <( * NlsMbCodePageTag )>
-    NLS_MB_OEM_CODE_PAGE_TAG equ <( * NlsMbOemCodePageTag )>
-  endif
-  externdef c NLS_MB_CODE_PAGE_TAG: BOOLEAN
-  externdef c NLS_MB_OEM_CODE_PAGE_TAG: BOOLEAN
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlInitString typedef proto stdcall :PSTRING_, :PCSZ
-    externdef stdcall _imp__RtlInitString@8: ptr proto_RtlInitString
-    RtlInitString equ <_imp__RtlInitString@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlInitAnsiString typedef proto stdcall :PANSI_STRING, :PCSZ
-    externdef stdcall _imp__RtlInitAnsiString@8: ptr proto_RtlInitAnsiString
-    RtlInitAnsiString equ <_imp__RtlInitAnsiString@8>
-  endif
-  proto_RtlInitUnicodeString typedef proto stdcall :PUNICODE_STRING, :PCWSTR
-  externdef stdcall _imp__RtlInitUnicodeString@8: ptr proto_RtlInitUnicodeString
-  RtlInitUnicodeString equ <_imp__RtlInitUnicodeString@8>
-  if  not defined(MIDL_PASS)
+
+
+
+
     RtlInitEmptyUnicodeString proto fastcall :PUNICODE_STRING, :PWCHAR, :WORD
     RtlInitEmptyAnsiString proto fastcall :PANSI_STRING, :PCHAR, :WORD
-  endif
+
   RTL_QUERY_REGISTRY_ROUTINE typedef proto stdcall :PWSTR,:DWORD,:PVOID,:DWORD,:PVOID,:PVOID
   PRTL_QUERY_REGISTRY_ROUTINE typedef ptr RTL_QUERY_REGISTRY_ROUTINE
   RTL_QUERY_REGISTRY_TABLE struct
@@ -3707,44 +3478,7 @@ ifndef _WDMDDK_
   RTL_QUERY_REGISTRY_TYPECHECK equ 00000100h
   RTL_QUERY_REGISTRY_TYPECHECK_SHIFT equ 24
   RTL_QUERY_REGISTRY_TYPECHECK_MASK equ ( 0ffh shl RTL_QUERY_REGISTRY_TYPECHECK_SHIFT )
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlQueryRegistryValues typedef proto stdcall :DWORD, :PCWSTR, :PRTL_QUERY_REGISTRY_TABLE, :PVOID, :PVOID
-    externdef stdcall _imp__RtlQueryRegistryValues@20: ptr proto_RtlQueryRegistryValues
-    RtlQueryRegistryValues equ <_imp__RtlQueryRegistryValues@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8) and  not defined(MIDL_PASS)
-    proto_MmGetSystemRoutineAddress typedef proto stdcall :PUNICODE_STRING
-    externdef stdcall _imp__MmGetSystemRoutineAddress@4: ptr proto_MmGetSystemRoutineAddress
-    MmGetSystemRoutineAddress equ <_imp__MmGetSystemRoutineAddress@4>
-    RtlxQueryRegistryValues proto fastcall :DWORD, :PCWSTR, :PRTL_QUERY_REGISTRY_TABLE, :PVOID, :PVOID
-    ;#pragma warning ( push )
-    ;#pragma warning ( disable : 4055 )
-    ;#pragma warning ( pop )
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8) and  not defined(MIDL_PASS)
-    ;#undef  RtlQueryRegistryValues
-    RtlQueryRegistryValues equ <RtlxQueryRegistryValues>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlWriteRegistryValue typedef proto stdcall :DWORD, :PCWSTR, :PCWSTR, :DWORD, :PVOID, :DWORD
-    externdef stdcall _imp__RtlWriteRegistryValue@24: ptr proto_RtlWriteRegistryValue
-    RtlWriteRegistryValue equ <_imp__RtlWriteRegistryValue@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlDeleteRegistryValue typedef proto stdcall :DWORD, :PCWSTR, :PCWSTR
-    externdef stdcall _imp__RtlDeleteRegistryValue@12: ptr proto_RtlDeleteRegistryValue
-    RtlDeleteRegistryValue equ <_imp__RtlDeleteRegistryValue@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlCreateRegistryKey typedef proto stdcall :DWORD, :PWSTR
-    externdef stdcall _imp__RtlCreateRegistryKey@8: ptr proto_RtlCreateRegistryKey
-    RtlCreateRegistryKey equ <_imp__RtlCreateRegistryKey@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlCheckRegistryKey typedef proto stdcall :DWORD, :PWSTR
-    externdef stdcall _imp__RtlCheckRegistryKey@8: ptr proto_RtlCheckRegistryKey
-    RtlCheckRegistryKey equ <_imp__RtlCheckRegistryKey@8>
-  endif
+
   RTL_REGISTRY_ABSOLUTE equ 0
   RTL_REGISTRY_SERVICES equ 1
   RTL_REGISTRY_CONTROL equ 2
@@ -3754,107 +3488,12 @@ ifndef _WDMDDK_
   RTL_REGISTRY_MAXIMUM equ 6
   RTL_REGISTRY_HANDLE equ 40000000h
   RTL_REGISTRY_OPTIONAL equ 80000000h
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    proto_RtlInitAnsiStringEx typedef proto stdcall :PANSI_STRING, :PCSZ
-    externdef stdcall _imp__RtlInitAnsiStringEx@8: ptr proto_RtlInitAnsiStringEx
-    RtlInitAnsiStringEx equ <_imp__RtlInitAnsiStringEx@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    proto_RtlInitStringEx typedef proto stdcall :PSTRING_, :PCSZ
-    externdef stdcall _imp__RtlInitStringEx@8: ptr proto_RtlInitStringEx
-    RtlInitStringEx equ <_imp__RtlInitStringEx@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlAnsiStringToUnicodeString typedef proto stdcall :PUNICODE_STRING, :PCANSI_STRING, :BOOLEAN
-    externdef stdcall _imp__RtlAnsiStringToUnicodeString@12: ptr proto_RtlAnsiStringToUnicodeString
-    RtlAnsiStringToUnicodeString equ <_imp__RtlAnsiStringToUnicodeString@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlUnicodeStringToAnsiString typedef proto stdcall :PANSI_STRING, :PCUNICODE_STRING, :BOOLEAN
-    externdef stdcall _imp__RtlUnicodeStringToAnsiString@12: ptr proto_RtlUnicodeStringToAnsiString
-    RtlUnicodeStringToAnsiString equ <_imp__RtlUnicodeStringToAnsiString@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlCompareUnicodeStrings typedef proto stdcall :PCWCH, :SIZE_T, :PCWCH, :SIZE_T, :BOOLEAN
-    externdef stdcall _imp__RtlCompareUnicodeStrings@20: ptr proto_RtlCompareUnicodeStrings
-    RtlCompareUnicodeStrings equ <_imp__RtlCompareUnicodeStrings@20>
-    proto_RtlCompareUnicodeString typedef proto stdcall :PCUNICODE_STRING, :PCUNICODE_STRING, :BOOLEAN
-    externdef stdcall _imp__RtlCompareUnicodeString@12: ptr proto_RtlCompareUnicodeString
-    RtlCompareUnicodeString equ <_imp__RtlCompareUnicodeString@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlEqualUnicodeString typedef proto stdcall :PCUNICODE_STRING, :PCUNICODE_STRING, :BOOLEAN
-    externdef stdcall _imp__RtlEqualUnicodeString@12: ptr proto_RtlEqualUnicodeString
-    RtlEqualUnicodeString equ <_imp__RtlEqualUnicodeString@12>
-  endif
+
+
   HASH_STRING_ALGORITHM_DEFAULT equ 0
   HASH_STRING_ALGORITHM_X65599 equ 1
   HASH_STRING_ALGORITHM_INVALID equ 0ffffffffh
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    proto_RtlHashUnicodeString typedef proto stdcall :PCUNICODE_STRING, :BOOLEAN, :DWORD, :PULONG
-    externdef stdcall _imp__RtlHashUnicodeString@16: ptr proto_RtlHashUnicodeString
-    RtlHashUnicodeString equ <_imp__RtlHashUnicodeString@16>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlCopyUnicodeString typedef proto stdcall :PUNICODE_STRING, :PCUNICODE_STRING
-    externdef stdcall _imp__RtlCopyUnicodeString@8: ptr proto_RtlCopyUnicodeString
-    RtlCopyUnicodeString equ <_imp__RtlCopyUnicodeString@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlAppendUnicodeStringToString typedef proto stdcall :PUNICODE_STRING, :PCUNICODE_STRING
-    externdef stdcall _imp__RtlAppendUnicodeStringToString@8: ptr proto_RtlAppendUnicodeStringToString
-    RtlAppendUnicodeStringToString equ <_imp__RtlAppendUnicodeStringToString@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlAppendUnicodeToString typedef proto stdcall :PUNICODE_STRING, :PCWSTR
-    externdef stdcall _imp__RtlAppendUnicodeToString@8: ptr proto_RtlAppendUnicodeToString
-    RtlAppendUnicodeToString equ <_imp__RtlAppendUnicodeToString@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlUpcaseUnicodeChar typedef proto stdcall :WCHAR
-    externdef stdcall _imp__RtlUpcaseUnicodeChar@4: ptr proto_RtlUpcaseUnicodeChar
-    RtlUpcaseUnicodeChar equ <_imp__RtlUpcaseUnicodeChar@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    proto_RtlDowncaseUnicodeChar typedef proto stdcall :WCHAR
-    externdef stdcall _imp__RtlDowncaseUnicodeChar@4: ptr proto_RtlDowncaseUnicodeChar
-    RtlDowncaseUnicodeChar equ <_imp__RtlDowncaseUnicodeChar@4>
-  endif
-  proto_RtlFreeUnicodeString typedef proto stdcall :PUNICODE_STRING
-  externdef stdcall _imp__RtlFreeUnicodeString@4: ptr proto_RtlFreeUnicodeString
-  RtlFreeUnicodeString equ <_imp__RtlFreeUnicodeString@4>
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFreeAnsiString typedef proto stdcall :PANSI_STRING
-    externdef stdcall _imp__RtlFreeAnsiString@4: ptr proto_RtlFreeAnsiString
-    RtlFreeAnsiString equ <_imp__RtlFreeAnsiString@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlxUnicodeStringToAnsiSize typedef proto stdcall :PCUNICODE_STRING
-    externdef stdcall _imp__RtlxUnicodeStringToAnsiSize@4: ptr proto_RtlxUnicodeStringToAnsiSize
-    RtlxUnicodeStringToAnsiSize equ <_imp__RtlxUnicodeStringToAnsiSize@4>
-  endif
-  RtlUnicodeStringToAnsiSize macro STRING
-   exitm <( NLS_MB_CODE_PAGE_TAG ? RtlxUnicodeStringToAnsiSize ( STRING ) : ( ( STRING ) - Length + sizeof ( UNICODE_NULL ) ) / sizeof ( WCHAR ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlxAnsiStringToUnicodeSize typedef proto stdcall :PCANSI_STRING
-    externdef stdcall _imp__RtlxAnsiStringToUnicodeSize@4: ptr proto_RtlxAnsiStringToUnicodeSize
-    RtlxAnsiStringToUnicodeSize equ <_imp__RtlxAnsiStringToUnicodeSize@4>
-  endif
-  RtlAnsiStringToUnicodeSize macro STRING
-   exitm <( NLS_MB_CODE_PAGE_TAG ? RtlxAnsiStringToUnicodeSize ( STRING ) : ( ( STRING ) - Length + sizeof ( ANSI_NULL ) ) * sizeof ( WCHAR ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    proto_RtlUnicodeToUTF8N typedef proto stdcall :PCHAR, :DWORD, :PULONG, :PCWCH, :DWORD
-    externdef stdcall _imp__RtlUnicodeToUTF8N@20: ptr proto_RtlUnicodeToUTF8N
-    RtlUnicodeToUTF8N equ <_imp__RtlUnicodeToUTF8N@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    proto_RtlUTF8ToUnicodeN typedef proto stdcall :PWSTR, :DWORD, :PULONG, :PCCH, :DWORD
-    externdef stdcall _imp__RtlUTF8ToUnicodeN@20: ptr proto_RtlUTF8ToUnicodeN
-    RtlUTF8ToUnicodeN equ <_imp__RtlUTF8ToUnicodeN@20>
-  endif
-  include guiddef.inc
+
   ifndef DEFINE_GUIDEX
     DEFINE_GUIDEX macro name
      exitm <EXTERN_C const CDECL GUID name >
@@ -3865,84 +3504,17 @@ ifndef _WDMDDK_
      exitm <STATIC_ ## guid >
     endm
   endif
-  ifndef __IID_ALIGNED__
-    __IID_ALIGNED__ equ <>
-    ifdef __cplusplus
-      IsEqualGUIDAligned proto fastcall :REFGUID, :REFGUID
-    else
-      IsEqualGUIDAligned macro guid1,guid2
-       exitm <( ( * ( PLONGLONG ) ( guid1 ) == * ( PLONGLONG ) ( guid2 ) ) and ( * ( ( PLONGLONG ) ( guid1 ) + 1 ) == * ( ( PLONGLONG ) ( guid2 ) + 1 ) ) ) >
-      endm
-    endif
-  endif
+
   RTL_GUID_STRING_SIZE equ 38
-  proto_RtlStringFromGUID typedef proto stdcall :REFGUID, :PUNICODE_STRING
-  externdef stdcall _imp__RtlStringFromGUID@8: ptr proto_RtlStringFromGUID
-  RtlStringFromGUID equ <_imp__RtlStringFromGUID@8>
-  proto_RtlGUIDFromString typedef proto stdcall :PCUNICODE_STRING, :ptr GUID
-  externdef stdcall _imp__RtlGUIDFromString@8: ptr proto_RtlGUIDFromString
-  RtlGUIDFromString equ <_imp__RtlGUIDFromString@8>
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    proto_RtlGenerateClass5Guid typedef proto stdcall :REFGUID, :PVOID, :DWORD, :ptr GUID
-    externdef stdcall _imp__RtlGenerateClass5Guid@16: ptr proto_RtlGenerateClass5Guid
-    RtlGenerateClass5Guid equ <_imp__RtlGenerateClass5Guid@16>
-  endif
-  if defined(_DBG_MEMCPY_INLINE_) and  not defined(MIDL_PASS) and  not defined(_MEMCPY_INLINE_) and  not defined(_CRTBLD)
-    _MEMCPY_INLINE_ equ <>
-    memcpy_inline proto c :ptr , :ptr , :size_t
-    memcpy equ <memcpy_inline>
-  endif
-  RtlEqualMemory macro Destination,Source,Length
-   exitm <( ! memcmp ( ( Destination ) , ( Source ) , ( Length ) ) ) >
-  endm
-  RtlMoveMemory macro Destination,Source,Length
-   exitm <memmove ( ( Destination ) , ( Source ) , ( Length ) ) >
-  endm
-  RtlCopyMemory macro Destination,Source,Length
-   exitm <memcpy ( ( Destination ) , ( Source ) , ( Length ) ) >
-  endm
-  RtlFillMemory macro Destination,Length,Fill
-   exitm <memset ( ( Destination ) , ( Fill ) , ( Length ) ) >
-  endm
-  RtlZeroMemory macro Destination,Length
-   exitm <memset ( ( Destination ) , 0 , ( Length ) ) >
-  endm
-  if  not defined(MIDL_PASS)
-    RtlSecureZeroMemory proto c :PVOID, :SIZE_T
-    if defined(_M_AMD64)
-    else
-      if  not defined(_M_CEE) and (defined(_M_ARM) or defined(_M_ARM64))
-      else
-      endif
-    endif
-  endif
+
+
+
   RtlCopyBytes equ <RtlCopyMemory>
   RtlZeroBytes equ <RtlZeroMemory>
   RtlFillBytes equ <RtlFillMemory>
-  if defined(_M_AMD64)
-    proto_RtlCopyMemoryNonTemporal typedef proto stdcall :ptr , :ptr , :SIZE_T
-    externdef stdcall _imp__RtlCopyMemoryNonTemporal@12: ptr proto_RtlCopyMemoryNonTemporal
-    RtlCopyMemoryNonTemporal equ <_imp__RtlCopyMemoryNonTemporal@12>
-  else
-    RtlCopyMemoryNonTemporal equ <RtlCopyMemory>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2KSP3)
-    proto_RtlPrefetchMemoryNonTemporal typedef proto fastcall :PVOID, :SIZE_T
-    externdef stdcall _imp_RtlPrefetchMemoryNonTemporal: ptr proto_RtlPrefetchMemoryNonTemporal
-    RtlPrefetchMemoryNonTemporal equ <_imp_RtlPrefetchMemoryNonTemporal>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    if (_MSC_FULL_VER ge 150030729) and  not defined(IMPORT_NATIVE_DBG_BREAK)
-      DbgBreakPoint equ <__debugbreak>
-    else
-      DbgBreakPoint proto stdcall
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_DbgBreakPointWithStatus typedef proto stdcall :DWORD
-    externdef stdcall _imp__DbgBreakPointWithStatus@4: ptr proto_DbgBreakPointWithStatus
-    DbgBreakPointWithStatus equ <_imp__DbgBreakPointWithStatus@4>
-  endif
+
+
+
   DBG_STATUS_CONTROL_C equ 1
   DBG_STATUS_SYSRQ equ 2
   DBG_STATUS_BUGCHECK_FIRST equ 3
@@ -3950,179 +3522,163 @@ ifndef _WDMDDK_
   DBG_STATUS_FATAL equ 5
   DBG_STATUS_DEBUG_CONTROL equ 6
   DBG_STATUS_WORKER equ 7
-  if DBG
-    KdPrint macro _x_
-     exitm <DbgPrint _x_ >
-    endm
-    KdPrintEx macro _x_
-     exitm <DbgPrintEx _x_ >
-    endm
-    vKdPrintEx macro _x_
-     exitm <vDbgPrintEx _x_ >
-    endm
-    vKdPrintExWithPrefix macro _x_
-     exitm <vDbgPrintExWithPrefix _x_ >
-    endm
-    KdBreakPoint macro 
-     exitm <DbgBreakPoint ( ) >
-    endm
-    KdBreakPointWithStatus macro s
-     exitm <DbgBreakPointWithStatus ( s ) >
-    endm
-  else
-    KdPrint macro _x_
-     exitm <>
-    endm
-    KdPrintEx macro _x_
-     exitm <>
-    endm
-    vKdPrintEx macro _x_
-     exitm <>
-    endm
-    vKdPrintExWithPrefix macro _x_
-     exitm <>
-    endm
-    KdBreakPoint macro 
-     exitm <>
-    endm
-    KdBreakPointWithStatus macro s
-     exitm <>
-    endm
-  endif
-  ifndef _DBGNT_
-    DbgPrint proto c :PCSTR, :VARARG
-    if (NTDDI_VERSION ge NTDDI_WINXP)
-      proto_DbgPrintEx typedef proto c :DWORD, :DWORD, :PCSTR, :VARARG
-      externdef stdcall _imp__DbgPrintEx: ptr proto_DbgPrintEx
-      DbgPrintEx equ <_imp__DbgPrintEx>
-    endif
-    ifdef _VA_LIST_DEFINED
-      if (NTDDI_VERSION ge NTDDI_WINXP)
-        proto_vDbgPrintEx typedef proto stdcall :DWORD, :DWORD, :PCCH, :va_list
-        externdef stdcall _imp__vDbgPrintEx@16: ptr proto_vDbgPrintEx
-        vDbgPrintEx equ <_imp__vDbgPrintEx@16>
-        proto_vDbgPrintExWithPrefix typedef proto stdcall :PCCH, :DWORD, :DWORD, :PCCH, :va_list
-        externdef stdcall _imp__vDbgPrintExWithPrefix@20: ptr proto_vDbgPrintExWithPrefix
-        vDbgPrintExWithPrefix equ <_imp__vDbgPrintExWithPrefix@20>
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      proto_DbgPrintReturnControlC typedef proto c :PCCH, :VARARG
-      externdef stdcall _imp__DbgPrintReturnControlC: ptr proto_DbgPrintReturnControlC
-      DbgPrintReturnControlC equ <_imp__DbgPrintReturnControlC>
-    endif
-    if (NTDDI_VERSION ge NTDDI_WINXP)
-      proto_DbgQueryDebugFilterState typedef proto stdcall :DWORD, :DWORD
-      externdef stdcall _imp__DbgQueryDebugFilterState@8: ptr proto_DbgQueryDebugFilterState
-      DbgQueryDebugFilterState equ <_imp__DbgQueryDebugFilterState@8>
-    endif
-    if (NTDDI_VERSION ge NTDDI_WINXP)
-      proto_DbgSetDebugFilterState typedef proto stdcall :DWORD, :DWORD, :BOOLEAN
-      externdef stdcall _imp__DbgSetDebugFilterState@12: ptr proto_DbgSetDebugFilterState
-      DbgSetDebugFilterState equ <_imp__DbgSetDebugFilterState@12>
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      proto_PDEBUG_PRINT_CALLBACK typedef proto fastcall :PSTRING, :DWORD, :DWORD
-      PDEBUG_PRINT_CALLBACK typedef ptr proto_PDEBUG_PRINT_CALLBACK
-      proto_DbgSetDebugPrintCallback typedef proto stdcall :PDEBUG_PRINT_CALLBACK, :BOOLEAN
-      externdef stdcall _imp__DbgSetDebugPrintCallback@8: ptr proto_DbgSetDebugPrintCallback
-      DbgSetDebugPrintCallback equ <_imp__DbgSetDebugPrintCallback@8>
-    endif
-  endif
-  if  not defined(MIDL_PASS)
-    RtlLargeIntegerAdd proto fastcall :LARGE_INTEGER, :LARGE_INTEGER
-    RtlEnlargedIntegerMultiply proto fastcall :SDWORD, :SDWORD
-    RtlEnlargedUnsignedMultiply proto fastcall :DWORD, :DWORD
-    RtlEnlargedUnsignedDivide proto fastcall :ULARGE_INTEGER, :DWORD, :PULONG
-    RtlLargeIntegerNegate proto fastcall :LARGE_INTEGER
-    RtlLargeIntegerSubtract proto fastcall :LARGE_INTEGER, :LARGE_INTEGER
-    if (defined(_AMD64_) or defined(_ARM64_) or defined(_M_HYBRID_X86_ARM64)) and  not defined(_M_CEE_PURE)
-      RtlExtendedMagicDivide proto fastcall :LARGE_INTEGER, :LARGE_INTEGER, :CCHAR
-    endif
-    if (defined(_X86_) and  not defined(_M_HYBRID_X86_ARM64)) or defined(_ARM_) or defined(_IA64_)
-      if (NTDDI_VERSION ge NTDDI_WIN2K)
-        proto_RtlExtendedMagicDivide typedef proto stdcall :LARGE_INTEGER, :LARGE_INTEGER, :CCHAR
-        externdef stdcall _imp__RtlExtendedMagicDivide@12: ptr proto_RtlExtendedMagicDivide
-        RtlExtendedMagicDivide equ <_imp__RtlExtendedMagicDivide@12>
-      endif
-    endif
-    if defined(_AMD64_) or defined(_ARM_) or defined(_ARM64_) or defined(_IA64_) or defined(_CHPE_X86_ARM64_)
-      RtlExtendedLargeIntegerDivide proto fastcall :LARGE_INTEGER, :DWORD, :PULONG
-      RtlExtendedIntegerMultiply proto fastcall :LARGE_INTEGER, :SDWORD
-    else
-      if (NTDDI_VERSION ge NTDDI_WIN2K)
-        proto_RtlExtendedLargeIntegerDivide typedef proto stdcall :LARGE_INTEGER, :DWORD, :PULONG
-        externdef stdcall _imp__RtlExtendedLargeIntegerDivide@12: ptr proto_RtlExtendedLargeIntegerDivide
-        RtlExtendedLargeIntegerDivide equ <_imp__RtlExtendedLargeIntegerDivide@12>
-      endif
-      if (NTDDI_VERSION ge NTDDI_WIN2K)
-        proto_RtlExtendedIntegerMultiply typedef proto stdcall :LARGE_INTEGER, :SDWORD
-        externdef stdcall _imp__RtlExtendedIntegerMultiply@8: ptr proto_RtlExtendedIntegerMultiply
-        RtlExtendedIntegerMultiply equ <_imp__RtlExtendedIntegerMultiply@8>
-      endif
-    endif
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( RtlLargeIntegerAnd )
-    endif
-    RtlLargeIntegerAnd macro Result,Source,Mask
-     exitm <Result.QuadPart = Source.QuadPart and Mask.QuadPart >
-    endm
-    RtlConvertLongToLargeInteger proto fastcall :SDWORD
-    RtlConvertUlongToLargeInteger proto fastcall :DWORD
-    RtlLargeIntegerShiftLeft proto fastcall :LARGE_INTEGER, :CCHAR
-    RtlLargeIntegerShiftRight proto fastcall :LARGE_INTEGER, :CCHAR
-    RtlLargeIntegerArithmeticShift proto fastcall :LARGE_INTEGER, :CCHAR
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( RtlLargeIntegerGreaterThan )
-      ;#pragma deprecated ( RtlLargeIntegerGreaterThanOrEqualTo )
-      ;#pragma deprecated ( RtlLargeIntegerEqualTo )
-      ;#pragma deprecated ( RtlLargeIntegerNotEqualTo )
-      ;#pragma deprecated ( RtlLargeIntegerLessThan )
-      ;#pragma deprecated ( RtlLargeIntegerLessThanOrEqualTo )
-      ;#pragma deprecated ( RtlLargeIntegerGreaterThanZero )
-      ;#pragma deprecated ( RtlLargeIntegerGreaterOrEqualToZero )
-      ;#pragma deprecated ( RtlLargeIntegerEqualToZero )
-      ;#pragma deprecated ( RtlLargeIntegerNotEqualToZero )
-      ;#pragma deprecated ( RtlLargeIntegerLessThanZero )
-      ;#pragma deprecated ( RtlLargeIntegerLessOrEqualToZero )
-    endif
-    RtlLargeIntegerGreaterThan macro X,Y
-     exitm <( ( ( ( X ) .HighPart == ( Y ) .HighPart ) and ( ( X ) .LowPart > ( Y ) .LowPart ) ) or ( ( X ) .HighPart > ( Y ) .HighPart ) ) >
-    endm
-    RtlLargeIntegerGreaterThanOrEqualTo macro X,Y
-     exitm <( ( ( ( X ) .HighPart == ( Y ) .HighPart ) and ( ( X ) .LowPart >= ( Y ) .LowPart ) ) or ( ( X ) .HighPart > ( Y ) .HighPart ) ) >
-    endm
-    RtlLargeIntegerEqualTo macro X,Y
-     exitm <( ! ( ( ( X ) .LowPart ^ ( Y ) .LowPart ) or ( ( X ) .HighPart ^ ( Y ) .HighPart ) ) ) >
-    endm
-    RtlLargeIntegerNotEqualTo macro X,Y
-     exitm <( ( ( ( X ) .LowPart ^ ( Y ) .LowPart ) or ( ( X ) .HighPart ^ ( Y ) .HighPart ) ) ) >
-    endm
-    RtlLargeIntegerLessThan macro X,Y
-     exitm <( ( ( ( X ) .HighPart == ( Y ) .HighPart ) and ( ( X ) .LowPart < ( Y ) .LowPart ) ) or ( ( X ) .HighPart < ( Y ) .HighPart ) ) >
-    endm
-    RtlLargeIntegerLessThanOrEqualTo macro X,Y
-     exitm <( ( ( ( X ) .HighPart == ( Y ) .HighPart ) and ( ( X ) .LowPart <= ( Y ) .LowPart ) ) or ( ( X ) .HighPart < ( Y ) .HighPart ) ) >
-    endm
-    RtlLargeIntegerGreaterThanZero macro X
-     exitm <( ( ( ( X ) .HighPart == 0 ) and ( ( X ) .LowPart > 0 ) ) or ( ( X ) .HighPart > 0 ) ) >
-    endm
-    RtlLargeIntegerGreaterOrEqualToZero macro X
-     exitm <( ( X ) .HighPart >= 0 ) >
-    endm
-    RtlLargeIntegerEqualToZero macro X
-     exitm <( ! ( ( X ) .LowPart or ( X ) .HighPart ) ) >
-    endm
-    RtlLargeIntegerNotEqualToZero macro X
-     exitm <( ( ( X ) .LowPart or ( X ) .HighPart ) ) >
-    endm
-    RtlLargeIntegerLessThanZero macro X
-     exitm <( ( ( X ) .HighPart < 0 ) ) >
-    endm
-    RtlLargeIntegerLessOrEqualToZero macro X
-     exitm <( ( ( X ) .HighPart < 0 ) or ! ( ( X ) .LowPart or ( X ) .HighPart ) ) >
-    endm
-  endif
+
+    ; DPFLTR_TYPE
+    DPFLTR_SYSTEM_ID EQU 0
+    DPFLTR_SMSS_ID EQU 1
+    DPFLTR_SETUP_ID EQU 2
+    DPFLTR_NTFS_ID EQU 3
+    DPFLTR_FSTUB_ID EQU 4
+    DPFLTR_CRASHDUMP_ID EQU 5
+    DPFLTR_CDAUDIO_ID EQU 6
+    DPFLTR_CDROM_ID EQU 7
+    DPFLTR_CLASSPNP_ID EQU 8
+    DPFLTR_DISK_ID EQU 9
+    DPFLTR_REDBOOK_ID EQU 10
+    DPFLTR_STORPROP_ID EQU 11
+    DPFLTR_SCSIPORT_ID EQU 12
+    DPFLTR_SCSIMINIPORT_ID EQU 13
+    DPFLTR_CONFIG_ID EQU 14
+    DPFLTR_I8042PRT_ID EQU 15
+    DPFLTR_SERMOUSE_ID EQU 16
+    DPFLTR_LSERMOUS_ID EQU 17
+    DPFLTR_KBDHID_ID EQU 18
+    DPFLTR_MOUHID_ID EQU 19
+    DPFLTR_KBDCLASS_ID EQU 20
+    DPFLTR_MOUCLASS_ID EQU 21
+    DPFLTR_TWOTRACK_ID EQU 22
+    DPFLTR_WMILIB_ID EQU 23
+    DPFLTR_ACPI_ID EQU 24
+    DPFLTR_AMLI_ID EQU 25
+    DPFLTR_HALIA64_ID EQU 26
+    DPFLTR_VIDEO_ID EQU 27
+    DPFLTR_SVCHOST_ID EQU 28
+    DPFLTR_VIDEOPRT_ID EQU 29
+    DPFLTR_TCPIP_ID EQU 30
+    DPFLTR_DMSYNTH_ID EQU 31
+    DPFLTR_NTOSPNP_ID EQU 32
+    DPFLTR_FASTFAT_ID EQU 33
+    DPFLTR_SAMSS_ID EQU 34
+    DPFLTR_PNPMGR_ID EQU 35
+    DPFLTR_NETAPI_ID EQU 36
+    DPFLTR_SCSERVER_ID EQU 37
+    DPFLTR_SCCLIENT_ID EQU 38
+    DPFLTR_SERIAL_ID EQU 39
+    DPFLTR_SERENUM_ID EQU 40
+    DPFLTR_UHCD_ID EQU 41
+    DPFLTR_RPCPROXY_ID EQU 42
+    DPFLTR_AUTOCHK_ID EQU 43
+    DPFLTR_DCOMSS_ID EQU 44
+    DPFLTR_UNIMODEM_ID EQU 45
+    DPFLTR_SIS_ID EQU 46
+    DPFLTR_FLTMGR_ID EQU 47
+    DPFLTR_WMICORE_ID EQU 48
+    DPFLTR_BURNENG_ID EQU 49
+    DPFLTR_IMAPI_ID EQU 50
+    DPFLTR_SXS_ID EQU 51
+    DPFLTR_FUSION_ID EQU 52
+    DPFLTR_IDLETASK_ID EQU 53
+    DPFLTR_SOFTPCI_ID EQU 54
+    DPFLTR_TAPE_ID EQU 55
+    DPFLTR_MCHGR_ID EQU 56
+    DPFLTR_IDEP_ID EQU 57
+    DPFLTR_PCIIDE_ID EQU 58
+    DPFLTR_FLOPPY_ID EQU 59
+    DPFLTR_FDC_ID EQU 60
+    DPFLTR_TERMSRV_ID EQU 61
+    DPFLTR_W32TIME_ID EQU 62
+    DPFLTR_PREFETCHER_ID EQU 63
+    DPFLTR_RSFILTER_ID EQU 64
+    DPFLTR_FCPORT_ID EQU 65
+    DPFLTR_PCI_ID EQU 66
+    DPFLTR_DMIO_ID EQU 67
+    DPFLTR_DMCONFIG_ID EQU 68
+    DPFLTR_DMADMIN_ID EQU 69
+    DPFLTR_WSOCKTRANSPORT_ID EQU 70
+    DPFLTR_VSS_ID EQU 71
+    DPFLTR_PNPMEM_ID EQU 72
+    DPFLTR_PROCESSOR_ID EQU 73
+    DPFLTR_DMSERVER_ID EQU 74
+    DPFLTR_SR_ID EQU 75
+    DPFLTR_INFINIBAND_ID EQU 76
+    DPFLTR_IHVDRIVER_ID EQU 77
+    DPFLTR_IHVVIDEO_ID EQU 78
+    DPFLTR_IHVAUDIO_ID EQU 79
+    DPFLTR_IHVNETWORK_ID EQU 80
+    DPFLTR_IHVSTREAMING_ID EQU 81
+    DPFLTR_IHVBUS_ID EQU 82
+    DPFLTR_HPS_ID EQU 83
+    DPFLTR_RTLTHREADPOOL_ID EQU 84
+    DPFLTR_LDR_ID EQU 85
+    DPFLTR_TCPIP6_ID EQU 86
+    DPFLTR_ISAPNP_ID EQU 87
+    DPFLTR_SHPC_ID EQU 88
+    DPFLTR_STORPORT_ID EQU 89
+    DPFLTR_STORMINIPORT_ID EQU 90
+    DPFLTR_PRINTSPOOLER_ID EQU 91
+    DPFLTR_VSSDYNDISK_ID EQU 92
+    DPFLTR_VERIFIER_ID EQU 93
+    DPFLTR_VDS_ID EQU 94
+    DPFLTR_VDSBAS_ID EQU 95
+    DPFLTR_VDSDYN_ID EQU 96
+    DPFLTR_VDSDYNDR_ID EQU 97
+    DPFLTR_VDSLDR_ID EQU 98
+    DPFLTR_VDSUTIL_ID EQU 99
+    DPFLTR_DFRGIFC_ID EQU 100
+    DPFLTR_DEFAULT_ID EQU 101
+    DPFLTR_MM_ID EQU 102
+    DPFLTR_DFSC_ID EQU 103
+    DPFLTR_WOW64_ID EQU 104
+    DPFLTR_ALPC_ID EQU 105
+    DPFLTR_WDI_ID EQU 106
+    DPFLTR_PERFLIB_ID EQU 107
+    DPFLTR_KTM_ID EQU 108
+    DPFLTR_IOSTRESS_ID EQU 109
+    DPFLTR_HEAP_ID EQU 110
+    DPFLTR_WHEA_ID EQU 111
+    DPFLTR_USERGDI_ID EQU 112
+    DPFLTR_MMCSS_ID EQU 113
+    DPFLTR_TPM_ID EQU 114
+    DPFLTR_THREADORDER_ID EQU 115
+    DPFLTR_ENVIRON_ID EQU 116
+    DPFLTR_EMS_ID EQU 117
+    DPFLTR_WDT_ID EQU 118
+    DPFLTR_FVEVOL_ID EQU 119
+    DPFLTR_NDIS_ID EQU 120
+    DPFLTR_NVCTRACE_ID EQU 121
+    DPFLTR_LUAFV_ID EQU 122
+    DPFLTR_APPCOMPAT_ID EQU 123
+    DPFLTR_USBSTOR_ID EQU 124
+    DPFLTR_SBP2PORT_ID EQU 125
+    DPFLTR_COVERAGE_ID EQU 126
+    DPFLTR_CACHEMGR_ID EQU 127
+    DPFLTR_MOUNTMGR_ID EQU 128
+    DPFLTR_CFR_ID EQU 129
+    DPFLTR_TXF_ID EQU 130
+    DPFLTR_KSECDD_ID EQU 131
+    DPFLTR_FLTREGRESS_ID EQU 132
+    DPFLTR_MPIO_ID EQU 133
+    DPFLTR_MSDSM_ID EQU 134
+    DPFLTR_UDFS_ID EQU 135
+    DPFLTR_ENDOFTABLE_ID EQU 136
+
+    DPFLTR_ERROR_LEVEL      EQU 0
+    DPFLTR_WARNING_LEVEL    EQU 1
+    DPFLTR_TRACE_LEVEL      EQU 2
+    DPFLTR_INFO_LEVEL       EQU 3
+    DPFLTR_MASK             EQU 80000000h
+
+    KdPrint TEXTEQU <DbgPrint>
+    KdPrintEx TEXTEQU <DbgPrintEx>
+    
+    KdBreakPoint TEXTEQU <DbgBreakPoint>
+    KdBreakPointWithStatus TEXTEQU <DbgBreakPointWithStatus>
+    
+    vKdPrintEx TEXTEQU <vDbgPrintEx>
+    vKdPrintExWithPrefix TEXTEQU <vDbgPrintExWithPrefix>
+    
+
+
   TIME_FIELDS struct
     Year CSHORT ?
     Month CSHORT ?
@@ -4135,16 +3691,7 @@ ifndef _WDMDDK_
   TIME_FIELDS ends
 
   PTIME_FIELDS typedef ptr TIME_FIELDS
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlTimeToTimeFields typedef proto stdcall :PLARGE_INTEGER, :PTIME_FIELDS
-    externdef stdcall _imp__RtlTimeToTimeFields@8: ptr proto_RtlTimeToTimeFields
-    RtlTimeToTimeFields equ <_imp__RtlTimeToTimeFields@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlTimeFieldsToTime typedef proto stdcall :PTIME_FIELDS, :PLARGE_INTEGER
-    externdef stdcall _imp__RtlTimeFieldsToTime@8: ptr proto_RtlTimeFieldsToTime
-    RtlTimeFieldsToTime equ <_imp__RtlTimeFieldsToTime@8>
-  endif
+
   SHORT_SIZE equ <( sizeof ( USHORT ) )>
   SHORT_MASK equ ( SHORT_SIZE - 1 )
   LONG_SIZE equ <( sizeof ( LONG ) )>
@@ -4170,246 +3717,23 @@ ifndef _WDMDDK_
   LONG_3RD_MOST_SIGNIFICANT_BIT equ 1
   LONG_2ND_MOST_SIGNIFICANT_BIT equ 2
   LONG_MOST_SIGNIFICANT_BIT equ 3
-  if defined(_AMD64_)
-    RtlStoreUshort macro ADDRESS,VALUE
-     exitm <* ( USHORT UNALIGNED * ) ( ADDRESS ) = ( VALUE ) >
-    endm
-  else
-    RtlStoreUshort macro ADDRESS,VALUE
-     exitm <if ( ( ADDRESS ) and SHORT_MASK ) { ( ( PUCHAR ) ( ADDRESS ) ) [ SHORT_LEAST_SIGNIFICANT_BIT ] = ( FIRSTBYTE ( VALUE ) ) ; ( ( PUCHAR ) ( ADDRESS ) ) [ SHORT_MOST_SIGNIFICANT_BIT ] = ( SECONDBYTE ( VALUE ) ) ; } else { * ( ( PUSHORT ) ( ADDRESS ) ) = VALUE ; } >
-    endm
-  endif
-  if defined(_AMD64_)
-    RtlStoreUlong macro ADDRESS,VALUE
-     exitm <* ( ULONG UNALIGNED * ) ( ADDRESS ) = ( VALUE ) >
-    endm
-  else
-    RtlStoreUlong macro ADDRESS,VALUE
-     exitm <if ( ( ADDRESS ) and LONG_MASK ) { ( ( PUCHAR ) ( ADDRESS ) ) [ LONG_LEAST_SIGNIFICANT_BIT ] = ( FIRSTBYTE ( VALUE ) ) ; ( ( PUCHAR ) ( ADDRESS ) ) [ LONG_3RD_MOST_SIGNIFICANT_BIT ] = ( SECONDBYTE ( VALUE ) ) ; ( ( PUCHAR ) ( ADDRESS ) ) [ LONG_2ND_MOST_SIGNIFICANT_BIT ] = ( THIRDBYTE ( VALUE ) ) ; ( ( PUCHAR ) ( ADDRESS ) ) [ LONG_MOST_SIGNIFICANT_BIT ] = ( FOURTHBYTE ( VALUE ) ) ; } else { * ( ( PULONG ) ( ADDRESS ) ) = ( VALUE ) ; } >
-    endm
-  endif
-  if defined(_AMD64_)
-    RtlStoreUlonglong macro ADDRESS,VALUE
-     exitm <* ( ULONGLONG UNALIGNED * ) ( ADDRESS ) = ( VALUE ) >
-    endm
-  else
-    RtlStoreUlonglong macro ADDRESS,VALUE
-     exitm <if ( ( ADDRESS ) and LONGLONG_MASK ) { RtlStoreUlong ( ( ADDRESS ) , ( VALUE ) and 0FFFFFFFFh ) ; RtlStoreUlong ( ( ADDRESS ) + sizeof ( ULONG ) , ( VALUE ) shr 32 ) ; } else { * ( ( PULONGLONG ) ( ADDRESS ) ) = ( VALUE ) ; } >
-    endm
-  endif
-  ifdef _WIN64
-    RtlStoreUlongPtr macro ADDRESS,VALUE
-     exitm <RtlStoreUlonglong ( ADDRESS , VALUE ) >
-    endm
-  else
-    RtlStoreUlongPtr macro ADDRESS,VALUE
-     exitm <RtlStoreUlong ( ADDRESS , VALUE ) >
-    endm
-  endif
-  if defined(_AMD64_)
-    RtlRetrieveUshort macro DEST_ADDRESS,SRC_ADDRESS
-     exitm <* ( USHORT UNALIGNED * ) ( DEST_ADDRESS ) = * ( PUSHORT ) ( SRC_ADDRESS ) >
-    endm
-  else
-    RtlRetrieveUshort macro DEST_ADDRESS,SRC_ADDRESS
-     exitm <if ( SRC_ADDRESS and SHORT_MASK ) { ( ( PUCHAR ) ( DEST_ADDRESS ) ) [ 0 ] = ( ( PUCHAR ) ( SRC_ADDRESS ) ) [ 0 ] ; ( ( PUCHAR ) ( DEST_ADDRESS ) ) [ 1 ] = ( ( PUCHAR ) ( SRC_ADDRESS ) ) [ 1 ] ; } else { * ( ( PUSHORT ) DEST_ADDRESS ) = * ( ( PUSHORT ) SRC_ADDRESS ) ; } >
-    endm
-  endif
-  if defined(_AMD64_)
-    RtlRetrieveUlong macro DEST_ADDRESS,SRC_ADDRESS
-     exitm <* ( ULONG UNALIGNED * ) ( DEST_ADDRESS ) = * ( PULONG ) ( SRC_ADDRESS ) >
-    endm
-  else
-    RtlRetrieveUlong macro DEST_ADDRESS,SRC_ADDRESS
-     exitm <if ( SRC_ADDRESS and LONG_MASK ) { ( ( PUCHAR ) ( DEST_ADDRESS ) ) [ 0 ] = ( ( PUCHAR ) ( SRC_ADDRESS ) ) [ 0 ] ; ( ( PUCHAR ) ( DEST_ADDRESS ) ) [ 1 ] = ( ( PUCHAR ) ( SRC_ADDRESS ) ) [ 1 ] ; ( ( PUCHAR ) ( DEST_ADDRESS ) ) [ 2 ] = ( ( PUCHAR ) ( SRC_ADDRESS ) ) [ 2 ] ; ( ( PUCHAR ) ( DEST_ADDRESS ) ) [ 3 ] = ( ( PUCHAR ) ( SRC_ADDRESS ) ) [ 3 ] ; } else { * ( ( PULONG ) DEST_ADDRESS ) = * ( ( PULONG ) SRC_ADDRESS ) ; } >
-    endm
-  endif
+
   RTL_BITMAP struct
     SizeOfBitMap DWORD ?
     Buffer PULONG ?
   RTL_BITMAP ends
 
   PRTL_BITMAP typedef ptr RTL_BITMAP
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlInitializeBitMap typedef proto stdcall :PRTL_BITMAP, :PULONG, :DWORD
-    externdef stdcall _imp__RtlInitializeBitMap@12: ptr proto_RtlInitializeBitMap
-    RtlInitializeBitMap equ <_imp__RtlInitializeBitMap@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    proto_RtlClearBit typedef proto stdcall :PRTL_BITMAP, :DWORD
-    externdef stdcall _imp__RtlClearBit@8: ptr proto_RtlClearBit
-    RtlClearBit equ <_imp__RtlClearBit@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    proto_RtlSetBit typedef proto stdcall :PRTL_BITMAP, :DWORD
-    externdef stdcall _imp__RtlSetBit@8: ptr proto_RtlSetBit
-    RtlSetBit equ <_imp__RtlSetBit@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    proto_RtlTestBit typedef proto stdcall :PRTL_BITMAP, :DWORD
-    externdef stdcall _imp__RtlTestBit@8: ptr proto_RtlTestBit
-    RtlTestBit equ <_imp__RtlTestBit@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlClearAllBits typedef proto stdcall :PRTL_BITMAP
-    externdef stdcall _imp__RtlClearAllBits@4: ptr proto_RtlClearAllBits
-    RtlClearAllBits equ <_imp__RtlClearAllBits@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlSetAllBits typedef proto stdcall :PRTL_BITMAP
-    externdef stdcall _imp__RtlSetAllBits@4: ptr proto_RtlSetAllBits
-    RtlSetAllBits equ <_imp__RtlSetAllBits@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindClearBits typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlFindClearBits@12: ptr proto_RtlFindClearBits
-    RtlFindClearBits equ <_imp__RtlFindClearBits@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindSetBits typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlFindSetBits@12: ptr proto_RtlFindSetBits
-    RtlFindSetBits equ <_imp__RtlFindSetBits@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindClearBitsAndSet typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlFindClearBitsAndSet@12: ptr proto_RtlFindClearBitsAndSet
-    RtlFindClearBitsAndSet equ <_imp__RtlFindClearBitsAndSet@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindSetBitsAndClear typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlFindSetBitsAndClear@12: ptr proto_RtlFindSetBitsAndClear
-    RtlFindSetBitsAndClear equ <_imp__RtlFindSetBitsAndClear@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlClearBits typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlClearBits@12: ptr proto_RtlClearBits
-    RtlClearBits equ <_imp__RtlClearBits@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlSetBits typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlSetBits@12: ptr proto_RtlSetBits
-    RtlSetBits equ <_imp__RtlSetBits@12>
-  endif
+
+
   RTL_BITMAP_RUN struct
     StartingIndex DWORD ?
     NumberOfBits DWORD ?
   RTL_BITMAP_RUN ends
 
   PRTL_BITMAP_RUN typedef ptr RTL_BITMAP_RUN
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindClearRuns typedef proto stdcall :PRTL_BITMAP, :PRTL_BITMAP_RUN, :DWORD, :BOOLEAN
-    externdef stdcall _imp__RtlFindClearRuns@16: ptr proto_RtlFindClearRuns
-    RtlFindClearRuns equ <_imp__RtlFindClearRuns@16>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindLongestRunClear typedef proto stdcall :PRTL_BITMAP, :PULONG
-    externdef stdcall _imp__RtlFindLongestRunClear@8: ptr proto_RtlFindLongestRunClear
-    RtlFindLongestRunClear equ <_imp__RtlFindLongestRunClear@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindFirstRunClear typedef proto stdcall :PRTL_BITMAP, :PULONG
-    externdef stdcall _imp__RtlFindFirstRunClear@8: ptr proto_RtlFindFirstRunClear
-    RtlFindFirstRunClear equ <_imp__RtlFindFirstRunClear@8>
-  endif
-  if defined(_M_AMD64) and  not defined(MIDL_PASS)
-    RtlCheckBit proto fastcall :PRTL_BITMAP, :DWORD
-  else
-    RtlCheckBit macro BMH,BP
-     exitm <( ( ( ( ( PLONG ) ( BMH ) - Buffer ) [ ( BP ) / 32 ] ) shr ( ( BP ) % 32 ) ) and 1h ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    proto_RtlNumberOfClearBitsInRange typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlNumberOfClearBitsInRange@12: ptr proto_RtlNumberOfClearBitsInRange
-    RtlNumberOfClearBitsInRange equ <_imp__RtlNumberOfClearBitsInRange@12>
-    proto_RtlNumberOfSetBitsInRange typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlNumberOfSetBitsInRange@12: ptr proto_RtlNumberOfSetBitsInRange
-    RtlNumberOfSetBitsInRange equ <_imp__RtlNumberOfSetBitsInRange@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlNumberOfClearBits typedef proto stdcall :PRTL_BITMAP
-    externdef stdcall _imp__RtlNumberOfClearBits@4: ptr proto_RtlNumberOfClearBits
-    RtlNumberOfClearBits equ <_imp__RtlNumberOfClearBits@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlNumberOfSetBits typedef proto stdcall :PRTL_BITMAP
-    externdef stdcall _imp__RtlNumberOfSetBits@4: ptr proto_RtlNumberOfSetBits
-    RtlNumberOfSetBits equ <_imp__RtlNumberOfSetBits@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlAreBitsClear typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlAreBitsClear@12: ptr proto_RtlAreBitsClear
-    RtlAreBitsClear equ <_imp__RtlAreBitsClear@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlAreBitsSet typedef proto stdcall :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlAreBitsSet@12: ptr proto_RtlAreBitsSet
-    RtlAreBitsSet equ <_imp__RtlAreBitsSet@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindNextForwardRunClear typedef proto stdcall :PRTL_BITMAP, :DWORD, :PULONG
-    externdef stdcall _imp__RtlFindNextForwardRunClear@12: ptr proto_RtlFindNextForwardRunClear
-    RtlFindNextForwardRunClear equ <_imp__RtlFindNextForwardRunClear@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindLastBackwardRunClear typedef proto stdcall :PRTL_BITMAP, :DWORD, :PULONG
-    externdef stdcall _imp__RtlFindLastBackwardRunClear@12: ptr proto_RtlFindLastBackwardRunClear
-    RtlFindLastBackwardRunClear equ <_imp__RtlFindLastBackwardRunClear@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindLeastSignificantBit typedef proto stdcall :QWORD
-    externdef stdcall _imp__RtlFindLeastSignificantBit@4: ptr proto_RtlFindLeastSignificantBit
-    RtlFindLeastSignificantBit equ <_imp__RtlFindLeastSignificantBit@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlFindMostSignificantBit typedef proto stdcall :QWORD
-    externdef stdcall _imp__RtlFindMostSignificantBit@4: ptr proto_RtlFindMostSignificantBit
-    RtlFindMostSignificantBit equ <_imp__RtlFindMostSignificantBit@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_RtlNumberOfSetBitsUlongPtr typedef proto stdcall :ULONG_PTR
-    externdef stdcall _imp__RtlNumberOfSetBitsUlongPtr@8: ptr proto_RtlNumberOfSetBitsUlongPtr
-    RtlNumberOfSetBitsUlongPtr equ <_imp__RtlNumberOfSetBitsUlongPtr@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    proto_RtlCopyBitMap typedef proto stdcall :PRTL_BITMAP, :PRTL_BITMAP, :DWORD
-    externdef stdcall _imp__RtlCopyBitMap@12: ptr proto_RtlCopyBitMap
-    RtlCopyBitMap equ <_imp__RtlCopyBitMap@12>
-    proto_RtlExtractBitMap typedef proto stdcall :PRTL_BITMAP, :PRTL_BITMAP, :DWORD, :DWORD
-    externdef stdcall _imp__RtlExtractBitMap@16: ptr proto_RtlExtractBitMap
-    RtlExtractBitMap equ <_imp__RtlExtractBitMap@16>
-  endif
-  RtlEqualLuid macro L1,L2
-   exitm <( ( ( L1 ) - LowPart == ( L2 ) - LowPart ) and ( ( L1 ) - HighPart == ( L2 ) - HighPart ) ) >
-  endm
-  RtlIsZeroLuid macro L1
-   exitm <( ( ( ( L1 ) - LowPart or ( L1 ) - HighPart ) == 0 ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlCreateSecurityDescriptor typedef proto stdcall :PSECURITY_DESCRIPTOR, :DWORD
-    externdef stdcall _imp__RtlCreateSecurityDescriptor@8: ptr proto_RtlCreateSecurityDescriptor
-    RtlCreateSecurityDescriptor equ <_imp__RtlCreateSecurityDescriptor@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlValidSecurityDescriptor typedef proto stdcall :PSECURITY_DESCRIPTOR
-    externdef stdcall _imp__RtlValidSecurityDescriptor@4: ptr proto_RtlValidSecurityDescriptor
-    RtlValidSecurityDescriptor equ <_imp__RtlValidSecurityDescriptor@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlLengthSecurityDescriptor typedef proto stdcall :PSECURITY_DESCRIPTOR
-    externdef stdcall _imp__RtlLengthSecurityDescriptor@4: ptr proto_RtlLengthSecurityDescriptor
-    RtlLengthSecurityDescriptor equ <_imp__RtlLengthSecurityDescriptor@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlValidRelativeSecurityDescriptor typedef proto stdcall :PSECURITY_DESCRIPTOR, :DWORD, :SECURITY_INFORMATION
-    externdef stdcall _imp__RtlValidRelativeSecurityDescriptor@12: ptr proto_RtlValidRelativeSecurityDescriptor
-    RtlValidRelativeSecurityDescriptor equ <_imp__RtlValidRelativeSecurityDescriptor@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlSetDaclSecurityDescriptor typedef proto stdcall :PSECURITY_DESCRIPTOR, :BOOLEAN, :PACL, :BOOLEAN
-    externdef stdcall _imp__RtlSetDaclSecurityDescriptor@16: ptr proto_RtlSetDaclSecurityDescriptor
-    RtlSetDaclSecurityDescriptor equ <_imp__RtlSetDaclSecurityDescriptor@16>
-  endif
+
+
   SEF_DACL_AUTO_INHERIT equ 01h
   SEF_SACL_AUTO_INHERIT equ 02h
   SEF_DEFAULT_DESCRIPTOR_FOR_OBJECT equ 04h
@@ -4424,46 +3748,13 @@ ifndef _WDMDDK_
   SEF_AVOID_OWNER_RESTRICTION equ 1000h
   SEF_FORCE_USER_MODE equ 2000h
   SEF_MACL_VALID_FLAGS equ <( SEF_MACL_NO_WRITE_UP or SEF_MACL_NO_READ_UP or SEF_MACL_NO_EXECUTE_UP )>
-  if (defined(_M_IX86) and (_MSC_FULL_VER gt 13009037)) or ((defined(_M_AMD64) or defined(_M_IA64)) and (_MSC_FULL_VER gt 13009175)) or defined(_M_ARM) or defined(_M_ARM64)
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
+
     _byteswap_ushort proto c :WORD
     _byteswap_ulong proto c :DWORD
     _byteswap_uint64 proto c :QWORD
-    ifdef __cplusplus
-      ;}
-    endif
-    ;#pragma intrinsic ( _byteswap_ushort )
-    ;#pragma intrinsic ( _byteswap_ulong )
-    ;#pragma intrinsic ( _byteswap_uint64 )
-    RtlUshortByteSwap macro _x
-     exitm <_byteswap_ushort ( ( _x ) ) >
-    endm
-    RtlUlongByteSwap macro _x
-     exitm <_byteswap_ulong ( ( _x ) ) >
-    endm
-    RtlUlonglongByteSwap macro _x
-     exitm <_byteswap_uint64 ( ( _x ) ) >
-    endm
-  else
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      proto_RtlUshortByteSwap typedef proto fastcall :WORD
-      externdef stdcall _imp_RtlUshortByteSwap: ptr proto_RtlUshortByteSwap
-      RtlUshortByteSwap equ <_imp_RtlUshortByteSwap>
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      proto_RtlUlongByteSwap typedef proto fastcall :DWORD
-      externdef stdcall _imp_RtlUlongByteSwap: ptr proto_RtlUlongByteSwap
-      RtlUlongByteSwap equ <_imp_RtlUlongByteSwap>
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      proto_RtlUlonglongByteSwap typedef proto fastcall :QWORD
-      externdef stdcall _imp_RtlUlonglongByteSwap: ptr proto_RtlUlonglongByteSwap
-      RtlUlonglongByteSwap equ <_imp_RtlUlonglongByteSwap>
-    endif
-  endif
+
+
+
   OSVERSIONINFOA struct
     dwOSVersionInfoSize DWORD ?
     dwMajorVersion DWORD ?
@@ -4567,168 +3858,70 @@ ifndef _WDMDDK_
   VER_PLATFORM_WIN32s equ 0
   VER_PLATFORM_WIN32_WINDOWS equ 1
   VER_PLATFORM_WIN32_NT equ 2
-  ;#pragma region Desktop Family or OneCore Family
-  if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP or WINAPI_PARTITION_SYSTEM)
-    VER_SET_CONDITION macro _m_,_t_,_c_
-     exitm <( ( _m_ ) = VerSetConditionMask ( ( _m_ ) , ( _t_ ) , ( _c_ ) ) ) >
-    endm
-    if  not defined(_WINBASE_) and  not defined(MIDL_PASS)
-      if (NTDDI_VERSION ge NTDDI_WIN2K)
-        proto_VerSetConditionMask typedef proto stdcall :QWORD, :DWORD, :BYTE
-        externdef stdcall _imp__VerSetConditionMask@12: ptr proto_VerSetConditionMask
-        VerSetConditionMask equ <_imp__VerSetConditionMask@12>
-      endif
-    endif
-  endif
-  ;#pragma endregion
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_RtlGetVersion typedef proto stdcall :PRTL_OSVERSIONINFOW
-    externdef stdcall _imp__RtlGetVersion@4: ptr proto_RtlGetVersion
-    RtlGetVersion equ <_imp__RtlGetVersion@4>
-    proto_RtlVerifyVersionInfo typedef proto stdcall :PRTL_OSVERSIONINFOEXW, :DWORD, :QWORD
-    externdef stdcall _imp__RtlVerifyVersionInfo@12: ptr proto_RtlVerifyVersionInfo
-    RtlVerifyVersionInfo equ <_imp__RtlVerifyVersionInfo@12>
-  endif
+
+
+
   proto_PFN_RTL_IS_NTDDI_VERSION_AVAILABLE typedef proto fastcall :DWORD
   PFN_RTL_IS_NTDDI_VERSION_AVAILABLE typedef ptr proto_PFN_RTL_IS_NTDDI_VERSION_AVAILABLE
   proto_PFN_RTL_IS_SERVICE_PACK_VERSION_INSTALLED typedef proto fastcall :DWORD
   PFN_RTL_IS_SERVICE_PACK_VERSION_INSTALLED typedef ptr proto_PFN_RTL_IS_SERVICE_PACK_VERSION_INSTALLED
-  RtlIsNtDdiVersionAvailable proto fastcall :DWORD
-  RtlIsServicePackVersionInstalled proto fastcall :DWORD
-  RtlInterlockedSetBits macro Flags,Flag
-   exitm <InterlockedOr ( ( PLONG ) ( Flags ) , Flag ) >
-  endm
-  RtlInterlockedAndBits macro Flags,Flag
-   exitm <InterlockedAnd ( ( PLONG ) ( Flags ) , Flag ) >
-  endm
-  RtlInterlockedClearBits macro Flags,Flag
-   exitm <RtlInterlockedAndBits ( Flags , not ( Flag ) ) >
-  endm
-  RtlInterlockedXorBits macro Flags,Flag
-   exitm <InterlockedXor ( Flags , Flag ) >
-  endm
-  RtlInterlockedSetBitsDiscardReturn macro Flags,Flag
-   exitm <RtlInterlockedSetBits ( Flags , Flag ) >
-  endm
-  RtlInterlockedAndBitsDiscardReturn macro Flags,Flag
-   exitm <RtlInterlockedAndBits ( Flags , Flag ) >
-  endm
-  RtlInterlockedClearBitsDiscardReturn macro Flags,Flag
-   exitm <RtlInterlockedAndBitsDiscardReturn ( Flags , not ( Flag ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    include dpfilter.inc
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_RtlIoEncodeMemIoResource typedef proto stdcall :PIO_RESOURCE_DESCRIPTOR, :BYTE, :QWORD, :QWORD, :QWORD, :QWORD
-    externdef stdcall _imp__RtlIoEncodeMemIoResource@24: ptr proto_RtlIoEncodeMemIoResource
-    RtlIoEncodeMemIoResource equ <_imp__RtlIoEncodeMemIoResource@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_RtlCmEncodeMemIoResource typedef proto stdcall :PCM_PARTIAL_RESOURCE_DESCRIPTOR, :BYTE, :QWORD, :QWORD
-    externdef stdcall _imp__RtlCmEncodeMemIoResource@16: ptr proto_RtlCmEncodeMemIoResource
-    RtlCmEncodeMemIoResource equ <_imp__RtlCmEncodeMemIoResource@16>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_RtlIoDecodeMemIoResource typedef proto stdcall :PIO_RESOURCE_DESCRIPTOR, :PULONGLONG, :PULONGLONG, :PULONGLONG
-    externdef stdcall _imp__RtlIoDecodeMemIoResource@16: ptr proto_RtlIoDecodeMemIoResource
-    RtlIoDecodeMemIoResource equ <_imp__RtlIoDecodeMemIoResource@16>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_RtlCmDecodeMemIoResource typedef proto stdcall :PCM_PARTIAL_RESOURCE_DESCRIPTOR, :PULONGLONG
-    externdef stdcall _imp__RtlCmDecodeMemIoResource@8: ptr proto_RtlCmDecodeMemIoResource
-    RtlCmDecodeMemIoResource equ <_imp__RtlCmDecodeMemIoResource@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_RtlFindClosestEncodableLength typedef proto stdcall :QWORD, :PULONGLONG
-    externdef stdcall _imp__RtlFindClosestEncodableLength@8: ptr proto_RtlFindClosestEncodableLength
-    RtlFindClosestEncodableLength equ <_imp__RtlFindClosestEncodableLength@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8) and  not defined(MIDL_PASS)
-    proto_RtlIsUntrustedObject typedef proto stdcall :HANDLE, :PVOID, :PBOOLEAN
-    externdef stdcall _imp__RtlIsUntrustedObject@12: ptr proto_RtlIsUntrustedObject
-    RtlIsUntrustedObject equ <_imp__RtlIsUntrustedObject@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    proto_RtlQueryValidationRunlevel typedef proto stdcall :PCUNICODE_STRING
-    externdef stdcall _imp__RtlQueryValidationRunlevel@4: ptr proto_RtlQueryValidationRunlevel
-    RtlQueryValidationRunlevel equ <_imp__RtlQueryValidationRunlevel@4>
-  endif
-  if  not defined(VRL_GLOBAL_LEVEL)
-    if (NTDDI_VERSION ge NTDDI_WIN8)
-      VRL_GLOBAL_LEVEL equ <( SharedUserData - GlobalValidationRunlevel )>
-    endif
-  endif
-  if  not defined(IS_VALIDATION_ENABLED)
-    if (NTDDI_VERSION ge NTDDI_WIN8)
-      IS_VALIDATION_ENABLED macro C,L
-       exitm <( ( L ) and ( C ) ) >
-      endm
+
+
+
+
       VRL_PREDEFINED_CLASS_BEGIN equ ( 1 shl 0 )
       VRL_CUSTOM_CLASS_BEGIN equ ( 1 shl 8 )
       VRL_CLASS_CONSISTENCY equ ( VRL_PREDEFINED_CLASS_BEGIN shl 0 )
       VRL_ENABLE_KERNEL_BREAKS equ ( 1 shl 31 )
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
+
+
     CTMF_INCLUDE_APPCONTAINER equ 00000001h
     CTMF_INCLUDE_LPAC equ 00000002h
     CTMF_VALID_FLAGS equ <( CTMF_INCLUDE_APPCONTAINER or CTMF_INCLUDE_LPAC )>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    ;#pragma region Desktop Family or OneCore Family
-    if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP or WINAPI_PARTITION_SYSTEM)
-      proto_RtlCrc32 typedef proto stdcall :ptr , :size_t, :DWORD
-      externdef stdcall _imp__RtlCrc32@12: ptr proto_RtlCrc32
-      RtlCrc32 equ <_imp__RtlCrc32@12>
-      proto_RtlCrc64 typedef proto stdcall :ptr , :size_t, :QWORD
-      externdef stdcall _imp__RtlCrc64@12: ptr proto_RtlCrc64
-      RtlCrc64 equ <_imp__RtlCrc64@12>
-    endif
-    ;#pragma endregion
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
+
+
+
     OS_DEPLOYEMENT_STATE_VALUES typedef SDWORD
-    OS_DEPLOYMENT_STANDARD = 1 
-    OS_DEPLOYMENT_COMPACT = 2
+    OS_DEPLOYMENT_STANDARD EQU 1 
+    OS_DEPLOYMENT_COMPACT EQU 2
     
     proto_RtlOsDeploymentState typedef proto stdcall :DWORD
     externdef stdcall _imp__RtlOsDeploymentState@4: ptr proto_RtlOsDeploymentState
     RtlOsDeploymentState equ <_imp__RtlOsDeploymentState@4>
-  endif
+
   IMAGE_POLICY_METADATA_VERSION equ 1
   IMAGE_POLICY_SECTION_NAME equ <".tPolicy",0>
   IMAGE_POLICY_METADATA_NAME equ <__ImagePolicyMetadata>
   IMAGE_POLICY_ENTRY_TYPE typedef SDWORD
-  ImagePolicyEntryTypeNone = 0 
-  ImagePolicyEntryTypeBool = 1
-  ImagePolicyEntryTypeInt8 = 2
-  ImagePolicyEntryTypeUInt8 = 3
-  ImagePolicyEntryTypeInt16 = 4
-  ImagePolicyEntryTypeUInt16 = 5
-  ImagePolicyEntryTypeInt32 = 6
-  ImagePolicyEntryTypeUInt32 = 7
-  ImagePolicyEntryTypeInt64 = 8
-  ImagePolicyEntryTypeUInt64 = 9
-  ImagePolicyEntryTypeAnsiString = 10
-  ImagePolicyEntryTypeUnicodeString = 11
-  ImagePolicyEntryTypeOverride = 12
-  ImagePolicyEntryTypeMaximum = 13
+  ImagePolicyEntryTypeNone EQU 0 
+  ImagePolicyEntryTypeBool EQU 1
+  ImagePolicyEntryTypeInt8 EQU 2
+  ImagePolicyEntryTypeUInt8 EQU 3
+  ImagePolicyEntryTypeInt16 EQU 4
+  ImagePolicyEntryTypeUInt16 EQU 5
+  ImagePolicyEntryTypeInt32 EQU 6
+  ImagePolicyEntryTypeUInt32 EQU 7
+  ImagePolicyEntryTypeInt64 EQU 8
+  ImagePolicyEntryTypeUInt64 EQU 9
+  ImagePolicyEntryTypeAnsiString EQU 10
+  ImagePolicyEntryTypeUnicodeString EQU 11
+  ImagePolicyEntryTypeOverride EQU 12
+  ImagePolicyEntryTypeMaximum EQU 13
   
   IMAGE_POLICY_ID typedef SDWORD
-  ImagePolicyIdNone = 0 
-  ImagePolicyIdEtw = 1
-  ImagePolicyIdDebug = 2
-  ImagePolicyIdCrashDump = 3
-  ImagePolicyIdCrashDumpKey = 4
-  ImagePolicyIdCrashDumpKeyGuid = 5
-  ImagePolicyIdParentSd = 6
-  ImagePolicyIdParentSdRev = 7
-  ImagePolicyIdSvn = 8
-  ImagePolicyIdDeviceId = 9
-  ImagePolicyIdCapability = 10
-  ImagePolicyIdScenarioId = 11
-  ImagePolicyIdMaximum = 12
+  ImagePolicyIdNone EQU 0 
+  ImagePolicyIdEtw EQU 1
+  ImagePolicyIdDebug EQU 2
+  ImagePolicyIdCrashDump EQU 3
+  ImagePolicyIdCrashDumpKey EQU 4
+  ImagePolicyIdCrashDumpKeyGuid EQU 5
+  ImagePolicyIdParentSd EQU 6
+  ImagePolicyIdParentSdRev EQU 7
+  ImagePolicyIdSvn EQU 8
+  ImagePolicyIdDeviceId EQU 9
+  ImagePolicyIdCapability EQU 10
+  ImagePolicyIdScenarioId EQU 11
+  ImagePolicyIdMaximum EQU 12
   
   IMAGE_POLICY_ENTRY struct
     Type_ IMAGE_POLICY_ENTRY_TYPE ?
@@ -4803,27 +3996,8 @@ ifndef _WDMDDK_
   IMAGE_POLICY_OVERRIDE macro _PolicyId_
    exitm <{ ImagePolicyEntryTypeOverride , _PolicyId_ , 0 } , >
   endm
-  include apiset.inc
-  ;#pragma region Desktop Family or OneCore Family
-  if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP or WINAPI_PARTITION_SYSTEM)
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      proto_RtlCompareMemory typedef proto stdcall :ptr , :ptr , :SIZE_T
-      externdef stdcall _imp__RtlCompareMemory@12: ptr proto_RtlCompareMemory
-      RtlCompareMemory equ <_imp__RtlCompareMemory@12>
-    endif
-  endif
-  ;#pragma endregion
-  ifndef _NTTMAPI_
-    _NTTMAPI_ equ <>
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    include ktmtypes.inc
-    if _MSC_VER ge 1200
-      ;#pragma warning ( push )
-      ;#pragma warning ( disable : 4820 )
-    endif
+
+
     TRANSACTIONMANAGER_QUERY_INFORMATION equ 0001h
     TRANSACTIONMANAGER_SET_INFORMATION equ 0002h
     TRANSACTIONMANAGER_RECOVER equ 0004h
@@ -4867,14 +4041,14 @@ ifndef _WDMDDK_
     ENLISTMENT_GENERIC_EXECUTE equ <( STANDARD_RIGHTS_EXECUTE or ENLISTMENT_RECOVER or ENLISTMENT_SUBORDINATE_RIGHTS or ENLISTMENT_SUPERIOR_RIGHTS )>
     ENLISTMENT_ALL_ACCESS equ <( STANDARD_RIGHTS_REQUIRED or ENLISTMENT_GENERIC_READ or ENLISTMENT_GENERIC_WRITE or ENLISTMENT_GENERIC_EXECUTE )>
     TRANSACTION_OUTCOME typedef SDWORD
-    TransactionOutcomeUndetermined = 1 
-    TransactionOutcomeCommitted = 2
-    TransactionOutcomeAborted = 3
+    TransactionOutcomeUndetermined EQU 1 
+    TransactionOutcomeCommitted EQU 2
+    TransactionOutcomeAborted EQU 3
     
     TRANSACTION_STATE typedef SDWORD
-    TransactionStateNormal = 1 
-    TransactionStateIndoubt = 2
-    TransactionStateCommittedNotify = 3
+    TransactionStateNormal EQU 1 
+    TransactionStateIndoubt EQU 2
+    TransactionStateCommittedNotify EQU 3
     
     TRANSACTION_BASIC_INFORMATION struct
       TransactionId GUID <>
@@ -4963,20 +4137,20 @@ ifndef _WDMDDK_
     PRESOURCEMANAGER_COMPLETION_INFORMATION typedef ptr RESOURCEMANAGER_COMPLETION_INFORMATION
     
     TRANSACTION_INFORMATION_CLASS typedef SDWORD
-    TransactionBasicInformation = 0
-    TransactionPropertiesInformation = 1
-    TransactionEnlistmentInformation = 2
-    TransactionSuperiorEnlistmentInformation = 3
+    TransactionBasicInformation EQU 0
+    TransactionPropertiesInformation EQU 1
+    TransactionEnlistmentInformation EQU 2
+    TransactionSuperiorEnlistmentInformation EQU 3
     
     TRANSACTIONMANAGER_INFORMATION_CLASS typedef SDWORD
-    TransactionManagerBasicInformation = 0
-    TransactionManagerLogInformation = 1
-    TransactionManagerLogPathInformation = 2
-    TransactionManagerRecoveryInformation = 4 
+    TransactionManagerBasicInformation EQU 0
+    TransactionManagerLogInformation EQU 1
+    TransactionManagerLogPathInformation EQU 2
+    TransactionManagerRecoveryInformation EQU 4 
     
     RESOURCEMANAGER_INFORMATION_CLASS typedef SDWORD
-    ResourceManagerBasicInformation = 0
-    ResourceManagerCompletionInformation = 1
+    ResourceManagerBasicInformation EQU 0
+    ResourceManagerCompletionInformation EQU 1
     
     ENLISTMENT_BASIC_INFORMATION struct
       EnlistmentId GUID <>
@@ -4995,12 +4169,14 @@ ifndef _WDMDDK_
     PENLISTMENT_CRM_INFORMATION typedef ptr ENLISTMENT_CRM_INFORMATION
     
     ENLISTMENT_INFORMATION_CLASS typedef SDWORD
-    EnlistmentBasicInformation = 0
-    EnlistmentRecoveryInformation = 1
-    EnlistmentCrmInformation = 2
+    EnlistmentBasicInformation EQU 0
+    EnlistmentRecoveryInformation EQU 1
+    EnlistmentCrmInformation EQU 2
+    
+    UOW TYPEDEF GUID    
     
     TRANSACTION_LIST_ENTRY struct
-      UOW UOW ?
+      tUOW UOW <>
     TRANSACTION_LIST_ENTRY ends
 
     PTRANSACTION_LIST_ENTRY typedef ptr TRANSACTION_LIST_ENTRY
@@ -5013,11 +4189,11 @@ ifndef _WDMDDK_
     PTRANSACTION_LIST_INFORMATION typedef ptr TRANSACTION_LIST_INFORMATION
     
     KTMOBJECT_TYPE typedef SDWORD
-    KTMOBJECT_TRANSACTION = 0
-    KTMOBJECT_TRANSACTION_MANAGER = 1
-    KTMOBJECT_RESOURCE_MANAGER = 2
-    KTMOBJECT_ENLISTMENT = 3
-    KTMOBJECT_INVALID = 4
+    KTMOBJECT_TRANSACTION EQU 0
+    KTMOBJECT_TRANSACTION_MANAGER EQU 1
+    KTMOBJECT_RESOURCE_MANAGER EQU 2
+    KTMOBJECT_ENLISTMENT EQU 3
+    KTMOBJECT_INVALID EQU 4
     
     PKTMOBJECT_TYPE typedef ptr KTMOBJECT_TYPE
     
@@ -5028,148 +4204,8 @@ ifndef _WDMDDK_
     KTMOBJECT_CURSOR ends
 
     PKTMOBJECT_CURSOR typedef ptr KTMOBJECT_CURSOR
-    
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCreateTransactionManager proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PUNICODE_STRING, :DWORD, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtOpenTransactionManager proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PUNICODE_STRING, :LPGUID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRenameTransactionManager proto stdcall :PUNICODE_STRING, :LPGUID
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRollforwardTransactionManager proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRecoverTransactionManager proto stdcall :HANDLE
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtQueryInformationTransactionManager proto stdcall :HANDLE, :TRANSACTIONMANAGER_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtSetInformationTransactionManager proto stdcall :HANDLE, :TRANSACTIONMANAGER_INFORMATION_CLASS, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtEnumerateTransactionObject proto stdcall :HANDLE, :KTMOBJECT_TYPE, :PKTMOBJECT_CURSOR, :DWORD, :PULONG
-    endif
-    proto_PFN_NT_CREATE_TRANSACTION typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :LPGUID, :HANDLE, :DWORD, :DWORD, :DWORD, :PLARGE_INTEGER, :PUNICODE_STRING
-    PFN_NT_CREATE_TRANSACTION typedef ptr proto_PFN_NT_CREATE_TRANSACTION
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCreateTransaction proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :LPGUID, :HANDLE, :DWORD, :DWORD, :DWORD, :PLARGE_INTEGER, :PUNICODE_STRING
-    endif
-    proto_PFN_NT_OPEN_TRANSACTION typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :LPGUID, :HANDLE
-    PFN_NT_OPEN_TRANSACTION typedef ptr proto_PFN_NT_OPEN_TRANSACTION
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtOpenTransaction proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :LPGUID, :HANDLE
-    endif
-    proto_PFN_NT_QUERY_INFORMATION_TRANSACTION typedef proto stdcall :HANDLE, :TRANSACTION_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    PFN_NT_QUERY_INFORMATION_TRANSACTION typedef ptr proto_PFN_NT_QUERY_INFORMATION_TRANSACTION
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtQueryInformationTransaction proto stdcall :HANDLE, :TRANSACTION_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    endif
-    proto_PFN_NT_SET_INFORMATION_TRANSACTION typedef proto stdcall :HANDLE, :TRANSACTION_INFORMATION_CLASS, :PVOID, :DWORD
-    PFN_NT_SET_INFORMATION_TRANSACTION typedef ptr proto_PFN_NT_SET_INFORMATION_TRANSACTION
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtSetInformationTransaction proto stdcall :HANDLE, :TRANSACTION_INFORMATION_CLASS, :PVOID, :DWORD
-    endif
-    proto_PFN_NT_COMMIT_TRANSACTION typedef proto stdcall :HANDLE, :BOOLEAN
-    PFN_NT_COMMIT_TRANSACTION typedef ptr proto_PFN_NT_COMMIT_TRANSACTION
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCommitTransaction proto stdcall :HANDLE, :BOOLEAN
-    endif
-    proto_PFN_NT_ROLLBACK_TRANSACTION typedef proto stdcall :HANDLE, :BOOLEAN
-    PFN_NT_ROLLBACK_TRANSACTION typedef ptr proto_PFN_NT_ROLLBACK_TRANSACTION
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRollbackTransaction proto stdcall :HANDLE, :BOOLEAN
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCreateEnlistment proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :HANDLE, :POBJECT_ATTRIBUTES, :DWORD, :NOTIFICATION_MASK, :PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtOpenEnlistment proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :LPGUID, :POBJECT_ATTRIBUTES
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtQueryInformationEnlistment proto stdcall :HANDLE, :ENLISTMENT_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtSetInformationEnlistment proto stdcall :HANDLE, :ENLISTMENT_INFORMATION_CLASS, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRecoverEnlistment proto stdcall :HANDLE, :PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtPrePrepareEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtPrepareEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCommitEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRollbackEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtPrePrepareComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtPrepareComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCommitComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtReadOnlyEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRollbackComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtSinglePhaseReject proto stdcall :HANDLE, :PLARGE_INTEGER
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtCreateResourceManager proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :LPGUID, :POBJECT_ATTRIBUTES, :DWORD, :PUNICODE_STRING
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtOpenResourceManager proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :LPGUID, :POBJECT_ATTRIBUTES
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRecoverResourceManager proto stdcall :HANDLE
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtGetNotificationResourceManager proto stdcall :HANDLE, :PTRANSACTION_NOTIFICATION, :DWORD, :PLARGE_INTEGER, :PULONG, :DWORD, :ULONG_PTR
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtQueryInformationResourceManager proto stdcall :HANDLE, :RESOURCEMANAGER_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtSetInformationResourceManager proto stdcall :HANDLE, :RESOURCEMANAGER_INFORMATION_CLASS, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtRegisterProtocolAddressInformation proto stdcall :HANDLE, :PCRM_PROTOCOL_ID, :DWORD, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtPropagationComplete proto stdcall :HANDLE, :DWORD, :DWORD, :PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      NtPropagationFailed proto stdcall :HANDLE, :DWORD, :NTSTATUS
-    endif
-    if _MSC_VER ge 1200
-      ;#pragma warning ( pop )
-    endif
-    ifdef __cplusplus
-      ;}
-    endif
-  endif
-  ;#undef  ALIGN_DOWN_BY
-  ;#undef  ALIGN_UP_BY
-  ;#undef  ALIGN_DOWN_POINTER_BY
-  ;#undef  ALIGN_UP_POINTER_BY
-  ;#undef  ALIGN_DOWN
-  ;#undef  ALIGN_UP
-  ;#undef  ALIGN_DOWN_POINTER
-  ;#undef  ALIGN_UP_POINTER
+
+
   ALIGN_DOWN_BY macro length,alignment
    exitm <( ( length ) and not ( alignment - 1 ) ) >
   endm
@@ -5204,24 +4240,9 @@ ifndef _WDMDDK_
      exitm <( sizeof ( ( ( type * ) 0 ) - field ) ) >
     endm
   endif
-  if defined(_WIN64)
-    BitScanReverseSizeT equ <BitScanReverse64>
-    BitScanForwardSizeT equ <BitScanForward64>
-  else
-    BitScanReverseSizeT equ <BitScanReverse>
-    BitScanForwardSizeT equ <BitScanForward>
-  endif
-  POOL_TAGGING equ 1
-  if DBG
-    IF_DEBUG equ <if ( TRUE )>
-  else
-    IF_DEBUG equ <if ( FALSE )>
-  endif
-  externdef c NtGlobalFlag: DWORD
-  ;#pragma warning ( push )
-  ;#pragma warning ( disable : 4471 )
-  POOL_TYPE typedef SDWORD
-  ;#pragma warning ( pop )
+
+
+
   ALLOCATE_FUNCTION typedef proto stdcall :POOL_TYPE,:SIZE_T,:DWORD
   PALLOCATE_FUNCTION typedef ptr ALLOCATE_FUNCTION
   FREE_FUNCTION typedef proto stdcall :PVOID
@@ -5232,61 +4253,51 @@ ifndef _WDMDDK_
   PALLOCATE_FUNCTION_EX typedef ptr ALLOCATE_FUNCTION_EX
   FREE_FUNCTION_EX typedef proto stdcall :PVOID,:PLOOKASIDE_LIST_EX
   PFREE_FUNCTION_EX typedef ptr FREE_FUNCTION_EX
-  if  not defined(_WIN64) and (defined(_NTDDK_) or defined(_NTIFS_) or defined(_NDIS_))
-    LOOKASIDE_ALIGN equ <>
-  else
-    LOOKASIDE_ALIGN equ <DECLSPEC_CACHEALIGN>
-  endif
-  GENERAL_LOOKASIDE_LAYOUT equ union { SLIST_HEADER ListHead ; SINGLE_LIST_ENTRY SingleListHead ; } DUMMYUNIONNAME ; USHORT Depth ; USHORT MaximumDepth ; ULONG TotalAllocates ; union { ULONG AllocateMisses ; ULONG AllocateHits ; } DUMMYUNIONNAME2 ; ULONG TotalFrees ; union { ULONG FreeMisses ; ULONG FreeHits ; } DUMMYUNIONNAME3 ; POOL_TYPE Type ; ULONG Tag ; ULONG Size ; union { PALLOCATE_FUNCTION_EX AllocateEx ; PALLOCATE_FUNCTION Allocate ; } DUMMYUNIONNAME4 ; union { PFREE_FUNCTION_EX FreeEx ; PFREE_FUNCTION Free ; } DUMMYUNIONNAME5 ; LIST_ENTRY ListEntry ; ULONG LastTotalAllocates ; union { ULONG LastAllocateMisses ; ULONG LastAllocateHits ; } DUMMYUNIONNAME6 ; ULONG Future [ 2 ] ;
-  if _MSC_VER ge 1200
-    ;#pragma warning ( push )
-    ;#pragma warning ( disable : 4324 )
-  endif
-  GENERAL_LOOKASIDE typedef LOOKASIDE_ALIGN
-  
-  PGENERAL_LOOKASIDE typedef ptr GENERAL_LOOKASIDE
-  if _MSC_VER ge 1200
-    ;#pragma warning ( pop )
-  endif
-  GENERAL_LOOKASIDE_POOL struct
-    GENERAL_LOOKASIDE_LAYOUT DWORD ?
-  GENERAL_LOOKASIDE_POOL ends
 
-  PGENERAL_LOOKASIDE_POOL typedef ptr GENERAL_LOOKASIDE_POOL
-  
-  LOOKASIDE_CHECK macro f
-   exitm <C_ASSERT ( FIELD_OFFSET ( GENERAL_LOOKASIDE , f ) == FIELD_OFFSET ( GENERAL_LOOKASIDE_POOL , f ) ) >
-  endm
-  LOOKASIDE_CHECK( TotalFrees)
-  LOOKASIDE_CHECK( Tag)
-  LOOKASIDE_CHECK( Future)
-  KPROCESSOR_MODE typedef CCHAR
+
+;  GENERAL_LOOKASIDE_LAYOUT equ union { SLIST_HEADER ListHead ; SINGLE_LIST_ENTRY SingleListHead ; } DUMMYUNIONNAME ; USHORT Depth ; USHORT MaximumDepth ; ULONG TotalAllocates ; union { ULONG AllocateMisses ; ULONG AllocateHits ; } DUMMYUNIONNAME2 ; ULONG TotalFrees ; union { ULONG FreeMisses ; ULONG FreeHits ; } DUMMYUNIONNAME3 ; POOL_TYPE Type ; ULONG Tag ; ULONG Size ; union { PALLOCATE_FUNCTION_EX AllocateEx ; PALLOCATE_FUNCTION Allocate ; } DUMMYUNIONNAME4 ; union { PFREE_FUNCTION_EX FreeEx ; PFREE_FUNCTION Free ; } DUMMYUNIONNAME5 ; LIST_ENTRY ListEntry ; ULONG LastTotalAllocates ; union { ULONG LastAllocateMisses ; ULONG LastAllocateHits ; } DUMMYUNIONNAME6 ; ULONG Future [ 2 ] ;
+;
+;
+;  GENERAL_LOOKASIDE_POOL struct
+;    GENERAL_LOOKASIDE_LAYOUT DWORD ?
+;  GENERAL_LOOKASIDE_POOL ends
+;
+;  PGENERAL_LOOKASIDE_POOL typedef ptr GENERAL_LOOKASIDE_POOL
+
+
+;  KPROCESSOR_MODE typedef CCHAR
   MODE typedef SDWORD
-  KernelMode = 0
-  UserMode = 1
-  MaximumMode = 2
+  KernelMode EQU 0
+  UserMode EQU 1
+  MaximumMode EQU 2
   
   KSYNCHRONIZE_ROUTINE typedef proto stdcall :PVOID
   PKSYNCHRONIZE_ROUTINE typedef ptr KSYNCHRONIZE_ROUTINE
-  KAPC struct
-    Type_ BYTE ?
-    SpareByte0 BYTE ?
-    Size_ BYTE ?
-    SpareByte1 BYTE ?
-    SpareLong0 DWORD ?
-    Thread POINTER ?
-    ApcListEntry LIST_ENTRY <>
-    Reserved PVOID 3 dup (?)
-    NormalContext PVOID ?
-    SystemArgument1 PVOID ?
-    SystemArgument2 PVOID ?
-    ApcStateIndex CCHAR ?
-    ApcMode KPROCESSOR_MODE ?
-    Inserted BOOLEAN ?
-  KAPC ends
-
-  PKAPC typedef ptr KAPC
-  PRKAPC typedef ptr KAPC
+  
+    IFNDEF KAPC
+    KAPC STRUCT			; sizeof = 30h
+    	fwType			WORD		IO_TYPE_APC	; 12h
+    	cbSize			WORD		?			; cb
+    	Spare0			DWORD		?
+    	Thread			PVOID		?			; PTR KTHREAD
+    	ApcListEntry	LIST_ENTRY	<>
+    	KernelRoutine	PVOID		?			; KiSuspendNop
+    	RundownRoutine	PVOID		?
+    	NormalRoutine	PVOID		?			; KiSuspendThread
+    	NormalContext	PVOID		?
+    
+    	; N.B. The following two members MUST be together.
+    
+    	SystemArgument1	PVOID		?
+    	SystemArgument2	PVOID		?
+    	ApcStateIndex	CHAR		?
+    	ApcMode			KPROCESSOR_MODE	?
+    	Inserted		BOOLEAN		?
+    					db			?			; padding
+    KAPC ENDS
+    ENDIF
+    PKAPC typedef PTR KAPC  
+    PRKAPC typedef ptr KAPC
   
   KAPC_OFFSET_TO_SPARE_BYTE0 equ <FIELD_OFFSET ( KAPC , SpareByte0 )>
   KAPC_OFFSET_TO_SPARE_BYTE1 equ <FIELD_OFFSET ( KAPC , SpareByte1 )>
@@ -5295,235 +4306,91 @@ ifndef _WDMDDK_
   KAPC_OFFSET_TO_SYSTEMARGUMENT2 equ <FIELD_OFFSET ( KAPC , SystemArgument2 )>
   KAPC_OFFSET_TO_APCSTATEINDEX equ <FIELD_OFFSET ( KAPC , ApcStateIndex )>
   KAPC_ACTUAL_LENGTH equ <( FIELD_OFFSET ( KAPC , Inserted ) + sizeof ( BOOLEAN ) )>
-  KDEFERRED_ROUTINE proto fastcall :ptr _KDPC, :PVOID, :PVOID, :PVOID
-  PKDEFERRED_ROUTINE typedef ptr KDEFERRED_ROUTINE
+
   KDPC_IMPORTANCE typedef SDWORD
-  LowImportance = 0
-  MediumImportance = 1
-  HighImportance = 2
-  MediumHighImportance = 3
+  LowImportance EQU 0
+  MediumImportance EQU 1
+  HighImportance EQU 2
+  MediumHighImportance EQU 3
   
   DPC_NORMAL equ 0
   DPC_THREADED equ 1
-  ASSERT_DPC macro Object
-   exitm <NT_ASSERT ( ( ( Object ) - Type == 0 ) or ( ( Object ) - Type == DpcObject ) or ( ( Object ) - Type == ThreadedDpcObject ) ) >
-  endm
-  KDPC struct
-    union DUMMYUNIONNAME_9
-      TargetInfoAsUlong DWORD ?
-      struct DUMMYSTRUCTNAME_10
-        Type_ BYTE ?
-        Importance BYTE ?
-        Number WORD ?
-      ends
-    ends
-    DpcListEntry SINGLE_LIST_ENTRY <>
-    ProcessorHistory KAFFINITY ?
-    DeferredRoutine PKDEFERRED_ROUTINE ?
-    DeferredContext PVOID ?
-    SystemArgument1 PVOID ?
-    SystemArgument2 PVOID ?
-    DpcData PVOID ?
-  KDPC ends
-
-  PKDPC typedef ptr KDPC
-  PRKDPC typedef ptr KDPC
   
-  if defined(_X86_)
-    PAGE_SIZE equ 1000h
-    PAGE_SHIFT equ 12
-  elseif defined(_AMD64_)
-    PAGE_SIZE equ 1000h
-    PAGE_SHIFT equ 12
-  elseif defined(_ARM64_)
-    PAGE_SIZE equ 1000h
-    PAGE_SHIFT equ 12
-  elseif defined(_ARM_)
-    PAGE_SIZE equ 1000h
-    PAGE_SHIFT equ 12
-  endif
-  MDL struct
-    Next POINTER ?
-    Size_ CSHORT ?
-    MdlFlags CSHORT ?
-    Process POINTER ?
-    MappedSystemVa PVOID ?
-    StartVa PVOID ?
-    ByteCount DWORD ?
-    ByteOffset DWORD ?
-  MDL ends
+    IFNDEF KDPC
+    KDPC STRUCT			; sizeof = 20h
+    	woType			WORD		IO_TYPE_DPC	; 13h (original name Type)
+    	Number			BYTE		?
+    	Importance		BYTE		?
+    	DpcListEntry	LIST_ENTRY	<>
+    	DeferredRoutine	QWORD		?
+    	DeferredContext	QWORD		?
+    	SystemArgument1	QWORD		?
+    	SystemArgument2	QWORD		?
+    	DpcData			QWORD		?			; (original Lock)
+    KDPC ENDS
+    ENDIF
+    PKDPC typedef ptr KDPC
+    PRKDPC typedef ptr KDPC
 
-  PMDL typedef ptr MDL
-  
-  PMDLX typedef ptr MDL
-  MDL_MAPPED_TO_SYSTEM_VA equ 0001h
-  MDL_PAGES_LOCKED equ 0002h
-  MDL_SOURCE_IS_NONPAGED_POOL equ 0004h
-  MDL_ALLOCATED_FIXED_SIZE equ 0008h
-  MDL_PARTIAL equ 0010h
-  MDL_PARTIAL_HAS_BEEN_MAPPED equ 0020h
-  MDL_IO_PAGE_READ equ 0040h
-  MDL_WRITE_OPERATION equ 0080h
-  MDL_LOCKED_PAGE_TABLES equ 0100h
-  MDL_PARENT_MAPPED_SYSTEM_VA equ <MDL_LOCKED_PAGE_TABLES>
-  MDL_FREE_EXTRA_PTES equ 0200h
-  MDL_DESCRIBES_AWE equ 0400h
-  MDL_IO_SPACE equ 0800h
-  MDL_NETWORK_HEADER equ 1000h
-  MDL_MAPPING_CAN_FAIL equ 2000h
-  MDL_PAGE_CONTENTS_INVARIANT equ 4000h
-  MDL_ALLOCATED_MUST_SUCCEED equ <MDL_PAGE_CONTENTS_INVARIANT>
-  MDL_INTERNAL equ 8000h
-  MDL_MAPPING_FLAGS equ <( MDL_MAPPED_TO_SYSTEM_VA or MDL_PAGES_LOCKED or MDL_SOURCE_IS_NONPAGED_POOL or MDL_PARTIAL_HAS_BEEN_MAPPED or MDL_PARENT_MAPPED_SYSTEM_VA or MDL_SYSTEM_VA or MDL_IO_SPACE )>
-  if defined(_PREFAST_)
-    __PREfastPagedCode proto fastcall
-    __PREfastPagedCodeLocked proto fastcall
-    PAGED_CODE macro 
-     exitm <__PREfastPagedCode ( ) ; >
-    endm
-    PAGED_CODE_LOCKED macro 
-     exitm <__PREfastPagedCodeLocked ( ) ; >
-    endm
-  elseif DBG
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      PAGED_ASSERT macro exp
-       exitm <NT_ASSERT ( exp ) >
-      endm
-    else
-      PAGED_ASSERT macro exp
-       exitm <ASSERT ( exp ) >
-      endm
-    endif
-    PAGED_CODE macro 
-     exitm <PAGED_ASSERT ( KeGetCurrentIrql ( ) <= APC_LEVEL ) ; >
-    endm
-    PAGED_CODE_LOCKED macro 
-     exitm <NOP_FUNCTION ; >
-    endm
-  else
-    PAGED_CODE macro 
-     exitm <NOP_FUNCTION ; >
-    endm
-    PAGED_CODE_LOCKED macro 
-     exitm <NOP_FUNCTION ; >
-    endm
-  endif
-  NTKERNELAPI equ <DECLSPEC_IMPORT>
-  if defined(_X86_) and  not defined(_NTHAL_)
-    _DECL_HAL_KE_IMPORT equ <DECLSPEC_IMPORT>
-  elseif defined(_X86_)
-    _DECL_HAL_KE_IMPORT equ <>
-  else
-    _DECL_HAL_KE_IMPORT equ <NTKERNELAPI>
-  endif
-  if  not defined(_NTHALDLL_) and  not defined(_BLDR_)
-    NTHALAPI equ <DECLSPEC_IMPORT>
-  else
-    NTHALAPI equ <>
-  endif
-  if defined(_X86_)
+
+    PAGE_SIZE equ 1000h
+    PAGE_SHIFT equ 12
+
+    IFNDEF MDL
+    MDL STRUCT			; sizeof= 1Ch
+    	Next			PVOID	?	; PTR MDL
+    	woSize			WORD	?	; 04h original name Size
+    	MdlFlags		WORD	?	; 06h
+    	Process			PVOID	?	; 08h PTR EPROCESS
+    	MappedSystemVa	PVOID	?	; 0Ch
+    	StartVa			PVOID	?	; 10h
+    	ByteCount		DWORD	?	; 14h
+    	ByteOffset		DWORD	?	; 18h
+    MDL ENDS
+    ENDIF
+    PMDL typedef ptr MDL
+    PMDLX typedef ptr MDL
+    
+    MDL_MAPPED_TO_SYSTEM_VA     equ 0001h
+    MDL_PAGES_LOCKED            equ 0002h
+    MDL_SOURCE_IS_NONPAGED_POOL equ 0004h
+    MDL_ALLOCATED_FIXED_SIZE    equ 0008h
+    MDL_PARTIAL                 equ 0010h
+    MDL_PARTIAL_HAS_BEEN_MAPPED equ 0020h
+    MDL_IO_PAGE_READ            equ 0040h
+    MDL_WRITE_OPERATION         equ 0080h
+    MDL_LOCKED_PAGE_TABLES      equ 0100h
+    MDL_PARENT_MAPPED_SYSTEM_VA equ MDL_LOCKED_PAGE_TABLES
+    MDL_FREE_EXTRA_PTES         equ 0200h
+    MDL_DESCRIBES_AWE           equ 0400h
+    MDL_LOCK_HELD               equ 0200h
+    MDL_PHYSICAL_VIEW           equ 0400h
+    MDL_IO_SPACE                equ 0800h
+    MDL_NETWORK_HEADER          equ 1000h
+    MDL_MAPPING_CAN_FAIL        equ 2000h
+    MDL_PAGE_CONTENTS_INVARIANT equ 4000h
+    MDL_ALLOCATED_MUST_SUCCEED  equ MDL_PAGE_CONTENTS_INVARIANT
+    MDL_INTERNAL                equ 8000h
+    MDL_MAPPING_FLAGS           equ (MDL_MAPPED_TO_SYSTEM_VA or MDL_PAGES_LOCKED or MDL_SOURCE_IS_NONPAGED_POOL or MDL_PARTIAL_HAS_BEEN_MAPPED or MDL_PARENT_MAPPED_SYSTEM_VA or MDL_LOCK_HELD or MDL_SYSTEM_VA or MDL_IO_SPACE)
+    
+
     KENCODED_TIMER_PROCESSOR equ 1
-  endif
+
   TIMER_TOLERABLE_DELAY_BITS equ 6
   TIMER_EXPIRED_INDEX_BITS equ 6
   TIMER_PROCESSOR_INDEX_BITS equ 5
-  DISPATCHER_HEADER struct
-    union DUMMYUNIONNAME_11
-      union DUMMYUNIONNAME_12
-        Lock_ SDWORD ?
-        LockNV SDWORD ?
-      ends
-      struct DUMMYSTRUCTNAME_13
-        Type_ BYTE ?
-        Signalling BYTE ?
-        Size_ BYTE ?
-        Reserved1 BYTE ?
-      ends
-      struct DUMMYSTRUCTNAME2
-        TimerType BYTE ?
-        union
-          TimerControlFlags BYTE ?
-          struct DUMMYSTRUCTNAME_14
-            DUMMYSTRUCTNAME_14_??12 record Absolute_??12:1, Wake_??12:1, EncodedTolerableDelay_??12:TIMER_TOLERABLE_DELAY_BITS
-            DUMMYSTRUCTNAME_14_??12 <>
-          ends
-        ends
-        Hand BYTE ?
-        union DUMMYUNIONNAME_15
-          TimerMiscFlags BYTE ?
-          struct DUMMYSTRUCTNAME_16
-            if  not defined(KENCODED_TIMER_PROCESSOR)
-              DUMMYSTRUCTNAME_16_??13 record Index_??13:TIMER_EXPIRED_INDEX_BITS, 
-            else
-              Index_??13:1, Processor_??13:TIMER_PROCESSOR_INDEX_BITS, 
-            endif
-            Inserted_??13:1, Expired_??13:1
-            DUMMYSTRUCTNAME_16_??13 <>
-          ends
-        ends
-      ends
-      struct DUMMYSTRUCTNAME3
-        Timer2Type BYTE ?
-        union DUMMYUNIONNAME_17
-          Timer2Flags BYTE ?
-          struct DUMMYSTRUCTNAME_18
-            DUMMYSTRUCTNAME_18_??14 record Timer2Inserted_??14:1, Timer2Expiring_??14:1, Timer2CancelPending_??14:1, Timer2SetPending_??14:1, Timer2Running_??14:1, Timer2Disabled_??14:1, Timer2ReservedFlags_??14:2
-            DUMMYSTRUCTNAME_18_??14 <>
-          ends
-        ends
-        Timer2ComponentId BYTE ?
-        Timer2RelativeId BYTE ?
-      ends
-      struct DUMMYSTRUCTNAME4
-        QueueType BYTE ?
-        union DUMMYUNIONNAME_19
-          QueueControlFlags BYTE ?
-          struct DUMMYSTRUCTNAME_20
-            DUMMYSTRUCTNAME_20_??15 record Abandoned_??15:1, DisableIncrement_??15:1, QueueReservedControlFlags_??15:6
-            DUMMYSTRUCTNAME_20_??15 <>
-          ends
-        ends
-        QueueSize BYTE ?
-        QueueReserved BYTE ?
-      ends
-      struct DUMMYSTRUCTNAME5
-        ThreadType BYTE ?
-        ThreadReserved BYTE ?
-        union DUMMYUNIONNAME_21
-          ThreadControlFlags BYTE ?
-          struct DUMMYSTRUCTNAME_22
-            DUMMYSTRUCTNAME_22_??16 record CycleProfiling_??16:1, CounterProfiling_??16:1, GroupScheduling_??16:1, AffinitySet_??16:1, Tagged_??16:1, EnergyProfiling_??16:1, SchedulerAssist_??16:1, 
-            if  not defined(_X86_)
-              ThreadReservedControlFlags_??16:1
-              DUMMYSTRUCTNAME_22_??16 <>
-            else
-              DUMMYSTRUCTNAME_22_??17 record Instrumented_??17:1
-              DUMMYSTRUCTNAME_22_??17 <>
-            endif
-          ends
-        ends
-        union DUMMYUNIONNAME2
-          DebugActive BYTE ?
-          if  not defined(_X86_)
-            struct DUMMYSTRUCTNAME_23
-              DUMMYSTRUCTNAME_23_??18 record ActiveDR7_??18:1, Instrumented_??18:1, Minimal_??18:1, Reserved4_??18:3, UmsScheduled_??18:1, UmsPrimary_??18:1
-              DUMMYSTRUCTNAME_23_??18 <>
-            ends
-          endif
-        ends
-      ends
-      struct DUMMYSTRUCTNAME6
-        MutantType BYTE ?
-        MutantSize BYTE ?
-        DpcActive BOOLEAN ?
-        MutantReserved BYTE ?
-      ends
-    ends
-    SignalState SDWORD ?
-    WaitListHead LIST_ENTRY <>
-  DISPATCHER_HEADER ends
 
-  PDISPATCHER_HEADER typedef ptr DISPATCHER_HEADER
+    IFNDEF DISPATCHER_HEADER
+    DISPATCHER_HEADER STRUCT		; sizeof = 10h
+    	byType			BYTE		?	; DISP_TYPE_* (original name Type)
+    	Absolute		BYTE		?
+    	cbSize			BYTE		?	; cb
+    	Inserted		BYTE		?
+    	SignalState		DWORD		?
+    	WaitListHead	LIST_ENTRY	<>
+    DISPATCHER_HEADER ENDS
+    ENDIF
+    PDISPATCHER_HEADER typedef ptr DISPATCHER_HEADER
   
   KEVENT struct
     Header DISPATCHER_HEADER <>
@@ -5543,9 +4410,9 @@ ifndef _WDMDDK_
     DueTime ULARGE_INTEGER <>
     TimerListEntry LIST_ENTRY <>
     Dpc POINTER ?
-    if  not defined(KENCODED_TIMER_PROCESSOR)
+    ;if  not defined(KENCODED_TIMER_PROCESSOR)
       Processor DWORD ?
-    endif
+    ;endif
     Period DWORD ?
   KTIMER ends
 
@@ -5554,9 +4421,9 @@ ifndef _WDMDDK_
   
   KTIMER_ACTUAL_LENGTH equ <( FIELD_OFFSET ( KTIMER , Period ) + sizeof ( LONG ) )>
   LOCK_OPERATION typedef SDWORD
-  IoReadAccess = 0
-  IoWriteAccess = 1
-  IoModifyAccess = 2
+  IoReadAccess EQU 0
+  IoWriteAccess EQU 1
+  IoModifyAccess EQU 2
   
   FAST_MUTEX struct
     Count SDWORD ?
@@ -5570,7 +4437,7 @@ ifndef _WDMDDK_
   KGUARDED_MUTEX typedef FAST_MUTEX
   PKGUARDED_MUTEX typedef ptr FAST_MUTEX
   
-  if defined(_X86_)
+
     PFN_COUNT typedef DWORD
     SPFN_NUMBER typedef SDWORD
     PSPFN_NUMBER typedef ptr SDWORD
@@ -5579,58 +4446,27 @@ ifndef _WDMDDK_
     FLUSH_MULTIPLE_MAXIMUM equ 32
     ALLOC_PRAGMA equ 1
     ALLOC_DATA_PRAGMA equ 1
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
+
       KfLowerIrql proto fastcall :KIRQL
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
+
       KfRaiseIrql proto fastcall :KIRQL
-    endif
+
     KeLowerIrql macro a
      exitm <KfLowerIrql ( a ) >
     endm
     KeRaiseIrql macro a,b
      exitm <* ( b ) = KfRaiseIrql ( a ) >
     endm
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
+
       KeRaiseIrqlToDpcLevel proto fastcall
-    endif
-    READ_REGISTER_UCHAR proto stdcall :ptr BYTE
-    READ_REGISTER_USHORT proto stdcall :ptr WORD
-    READ_REGISTER_ULONG proto stdcall :ptr DWORD
-    READ_REGISTER_BUFFER_UCHAR proto stdcall :ptr BYTE, :PUCHAR, :DWORD
-    READ_REGISTER_BUFFER_USHORT proto stdcall :ptr WORD, :PUSHORT, :DWORD
-    READ_REGISTER_BUFFER_ULONG proto stdcall :ptr DWORD, :PULONG, :DWORD
-    WRITE_REGISTER_UCHAR proto stdcall :ptr BYTE, :BYTE
-    WRITE_REGISTER_USHORT proto stdcall :ptr WORD, :WORD
-    WRITE_REGISTER_ULONG proto stdcall :ptr DWORD, :DWORD
-    WRITE_REGISTER_BUFFER_UCHAR proto stdcall :ptr BYTE, :PUCHAR, :DWORD
-    WRITE_REGISTER_BUFFER_USHORT proto stdcall :ptr WORD, :PUSHORT, :DWORD
-    WRITE_REGISTER_BUFFER_ULONG proto stdcall :ptr DWORD, :PULONG, :DWORD
-    READ_PORT_UCHAR proto stdcall :PUCHAR
-    READ_PORT_USHORT proto stdcall :PUSHORT
-    READ_PORT_ULONG proto stdcall :PULONG
-    READ_PORT_BUFFER_UCHAR proto stdcall :PUCHAR, :PUCHAR, :DWORD
-    READ_PORT_BUFFER_USHORT proto stdcall :PUSHORT, :PUSHORT, :DWORD
-    READ_PORT_BUFFER_ULONG proto stdcall :PULONG, :PULONG, :DWORD
-    WRITE_PORT_UCHAR proto stdcall :PUCHAR, :BYTE
-    WRITE_PORT_USHORT proto stdcall :PUSHORT, :WORD
-    WRITE_PORT_ULONG proto stdcall :PULONG, :DWORD
-    WRITE_PORT_BUFFER_UCHAR proto stdcall :PUCHAR, :PUCHAR, :DWORD
-    WRITE_PORT_BUFFER_USHORT proto stdcall :PUSHORT, :PUSHORT, :DWORD
-    WRITE_PORT_BUFFER_ULONG proto stdcall :PULONG, :PULONG, :DWORD
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( KeGetDcacheFillSize )
-    endif
+
+
     KeGetDcacheFillSize macro 
      exitm <1 >
     endm
-    if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
+
       KeFlushIoBuffers proto fastcall :PMDL, :BOOLEAN, :BOOLEAN
-    else
-      KeFlushIoBuffers macro Mdl,ReadOperation,DmaOperation
-       exitm <>
-      endm
-    endif
+
     ExAcquireSpinLock macro Lock,OldIrql
      exitm <KeAcquireSpinLock ( ( Lock ) , ( OldIrql ) ) >
     endm
@@ -5643,9 +4479,7 @@ ifndef _WDMDDK_
     ExReleaseSpinLockFromDpcLevel macro Lock
      exitm <KeReleaseSpinLockFromDpcLevel ( Lock ) >
     endm
-    KeQueryTickCount macro CurrentCount
-     exitm <{ KSYSTEM_TIME volatile * _TickCount = * ( ( PKSYSTEM_TIME * ) ( and KeTickCount ) ) ; for ( ; ; ) { ( CurrentCount ) - HighPart = _TickCount - High1Time ; ( CurrentCount ) - LowPart = _TickCount - LowPart ; if ( ( CurrentCount ) - HighPart == _TickCount - High2Time ) break ; YieldProcessor ( ) ; } } >
-    endm
+
     KFLOATING_SAVE struct
       ControlWord DWORD ?
       StatusWord DWORD ?
@@ -5687,7 +4521,7 @@ ifndef _WDMDDK_
       Ulong DWORD ?
       struct
         LineSize BYTE ?
-        AMD_L3_CACHE_INFO_??20 record LinesPerTag_??20:4, Associativity_??20:4, Reserved_??20:2, Size_??20:14
+        AMD_L3_CACHE_INFO_??20 record LinesPerTag_??20:4, Associativity_??20:4, Reserved_??210:2, Size_??20:14
         AMD_L3_CACHE_INFO_??20 <>
       ends
     AMD_L3_CACHE_INFO ends
@@ -5695,12 +4529,12 @@ ifndef _WDMDDK_
     PAMD_L3_CACHE_INFO typedef ptr AMD_L3_CACHE_INFO
     
     INTEL_CACHE_TYPE typedef SDWORD
-    IntelCacheNull = 0
-    IntelCacheData = 1
-    IntelCacheInstruction = 2
-    IntelCacheUnified = 3
-    IntelCacheRam = 4
-    IntelCacheTrace = 5
+    IntelCacheNull EQU 0
+    IntelCacheData EQU 1
+    IntelCacheInstruction EQU 2
+    IntelCacheUnified EQU 3
+    IntelCacheRam EQU 4
+    IntelCacheTrace EQU 5
     
     INTEL_CACHE_INFO_EAX union
       Ulong DWORD ?
@@ -5728,42 +4562,13 @@ ifndef _WDMDDK_
     MmLockPagableCodeSection macro Address
      exitm <MmLockPagableDataSection ( Address ) >
     endm
-    EFLAG_SIGN equ 8000h
-    EFLAG_ZERO equ 4000h
-    EFLAG_SELECT equ <( EFLAG_SIGN or EFLAG_ZERO )>
-    RESULT_NEGATIVE equ <( ( EFLAG_SIGN and not EFLAG_ZERO ) and EFLAG_SELECT )>
-    RESULT_ZERO equ <( ( not EFLAG_SIGN and EFLAG_ZERO ) and EFLAG_SELECT )>
-    RESULT_POSITIVE equ <( ( not EFLAG_SIGN and not EFLAG_ZERO ) and EFLAG_SELECT )>
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( ExInterlockedIncrementLong )
-      ;#pragma deprecated ( ExInterlockedDecrementLong )
-      ;#pragma deprecated ( ExInterlockedExchangeUlong )
-    endif
-    ExInterlockedIncrementLong macro Addend,Lock
-     exitm <Exfi386InterlockedIncrementLong ( Addend ) >
-    endm
-    ExInterlockedDecrementLong macro Addend,Lock
-     exitm <Exfi386InterlockedDecrementLong ( Addend ) >
-    endm
-    ExInterlockedExchangeUlong macro Target,Value,Lock
-     exitm <Exfi386InterlockedExchangeUlong ( Target , Value ) >
-    endm
-    ExInterlockedAddUlong equ <ExfInterlockedAddUlong>
-    ExInterlockedInsertHeadList equ <ExfInterlockedInsertHeadList>
-    ExInterlockedInsertTailList equ <ExfInterlockedInsertTailList>
-    ExInterlockedRemoveHeadList equ <ExfInterlockedRemoveHeadList>
-    ExInterlockedPopEntryList equ <ExfInterlockedPopEntryList>
-    ExInterlockedPushEntryList equ <ExfInterlockedPushEntryList>
-    if  not defined(MIDL_PASS) and defined(_M_IX86)
+
+
+
       KeGetCurrentIrql proto stdcall
-      if (NTDDI_VERSION ge NTDDI_WIN7)
+
         KeGetCurrentProcessorIndex proto stdcall
-      endif
-    endif
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
+
     CacheLineFlush macro Address
      exitm <_mm_clflush ( Address ) >
     endm
@@ -5787,33 +4592,23 @@ ifndef _WDMDDK_
      exitm <__writecr3 ( Data ) >
     endm
     __writecr3 proto fastcall :UINT32
-    ;#pragma intrinsic ( __readcr3 )
-    ;#pragma intrinsic ( __writecr3 )
+
     __readeflags proto fastcall
     ReadEflags macro 
      exitm <__readeflags ( ) >
     endm
-    ;#pragma intrinsic ( __readeflags )
+
     _ReadWriteBarrier proto fastcall
-    ifdef __cplusplus
-      ;}
-    endif
-    ;#pragma intrinsic ( _ReadWriteBarrier )
-    ;#pragma prefast ( push )
-    ;#pragma prefast ( disable : 6001 28113 , "The barrier variable is accessed only to create a side effect.",0 )
+
     KeMemoryBarrier proto fastcall
-    ;#pragma prefast ( pop )
+
     KeMemoryBarrierWithoutFence macro 
      exitm <_ReadWriteBarrier ( ) >
     endm
-    KeSaveFloatingPointState proto stdcall :PKFLOATING_SAVE
-    KeRestoreFloatingPointState proto stdcall :PKFLOATING_SAVE
-  endif
-  if defined(_M_AMD64) and  not defined(RC_INVOKED) and  not defined(MIDL_PASS)
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
+
+
+
+
     __inbyte proto fastcall :WORD
     __inword proto fastcall :WORD
     __indword proto fastcall :WORD
@@ -5826,35 +4621,15 @@ ifndef _WDMDDK_
     __outbytestring proto fastcall :WORD, :PUCHAR, :DWORD
     __outwordstring proto fastcall :WORD, :PUSHORT, :DWORD
     __outdwordstring proto fastcall :WORD, :PULONG, :DWORD
-    ;#pragma intrinsic ( __inbyte )
-    ;#pragma intrinsic ( __inword )
-    ;#pragma intrinsic ( __indword )
-    ;#pragma intrinsic ( __outbyte )
-    ;#pragma intrinsic ( __outword )
-    ;#pragma intrinsic ( __outdword )
-    ;#pragma intrinsic ( __inbytestring )
-    ;#pragma intrinsic ( __inwordstring )
-    ;#pragma intrinsic ( __indwordstring )
-    ;#pragma intrinsic ( __outbytestring )
-    ;#pragma intrinsic ( __outwordstring )
-    ;#pragma intrinsic ( __outdwordstring )
-    ifdef __cplusplus
-      ;}
-    endif
-  endif
-  if defined(_AMD64_)
+
+
     PFN_COUNT typedef DWORD
-    SPFN_NUMBER typedef LONG64
-    PSPFN_NUMBER typedef ptr LONG64
-    PFN_NUMBER typedef ULONG64
-    PPFN_NUMBER typedef ptr ULONG64
-    FLUSH_MULTIPLE_MAXIMUM equ 19
+
+
+
     ALLOC_PRAGMA equ 1
     ALLOC_DATA_PRAGMA equ 1
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
+
     ReadCR8 macro 
      exitm <__readcr8 ( ) >
     endm
@@ -5863,61 +4638,12 @@ ifndef _WDMDDK_
      exitm <__writecr8 ( Data ) >
     endm
     __writecr8 proto fastcall :ULONG64
-    ;#pragma intrinsic ( __readcr8 )
-    ;#pragma intrinsic ( __writecr8 )
-    ifdef __cplusplus
-      ;}
-    endif
-    if defined(_AMD64_) and  not defined(DSF_DRIVER)
-      ifdef __cplusplus
-        ;extern "C"
-        ;{
-      endif
-      READ_REGISTER_UCHAR proto fastcall :ptr BYTE
-      READ_REGISTER_USHORT proto fastcall :ptr WORD
-      READ_REGISTER_ULONG proto fastcall :ptr DWORD
-      READ_REGISTER_ULONG64 proto fastcall :ptr ULONG64
-      READ_REGISTER_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      READ_REGISTER_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      READ_REGISTER_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      READ_REGISTER_BUFFER_ULONG64 proto fastcall :ptr ULONG64, :PULONG64, :DWORD
-      WRITE_REGISTER_UCHAR proto fastcall :ptr BYTE, :BYTE
-      WRITE_REGISTER_USHORT proto fastcall :ptr WORD, :WORD
-      WRITE_REGISTER_ULONG proto fastcall :ptr DWORD, :DWORD
-      WRITE_REGISTER_ULONG64 proto fastcall :ptr ULONG64, :ULONG64
-      WRITE_REGISTER_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      WRITE_REGISTER_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      WRITE_REGISTER_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      WRITE_REGISTER_BUFFER_ULONG64 proto fastcall :ptr ULONG64, :PULONG64, :DWORD
-      READ_PORT_UCHAR proto fastcall :PUCHAR
-      READ_PORT_USHORT proto fastcall :PUSHORT
-      READ_PORT_ULONG proto fastcall :PULONG
-      READ_PORT_BUFFER_UCHAR proto fastcall :PUCHAR, :PUCHAR, :DWORD
-      READ_PORT_BUFFER_USHORT proto fastcall :PUSHORT, :PUSHORT, :DWORD
-      READ_PORT_BUFFER_ULONG proto fastcall :PULONG, :PULONG, :DWORD
-      WRITE_PORT_UCHAR proto fastcall :PUCHAR, :BYTE
-      WRITE_PORT_USHORT proto fastcall :PUSHORT, :WORD
-      WRITE_PORT_ULONG proto fastcall :PULONG, :DWORD
-      WRITE_PORT_BUFFER_UCHAR proto fastcall :PUCHAR, :PUCHAR, :DWORD
-      WRITE_PORT_BUFFER_USHORT proto fastcall :PUSHORT, :PUSHORT, :DWORD
-      WRITE_PORT_BUFFER_ULONG proto fastcall :PULONG, :PULONG, :DWORD
-      ifdef __cplusplus
-        ;}
-      endif
-    endif
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( KeGetDcacheFillSize )
-    endif
+
     KeGetDcacheFillSize macro 
      exitm <1 >
     endm
-    if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-      KeFlushIoBuffers( _In_ PMDL Mdl,  _In_ BOOLEAN ReadOperation,  _In_ BOOLEAN DmaOperation)
-    else
-      KeFlushIoBuffers macro Mdl,ReadOperation,DmaOperation
-       exitm <>
-      endm
-    endif
+
+
     ExAcquireSpinLock macro Lock,OldIrql
      exitm <KeAcquireSpinLock ( ( Lock ) , ( OldIrql ) ) >
     endm
@@ -5930,9 +4656,7 @@ ifndef _WDMDDK_
     ExReleaseSpinLockFromDpcLevel macro Lock
      exitm <KeReleaseSpinLockFromDpcLevel ( Lock ) >
     endm
-    KFLOATING_SAVE struct
-      Dummy DWORD ?
-    KFLOATING_SAVE ends
+
 
     PKFLOATING_SAVE typedef ptr KFLOATING_SAVE
     
@@ -5942,359 +4666,37 @@ ifndef _WDMDDK_
     MmLockPagableCodeSection macro Address
      exitm <MmLockPagableDataSection ( Address ) >
     endm
-    if (NTDDI_VERSION ge NTDDI_WIN7)
-      KeGetCurrentProcessorIndex proto fastcall
-    endif
-    if  not defined(_CROSS_PLATFORM_)
+
+
+ 
       KeMemoryBarrier proto fastcall
       KeMemoryBarrierWithoutFence macro 
        exitm <_ReadWriteBarrier ( ) >
       endm
-    else
-      KeMemoryBarrier macro 
-       exitm <>
-      endm
-      KeMemoryBarrierWithoutFence macro 
-       exitm <>
-      endm
-    endif
-    ;#pragma warning ( push )
-    ;#pragma warning ( suppress : 28104 28161 6001 6101 )
+
+
     KeSaveFloatingPointState proto fastcall :PKFLOATING_SAVE
-    ;#pragma warning ( pop )
-    ;#pragma warning ( push )
-    ;#pragma warning ( suppress : 28103 28162 )
+
     KeRestoreFloatingPointState proto fastcall :PKFLOATING_SAVE
-    ;#pragma warning ( pop )
-  endif
-  if defined(_AMD64_) and  not defined(MIDL_PASS)
-    KeGetCurrentIrql proto fastcall
+
+
     KeRaiseIrql macro a,b
      exitm <* ( b ) = KfRaiseIrql ( a ) >
     endm
-    if ((NTDDI_VERSION ge NTDDI_WIN8) and (defined(_NTDRIVER_) or defined(_NTDDK_) or defined(_NTIFS_) or defined(_NTHAL_) or defined(_NTOSP_) or defined(_BLDR_)))
-      KeLowerIrql proto fastcall :KIRQL
-      KfRaiseIrql proto fastcall :KIRQL
-    else
+
+
+
       KzLowerIrql proto fastcall :KIRQL
       KzRaiseIrql proto fastcall :KIRQL
-      KeLowerIrql equ <KzLowerIrql>
-      KfRaiseIrql equ <KzRaiseIrql>
-    endif
-  endif
-  if defined(_M_ARM) and  not defined(RC_INVOKED) and  not defined(MIDL_PASS)
-  endif
-  if defined(_ARM_)
-    PFN_COUNT typedef DWORD
-    SPFN_NUMBER typedef SDWORD
-    PSPFN_NUMBER typedef ptr SDWORD
-    PFN_NUMBER typedef DWORD
-    PPFN_NUMBER typedef ptr DWORD
-    MAX_EVENT_COUNTERS equ 31
-    FLUSH_MULTIPLE_MAXIMUM equ 32
-    ALLOC_PRAGMA equ 1
-    ALLOC_DATA_PRAGMA equ 1
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    ifdef __cplusplus
-      ;}
-    endif
-    if defined(_ARM_)
-      ifdef __cplusplus
-        ;extern "C"
-        ;{
-      endif
-      READ_REGISTER_NOFENCE_UCHAR proto fastcall :ptr BYTE
-      READ_REGISTER_NOFENCE_USHORT proto fastcall :ptr WORD
-      READ_REGISTER_NOFENCE_ULONG proto fastcall :ptr DWORD
-      READ_REGISTER_NOFENCE_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      READ_REGISTER_NOFENCE_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      READ_REGISTER_NOFENCE_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      WRITE_REGISTER_NOFENCE_UCHAR proto fastcall :ptr BYTE, :BYTE
-      WRITE_REGISTER_NOFENCE_USHORT proto fastcall :ptr WORD, :WORD
-      WRITE_REGISTER_NOFENCE_ULONG proto fastcall :ptr DWORD, :DWORD
-      WRITE_REGISTER_NOFENCE_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      WRITE_REGISTER_NOFENCE_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      WRITE_REGISTER_NOFENCE_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      REGISTER_FENCE proto fastcall
-      READ_REGISTER_UCHAR proto fastcall :ptr BYTE
-      READ_REGISTER_USHORT proto fastcall :ptr WORD
-      READ_REGISTER_ULONG proto fastcall :ptr DWORD
-      READ_REGISTER_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      READ_REGISTER_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      READ_REGISTER_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      WRITE_REGISTER_UCHAR proto fastcall :ptr BYTE, :BYTE
-      WRITE_REGISTER_USHORT proto fastcall :ptr WORD, :WORD
-      WRITE_REGISTER_ULONG proto fastcall :ptr DWORD, :DWORD
-      WRITE_REGISTER_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      WRITE_REGISTER_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      WRITE_REGISTER_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      READ_PORT_UCHAR proto fastcall :PUCHAR
-      READ_PORT_USHORT proto fastcall :PUSHORT
-      READ_PORT_ULONG proto fastcall :PULONG
-      READ_PORT_BUFFER_UCHAR proto fastcall :PUCHAR, :PUCHAR, :DWORD
-      READ_PORT_BUFFER_USHORT proto fastcall :PUSHORT, :PUSHORT, :DWORD
-      READ_PORT_BUFFER_ULONG proto fastcall :PULONG, :PULONG, :DWORD
-      WRITE_PORT_UCHAR proto fastcall :PUCHAR, :BYTE
-      WRITE_PORT_USHORT proto fastcall :PUSHORT, :WORD
-      WRITE_PORT_ULONG proto fastcall :PULONG, :DWORD
-      WRITE_PORT_BUFFER_UCHAR proto fastcall :PUCHAR, :PUCHAR, :DWORD
-      WRITE_PORT_BUFFER_USHORT proto fastcall :PUSHORT, :PUSHORT, :DWORD
-      WRITE_PORT_BUFFER_ULONG proto fastcall :PULONG, :PULONG, :DWORD
-      ifdef __cplusplus
-        ;}
-      endif
-    endif
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( KeGetDcacheFillSize )
-    endif
-    KeGetDcacheFillSize macro 
-     exitm <1 >
-    endm
-    KeFlushIoBuffers( _In_ PMDL Mdl,  _In_ BOOLEAN ReadOperation,  _In_ BOOLEAN DmaOperation)
-    KeFlushIoRectangle proto fastcall :PMDL, :PVOID, :DWORD, :DWORD, :DWORD, :BOOLEAN
-    ExAcquireSpinLock macro Lock,OldIrql
-     exitm <KeAcquireSpinLock ( ( Lock ) , ( OldIrql ) ) >
-    endm
-    ExReleaseSpinLock macro Lock,OldIrql
-     exitm <KeReleaseSpinLock ( ( Lock ) , ( OldIrql ) ) >
-    endm
-    ExAcquireSpinLockAtDpcLevel macro Lock
-     exitm <KeAcquireSpinLockAtDpcLevel ( Lock ) >
-    endm
-    ExReleaseSpinLockFromDpcLevel macro Lock
-     exitm <KeReleaseSpinLockFromDpcLevel ( Lock ) >
-    endm
-    KeQueryTickCount macro CurrentCount
-     exitm <{ KSYSTEM_TIME volatile * _TickCount = * ( ( PKSYSTEM_TIME * ) ( and KeTickCount ) ) ; for ( ; ; ) { ( CurrentCount ) - HighPart = _TickCount - High1Time ; ( CurrentCount ) - LowPart = _TickCount - LowPart ; if ( ( CurrentCount ) - HighPart == _TickCount - High2Time ) break ; YieldProcessor ( ) ; } } >
-    endm
-    ARM_IDCODE union
-      Ulong DWORD ?
-      struct
-        ARM_IDCODE_??23 record MinorRevision_??23:4, Model_??23:12, Architecture_??23:4, Revision_??23:4, Implementer_??23:8
-        ARM_IDCODE_??23 <>
-      ends
-    ARM_IDCODE ends
 
-    PARM_IDCODE typedef ptr ARM_IDCODE
-    
-    C_ASSERT( sizeof( ARM_IDCODE)==4)
-    KFLOATING_SAVE struct
-      Dummy DWORD ?
-    KFLOATING_SAVE ends
 
-    PKFLOATING_SAVE typedef ptr KFLOATING_SAVE
-    
-    MmGetProcedureAddress macro Address
-     exitm <( Address ) >
-    endm
-    MmLockPagableCodeSection macro Address
-     exitm <MmLockPagableDataSection ( Address ) >
-    endm
-    CP15_PCR_RESERVED_MASK equ 0FFFh
-    KIPCR macro 
-     exitm <( ( _MoveFromCoprocessor ( CP15_TPIDRPRW ) ) and not CP15_PCR_RESERVED_MASK ) >
-    endm
-    if (NTDDI_VERSION ge NTDDI_WIN7)
-      KeGetCurrentProcessorIndex proto fastcall
-    endif
-    if  not defined(_CROSS_PLATFORM_)
-      KeMemoryBarrier proto fastcall
-      KeMemoryBarrierWithoutFence macro 
-       exitm <_ReadWriteBarrier ( ) >
-      endm
-      ReadTimeStampCounter proto fastcall
-    else
-      KeMemoryBarrier macro 
-       exitm <>
-      endm
-      KeMemoryBarrierWithoutFence macro 
-       exitm <>
-      endm
-    endif
-    ;#pragma warning ( push )
-    ;#pragma warning ( suppress : 28104 28161 6001 6101 )
-    KeSaveFloatingPointState proto fastcall :PKFLOATING_SAVE
-    ;#pragma warning ( pop )
-    ;#pragma warning ( push )
-    ;#pragma warning ( suppress : 28103 28162 )
-    KeRestoreFloatingPointState proto fastcall :PKFLOATING_SAVE
-    ;#pragma warning ( pop )
-  endif
-  if defined(_ARM_) and  not defined(MIDL_PASS)
-    KeGetCurrentIrql proto fastcall
-    KfLowerIrql proto fastcall :KIRQL
-    KeLowerIrql macro a
-     exitm <KfLowerIrql ( a ) >
-    endm
-    KeRaiseIrql macro a,b
-     exitm <* ( b ) = KfRaiseIrql ( a ) >
-    endm
-    KfRaiseIrql proto fastcall :KIRQL
-  endif
-  if defined(_M_ARM64) and  not defined(RC_INVOKED) and  not defined(MIDL_PASS)
-  endif
-  if defined(_ARM64_)
-    PFN_COUNT typedef DWORD
-    SPFN_NUMBER typedef LONG64
-    PSPFN_NUMBER typedef ptr LONG64
-    PFN_NUMBER typedef ULONG64
-    PPFN_NUMBER typedef ptr ULONG64
-    MAX_EVENT_COUNTERS equ 31
-    FLUSH_MULTIPLE_MAXIMUM equ 32
-    ALLOC_PRAGMA equ 1
-    ALLOC_DATA_PRAGMA equ 1
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    ifdef __cplusplus
-      ;}
-    endif
-    if defined(_ARM64_)
-      ifdef __cplusplus
-        ;extern "C"
-        ;{
-      endif
-      READ_REGISTER_NOFENCE_UCHAR proto fastcall :ptr BYTE
-      READ_REGISTER_NOFENCE_USHORT proto fastcall :ptr WORD
-      READ_REGISTER_NOFENCE_ULONG proto fastcall :ptr DWORD
-      READ_REGISTER_NOFENCE_ULONG64 proto fastcall :ptr ULONG64
-      READ_REGISTER_NOFENCE_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      READ_REGISTER_NOFENCE_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      READ_REGISTER_NOFENCE_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      READ_REGISTER_NOFENCE_BUFFER_ULONG64 proto fastcall :ptr ULONG64, :PULONG64, :DWORD
-      WRITE_REGISTER_NOFENCE_UCHAR proto fastcall :ptr BYTE, :BYTE
-      WRITE_REGISTER_NOFENCE_USHORT proto fastcall :ptr WORD, :WORD
-      WRITE_REGISTER_NOFENCE_ULONG proto fastcall :ptr DWORD, :DWORD
-      WRITE_REGISTER_NOFENCE_ULONG64 proto fastcall :ptr ULONG64, :ULONG64
-      WRITE_REGISTER_NOFENCE_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      WRITE_REGISTER_NOFENCE_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      WRITE_REGISTER_NOFENCE_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      WRITE_REGISTER_NOFENCE_BUFFER_ULONG64 proto fastcall :ptr ULONG64, :PULONG64, :DWORD
-      REGISTER_FENCE proto fastcall
-      READ_REGISTER_UCHAR proto fastcall :ptr BYTE
-      READ_REGISTER_USHORT proto fastcall :ptr WORD
-      READ_REGISTER_ULONG proto fastcall :ptr DWORD
-      READ_REGISTER_ULONG64 proto fastcall :ptr ULONG64
-      READ_REGISTER_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      READ_REGISTER_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      READ_REGISTER_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      READ_REGISTER_BUFFER_ULONG64 proto fastcall :ptr ULONG64, :PULONG64, :DWORD
-      WRITE_REGISTER_UCHAR proto fastcall :ptr BYTE, :BYTE
-      WRITE_REGISTER_USHORT proto fastcall :ptr WORD, :WORD
-      WRITE_REGISTER_ULONG proto fastcall :ptr DWORD, :DWORD
-      WRITE_REGISTER_ULONG64 proto fastcall :ptr ULONG64, :ULONG64
-      WRITE_REGISTER_BUFFER_UCHAR proto fastcall :ptr BYTE, :PUCHAR, :DWORD
-      WRITE_REGISTER_BUFFER_USHORT proto fastcall :ptr WORD, :PUSHORT, :DWORD
-      WRITE_REGISTER_BUFFER_ULONG proto fastcall :ptr DWORD, :PULONG, :DWORD
-      WRITE_REGISTER_BUFFER_ULONG64 proto fastcall :ptr ULONG64, :PULONG64, :DWORD
-      READ_PORT_UCHAR proto fastcall :PUCHAR
-      READ_PORT_USHORT proto fastcall :PUSHORT
-      READ_PORT_ULONG proto fastcall :PULONG
-      READ_PORT_BUFFER_UCHAR proto fastcall :PUCHAR, :PUCHAR, :DWORD
-      READ_PORT_BUFFER_USHORT proto fastcall :PUSHORT, :PUSHORT, :DWORD
-      READ_PORT_BUFFER_ULONG proto fastcall :PULONG, :PULONG, :DWORD
-      WRITE_PORT_UCHAR proto fastcall :PUCHAR, :BYTE
-      WRITE_PORT_USHORT proto fastcall :PUSHORT, :WORD
-      WRITE_PORT_ULONG proto fastcall :PULONG, :DWORD
-      WRITE_PORT_BUFFER_UCHAR proto fastcall :PUCHAR, :PUCHAR, :DWORD
-      WRITE_PORT_BUFFER_USHORT proto fastcall :PUSHORT, :PUSHORT, :DWORD
-      WRITE_PORT_BUFFER_ULONG proto fastcall :PULONG, :PULONG, :DWORD
-      ifdef __cplusplus
-        ;}
-      endif
-    endif
-    if PRAGMA_DEPRECATED_DDK
-      ;#pragma deprecated ( KeGetDcacheFillSize )
-    endif
-    KeGetDcacheFillSize macro 
-     exitm <1 >
-    endm
-    KeFlushIoBuffers( _In_ PMDL Mdl,  _In_ BOOLEAN ReadOperation,  _In_ BOOLEAN DmaOperation)
-    ExAcquireSpinLock macro Lock,OldIrql
-     exitm <KeAcquireSpinLock ( ( Lock ) , ( OldIrql ) ) >
-    endm
-    ExReleaseSpinLock macro Lock,OldIrql
-     exitm <KeReleaseSpinLock ( ( Lock ) , ( OldIrql ) ) >
-    endm
-    ExAcquireSpinLockAtDpcLevel macro Lock
-     exitm <KeAcquireSpinLockAtDpcLevel ( Lock ) >
-    endm
-    ExReleaseSpinLockFromDpcLevel macro Lock
-     exitm <KeReleaseSpinLockFromDpcLevel ( Lock ) >
-    endm
-    ARM64_IDCODE union
-      Ulong ULONG64 ?
-      struct
-        ARM64_IDCODE_??24 record MinorRevision_??24:4, Model_??24:12, Architecture_??24:4, Revision_??24:4, Implementer_??24:8, Reserved_??24:32
-        ARM64_IDCODE_??24 <>
-      ends
-    ARM64_IDCODE ends
 
-    PARM64_IDCODE typedef ptr ARM64_IDCODE
-    
-    C_ASSERT( sizeof( ARM64_IDCODE)==8)
-    KFLOATING_SAVE struct
-      Dummy DWORD ?
-    KFLOATING_SAVE ends
 
-    PKFLOATING_SAVE typedef ptr KFLOATING_SAVE
-    
-    MmGetProcedureAddress macro Address
-     exitm <( Address ) >
-    endm
-    MmLockPagableCodeSection macro Address
-     exitm <MmLockPagableDataSection ( Address ) >
-    endm
-    ARM64_PCR_RESERVED_MASK equ 0FFFh
-    KIPCR macro 
-     exitm <( ( _ReadStatusReg ( ARM64_TPIDR_EL1 ) ) and not ARM64_PCR_RESERVED_MASK ) >
-    endm
-    if (NTDDI_VERSION ge NTDDI_WIN7)
-      KeGetCurrentProcessorIndex proto fastcall
-    endif
-    if  not defined(_CROSS_PLATFORM_)
-      KeMemoryBarrier proto fastcall
-      KeMemoryBarrierWithoutFence macro 
-       exitm <_ReadWriteBarrier ( ) >
-      endm
-      ReadTimeStampCounter proto fastcall
-    else
-      KeMemoryBarrier macro 
-       exitm <>
-      endm
-      KeMemoryBarrierWithoutFence macro 
-       exitm <>
-      endm
-    endif
-    ;#pragma warning ( push )
-    ;#pragma warning ( suppress : 28104 28161 6001 6101 )
-    KeSaveFloatingPointState proto fastcall :PKFLOATING_SAVE
-    ;#pragma warning ( pop )
-    ;#pragma warning ( push )
-    ;#pragma warning ( suppress : 28103 28162 )
-    KeRestoreFloatingPointState proto fastcall :PKFLOATING_SAVE
-    ;#pragma warning ( pop )
-  endif
-  if defined(_ARM64_) and  not defined(MIDL_PASS)
-    KeGetCurrentIrql proto fastcall
-    KfLowerIrql proto fastcall :KIRQL
-    KeLowerIrql macro a
-     exitm <KfLowerIrql ( a ) >
-    endm
-    KeRaiseIrql macro a,b
-     exitm <* ( b ) = KfRaiseIrql ( a ) >
-    endm
-    KfRaiseIrql proto fastcall :KIRQL
-  endif
   FIRMWARE_TYPE typedef SDWORD
-  FirmwareTypeUnknown = 0
-  FirmwareTypeBios = 1
-  FirmwareTypeUefi = 2
-  FirmwareTypeMax = 3
+  FirmwareTypeUnknown EQU 0
+  FirmwareTypeBios EQU 1
+  FirmwareTypeUefi EQU 2
+  FirmwareTypeMax EQU 3
   
   PFIRMWARE_TYPE typedef ptr FIRMWARE_TYPE
   
@@ -6305,19 +4707,19 @@ ifndef _WDMDDK_
   SEMAPHORE_MODIFY_STATE equ 0002h
   SEMAPHORE_ALL_ACCESS equ ( STANDARD_RIGHTS_REQUIRED or SYNCHRONIZE or 3h )
   LOGICAL_PROCESSOR_RELATIONSHIP typedef SDWORD
-  RelationProcessorCore = 0
-  RelationNumaNode = 1
-  RelationCache = 2
-  RelationProcessorPackage = 3
-  RelationGroup = 4
-  RelationAll = 0ffffh 
+  RelationProcessorCore EQU 0
+  RelationNumaNode EQU 1
+  RelationCache EQU 2
+  RelationProcessorPackage EQU 3
+  RelationGroup EQU 4
+  RelationAll EQU 0ffffh 
   
   LTP_PC_SMT equ 1h
   PROCESSOR_CACHE_TYPE typedef SDWORD
-  CacheUnified = 0
-  CacheInstruction = 1
-  CacheData = 2
-  CacheTrace = 3
+  CacheUnified EQU 0
+  CacheInstruction EQU 1
+  CacheData EQU 2
+  CacheTrace EQU 3
   
   CACHE_FULLY_ASSOCIATIVE equ 0FFh
   CACHE_DESCRIPTOR struct
@@ -6403,16 +4805,12 @@ ifndef _WDMDDK_
     Group_ GROUP_RELATIONSHIP <>
   DUMMYUNIONNAME_25 ends
 
-  ;}
-  SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX typedef _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
-  PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX typedef ptr _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
   
   CPU_SET_INFORMATION_TYPE typedef SDWORD
-  CpuSetInformation = 0
+  CpuSetInformation EQU 0
   
   PCPU_SET_INFORMATION_TYPE typedef ptr CPU_SET_INFORMATION_TYPE
-  
-  ;{
+
   DUMMYUNIONNAME_26 union
     struct CpuSet
       Id DWORD ?
@@ -6441,9 +4839,7 @@ ifndef _WDMDDK_
     ends
   DUMMYUNIONNAME_26 ends
 
-  ;}
-  SYSTEM_CPU_SET_INFORMATION typedef _SYSTEM_CPU_SET_INFORMATION
-  PSYSTEM_CPU_SET_INFORMATION typedef ptr _SYSTEM_CPU_SET_INFORMATION
+
   
   PF_FLOATING_POINT_PRECISION_ERRATA equ 0
   PF_FLOATING_POINT_EMULATED equ 1
@@ -6478,10 +4874,11 @@ ifndef _WDMDDK_
   PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE equ 30
   PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE equ 31
   PF_RDTSCP_INSTRUCTION_AVAILABLE equ 32
-  ALTERNATIVE_ARCHITECTURE_TYPE typedef SDWORD
-  StandardDesign = 0
-  NEC98x86 = 1
-  EndAlternatives = 2
+  
+  ;ALTERNATIVE_ARCHITECTURE_TYPE
+  StandardDesign EQU 0
+  NEC98x86 EQU 1
+  EndAlternatives EQU 2
   
 
   PROCESSOR_FEATURE_MAX equ 64
@@ -6502,170 +4899,177 @@ ifndef _WDMDDK_
   IS_TARGET_UNWIND macro Flag
    exitm <( Flag and EXCEPTION_TARGET_UNWIND ) >
   endm
-  EXCEPTION_MAXIMUM_PARAMETERS equ 15
-  EXCEPTION_RECORD struct
-    ExceptionCode NTSTATUS ?
-    ExceptionFlags DWORD ?
-    ExceptionRecord POINTER ?
-    ExceptionAddress PVOID ?
-    NumberParameters DWORD ?
-    ExceptionInformation ULONG_PTR EXCEPTION_MAXIMUM_PARAMETERS dup (?)
-  EXCEPTION_RECORD ends
-
-  PEXCEPTION_RECORD typedef ptr EXCEPTION_RECORD
-  EXCEPTION_RECORD32 struct
-    ExceptionCode NTSTATUS ?
-    ExceptionFlags DWORD ?
-    ExceptionRecord DWORD ?
-    ExceptionAddress DWORD ?
-    NumberParameters DWORD ?
-    ExceptionInformation DWORD EXCEPTION_MAXIMUM_PARAMETERS dup (?)
-  EXCEPTION_RECORD32 ends
-
-  PEXCEPTION_RECORD32 typedef ptr EXCEPTION_RECORD32
   
-  EXCEPTION_RECORD64 struct
-    ExceptionCode NTSTATUS ?
-    ExceptionFlags DWORD ?
-    ExceptionRecord ULONG64 ?
-    ExceptionAddress ULONG64 ?
-    NumberParameters DWORD ?
-    __unusedAlignment DWORD ?
-    ExceptionInformation ULONG64 EXCEPTION_MAXIMUM_PARAMETERS dup (?)
-  EXCEPTION_RECORD64 ends
-
-  PEXCEPTION_RECORD64 typedef ptr EXCEPTION_RECORD64
   
-  EXCEPTION_POINTERS struct
-    ExceptionRecord PEXCEPTION_RECORD ?
-    ContextRecord PCONTEXT ?
-  EXCEPTION_POINTERS ends
-
-  PEXCEPTION_POINTERS typedef ptr EXCEPTION_POINTERS
+    EXCEPTION_MAXIMUM_PARAMETERS equ 15
+    
+    IFNDEF EXCEPTION_RECORD
+    EXCEPTION_RECORD STRUCT
+    	ExceptionCode			NTSTATUS	?
+    	ExceptionFlags			DWORD		?
+    	ExceptionRecord			PVOID		?	; PTR EXCEPTION_RECORD
+    	ExceptionAddress		PVOID		?
+    	NumberParameters		DWORD		?
+    	ExceptionInformation	DWORD 		EXCEPTION_MAXIMUM_PARAMETERS dup(?)
+    EXCEPTION_RECORD ENDS
+    ENDIF
+    PEXCEPTION_RECORD typedef PTR EXCEPTION_RECORD
+    
+    IFNDEF EXCEPTION_RECORD32
+    EXCEPTION_RECORD32 STRUCT
+    	ExceptionCode			NTSTATUS	?
+    	ExceptionFlags			DWORD	?
+    	ExceptionRecord			DWORD	?
+    	ExceptionAddress		DWORD	?
+    	NumberParameters		DWORD	?
+    	ExceptionInformation	DWORD EXCEPTION_MAXIMUM_PARAMETERS dup(?)
+    EXCEPTION_RECORD32 ENDS
+    ENDIF
+  
+    IFNDEF EXCEPTION_RECORD64
+    EXCEPTION_RECORD64 struct
+        ExceptionCode NTSTATUS ?
+        ExceptionFlags DWORD ?
+        ExceptionRecord ULONG64 ?
+        ExceptionAddress ULONG64 ?
+        NumberParameters DWORD ?
+        __unusedAlignment DWORD ?
+        ExceptionInformation ULONG64 EXCEPTION_MAXIMUM_PARAMETERS dup (?)
+    EXCEPTION_RECORD64 ends
+    ENDIF
+    PEXCEPTION_RECORD64 typedef ptr EXCEPTION_RECORD64
+  
+    IFNDEF EXCEPTION_POINTERS
+    EXCEPTION_POINTERS STRUCT
+    	ExceptionRecord	PVOID	?	; PTR EXCEPTION_RECORD
+    	ContextRecord	PVOID	?	; PTR CONTEXT
+    EXCEPTION_POINTERS ENDS
+    ENDIF
+    PEXCEPTION_POINTERS typedef PTR EXCEPTION_POINTERS
   
   THREAD_WAIT_OBJECTS equ 3
-  if  not (defined(_X86_) or defined(_AMD64_) or defined(_ARM_) or defined(_ARM64_))
-    .err <"No target architecture defined",0>
-  endif
-  if (NTDDI_VERSION lt NTDDI_WIN7) or defined(_X86_) or  not defined(NT_PROCESSOR_GROUPS)
-    SINGLE_GROUP_LEGACY_API equ 1
-  endif
+
+
+    ;SINGLE_GROUP_LEGACY_API equ 1
+
   KINTERRUPT_MODE typedef SDWORD
-  LevelSensitive = 0
-  Latched = 1
+  LevelSensitive EQU 0
+  Latched EQU 1
   
   KINTERRUPT_POLARITY typedef SDWORD
-  InterruptPolarityUnknown = 0
-  InterruptActiveHigh = 1
-  InterruptRisingEdge = InterruptActiveHigh 
-  InterruptActiveLow = 1
-  InterruptFallingEdge = InterruptActiveLow 
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    InterruptActiveBoth = 1
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    InterruptActiveBothTriggerLow = InterruptActiveBoth 
-    InterruptActiveBothTriggerHigh = 1
-  endif
+  InterruptPolarityUnknown EQU 0
+  InterruptActiveHigh EQU 1
+  InterruptRisingEdge EQU InterruptActiveHigh 
+  InterruptActiveLow EQU 1
+  InterruptFallingEdge EQU InterruptActiveLow 
+
+    InterruptActiveBoth EQU 1
+
+
+    InterruptActiveBothTriggerLow EQU InterruptActiveBoth 
+    InterruptActiveBothTriggerHigh EQU 1
+
   
   PKINTERRUPT_POLARITY typedef ptr KINTERRUPT_POLARITY
   
   KWAIT_REASON typedef SDWORD
-  Executive = 0
-  FreePage = 1
-  PageIn = 2
-  PoolAllocation = 3
-  DelayExecution = 4
-  Suspended = 5
-  UserRequest = 6
-  WrExecutive = 7
-  WrFreePage = 8
-  WrPageIn = 9
-  WrPoolAllocation = 10
-  WrDelayExecution = 11
-  WrSuspended = 12
-  WrUserRequest = 13
-  WrSpare0 = 14
-  WrQueue = 15
-  WrLpcReceive = 16
-  WrLpcReply = 17
-  WrVirtualMemory = 18
-  WrPageOut = 19
-  WrRendezvous = 20
-  WrKeyedEvent = 21
-  WrTerminated = 22
-  WrProcessInSwap = 23
-  WrCpuRateControl = 24
-  WrCalloutStack = 25
-  WrKernel = 26
-  WrResource = 27
-  WrPushLock = 28
-  WrMutex = 29
-  WrQuantumEnd = 30
-  WrDispatchInt = 31
-  WrPreempted = 32
-  WrYieldExecution = 33
-  WrFastMutex = 34
-  WrGuardedMutex = 35
-  WrRundown = 36
-  WrAlertByThreadId = 37
-  WrDeferredPreempt = 38
-  WrPhysicalFault = 39
-  MaximumWaitReason = 40
+  Executive EQU 0
+  FreePage EQU 1
+  PageIn EQU 2
+  PoolAllocation EQU 3
+  DelayExecution EQU 4
+  Suspended EQU 5
+  UserRequest EQU 6
+  WrExecutive EQU 7
+  WrFreePage EQU 8
+  WrPageIn EQU 9
+  WrPoolAllocation EQU 10
+  WrDelayExecution EQU 11
+  WrSuspended EQU 12
+  WrUserRequest EQU 13
+  WrSpare0 EQU 14
+  WrQueue EQU 15
+  WrLpcReceive EQU 16
+  WrLpcReply EQU 17
+  WrVirtualMemory EQU 18
+  WrPageOut EQU 19
+  WrRendezvous EQU 20
+  WrKeyedEvent EQU 21
+  WrTerminated EQU 22
+  WrProcessInSwap EQU 23
+  WrCpuRateControl EQU 24
+  WrCalloutStack EQU 25
+  WrKernel EQU 26
+  WrResource EQU 27
+  WrPushLock EQU 28
+  WrMutex EQU 29
+  WrQuantumEnd EQU 30
+  WrDispatchInt EQU 31
+  WrPreempted EQU 32
+  WrYieldExecution EQU 33
+  WrFastMutex EQU 34
+  WrGuardedMutex EQU 35
+  WrRundown EQU 36
+  WrAlertByThreadId EQU 37
+  WrDeferredPreempt EQU 38
+  WrPhysicalFault EQU 39
+  MaximumWaitReason EQU 40
   
-  KWAIT_BLOCK struct
-    WaitListEntry LIST_ENTRY <>
-    WaitType BYTE ?
-    BlockState BYTE ?
-    WaitKey WORD ?
-    if defined(_WIN64)
-      SpareLong SDWORD ?
-    endif
-    union
-      Thread POINTER ?
-      NotificationQueue POINTER ?
-    ends
-    Object_ PVOID ?
-    SparePtr PVOID ?
-  KWAIT_BLOCK ends
+;  KWAIT_BLOCK struct
+;    WaitListEntry LIST_ENTRY <>
+;    WaitType BYTE ?
+;    BlockState BYTE ?
+;    WaitKey WORD ?
+;    SpareLong SDWORD ?
+;    union
+;      Thread POINTER ?
+;      NotificationQueue POINTER ?
+;    ends
+;    Object_ PVOID ?
+;    SparePtr PVOID ?
+;  KWAIT_BLOCK ends
 
-  PKWAIT_BLOCK typedef ptr KWAIT_BLOCK
-  PRKWAIT_BLOCK typedef ptr KWAIT_BLOCK
+    IFNDEF KWAIT_BLOCK
+    KWAIT_BLOCK STRUCT		; sizeof = 18h
+    	WaitListEntry	LIST_ENTRY	<>
+    	Thread			PVOID		?	; PTR KTHREAD
+    	Object			PVOID		?
+    	NextWaitBlock	PVOID		?	; PTR KWAIT_BLOCK
+    	WaitKey			WORD		?
+    	WaitType		WORD		?
+    KWAIT_BLOCK ENDS
+    ENDIF
+    PKWAIT_BLOCK typedef PTR KWAIT_BLOCK
+    PRKWAIT_BLOCK typedef ptr KWAIT_BLOCK
   
   KSTART_ROUTINE typedef proto stdcall :PVOID
   PKSTART_ROUTINE typedef ptr KSTART_ROUTINE
-  ASSERT_DEVICE_QUEUE macro E
-   exitm <NT_ASSERT ( ( E ) - Type == DeviceQueueObject ) >
-  endm
-  KDEVICE_QUEUE struct
-    Type_ CSHORT ?
-    Size_ CSHORT ?
-    DeviceListHead LIST_ENTRY <>
-    Lock_ KSPIN_LOCK ?
-    if defined(_AMD64_)
-      union
-        Busy BOOLEAN ?
-        struct
-          KDEVICE_QUEUE_??26 record Reserved_??26:8, Hint_??26:56
-          KDEVICE_QUEUE_??26 <>
-        ends
-      ends
-    else
-      Busy BOOLEAN ?
-    endif
-  KDEVICE_QUEUE ends
 
-  PKDEVICE_QUEUE typedef ptr KDEVICE_QUEUE
-  PRKDEVICE_QUEUE typedef ptr KDEVICE_QUEUE
+   
   
-  KDEVICE_QUEUE_ENTRY struct
-    DeviceListEntry LIST_ENTRY <>
-    SortKey DWORD ?
-    Inserted BOOLEAN ?
-  KDEVICE_QUEUE_ENTRY ends
-
-  PKDEVICE_QUEUE_ENTRY typedef ptr KDEVICE_QUEUE_ENTRY
-  PRKDEVICE_QUEUE_ENTRY typedef ptr KDEVICE_QUEUE_ENTRY
+    IFNDEF KDEVICE_QUEUE
+    KDEVICE_QUEUE STRUCT	; sizeof = 14h
+    	fwType			WORD		IO_TYPE_DEVICE_QUEUE; 14h
+    	cbSize			WORD		?					; cb
+    	DeviceListHead	LIST_ENTRY	<>
+    	ksLock			KSPIN_LOCK	?					; Lock is masm reserved symbol
+    	Busy			BOOLEAN		?
+    					db			3 dup(?)			; padding
+    KDEVICE_QUEUE ENDS
+    ENDIF
+    PKDEVICE_QUEUE	typedef PTR KDEVICE_QUEUE
+    PRKDEVICE_QUEUE typedef ptr KDEVICE_QUEUE
+    
+    IFNDEF
+    KDEVICE_QUEUE_ENTRY STRUCT	; sizeof = 10h
+    	DeviceListEntry	LIST_ENTRY	<>
+    	SortKey		DWORD		?
+    	Inserted	BOOLEAN		?
+    				db			3 dup(?)			; padding
+    KDEVICE_QUEUE_ENTRY ENDS
+    ENDIF
+    PKDEVICE_QUEUE_ENTRY typedef PTR KDEVICE_QUEUE_ENTRY
+    PRKDEVICE_QUEUE_ENTRY typedef ptr KDEVICE_QUEUE_ENTRY
   
   KSERVICE_ROUTINE typedef proto stdcall :ptr _KINTERRUPT,:PVOID
   PKSERVICE_ROUTINE typedef ptr KSERVICE_ROUTINE
@@ -6694,254 +5098,8 @@ ifndef _WDMDDK_
   PRKSEMAPHORE typedef ptr KSEMAPHORE
   
   KSEMAPHORE_ACTUAL_LENGTH equ <( FIELD_OFFSET ( KSEMAPHORE , Limit ) + sizeof ( LONG ) )>
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInitializeDpc proto fastcall :PRKDPC, :PKDEFERRED_ROUTINE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeInitializeThreadedDpc proto fastcall :PRKDPC, :PKDEFERRED_ROUTINE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInsertQueueDpc proto fastcall :PRKDPC, :PVOID, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeRemoveQueueDpc proto fastcall :PRKDPC
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    KeRemoveQueueDpcEx proto fastcall :PRKDPC, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeInitializeCrashDumpHeader proto fastcall :DWORD, :DWORD, :PVOID, :DWORD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeSetImportanceDpc proto fastcall :PRKDPC, :KDPC_IMPORTANCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K) and defined(SINGLE_GROUP_LEGACY_API)
-    KeSetTargetProcessorDpc proto fastcall :PRKDPC, :CCHAR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXPSP2)
-    KeFlushQueuedDpcs proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInitializeDeviceQueue proto fastcall :PKDEVICE_QUEUE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInsertDeviceQueue proto fastcall :PKDEVICE_QUEUE, :PKDEVICE_QUEUE_ENTRY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInsertByKeyDeviceQueue proto fastcall :PKDEVICE_QUEUE, :PKDEVICE_QUEUE_ENTRY, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeRemoveDeviceQueue proto fastcall :PKDEVICE_QUEUE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeRemoveByKeyDeviceQueue proto fastcall :PKDEVICE_QUEUE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeRemoveByKeyDeviceQueueIfBusy proto fastcall :PKDEVICE_QUEUE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeRemoveEntryDeviceQueue proto fastcall :PKDEVICE_QUEUE, :PKDEVICE_QUEUE_ENTRY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeSynchronizeExecution proto fastcall :PKINTERRUPT, :PKSYNCHRONIZE_ROUTINE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeAcquireInterruptSpinLock proto fastcall :PKINTERRUPT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeReleaseInterruptSpinLock proto fastcall :PKINTERRUPT, :KIRQL
-  endif
-  KeInitializeEvent proto fastcall :PRKEVENT, :EVENT_TYPE, :BOOLEAN
-  KeClearEvent proto fastcall :PRKEVENT
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeReadStateEvent proto fastcall :PRKEVENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeResetEvent proto fastcall :PRKEVENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeSetEvent proto fastcall :PRKEVENT, :KPRIORITY, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInitializeMutex proto fastcall :PRKMUTEX, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeReadStateMutex proto fastcall :PRKMUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeReleaseMutex proto fastcall :PRKMUTEX, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInitializeSemaphore proto fastcall :PRKSEMAPHORE, :SDWORD, :SDWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeReadStateSemaphore proto fastcall :PRKSEMAPHORE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeReleaseSemaphore proto fastcall :PRKSEMAPHORE, :KPRIORITY, :SDWORD, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeDelayExecutionThread proto fastcall :KPROCESSOR_MODE, :BOOLEAN, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeQueryPriorityThread proto fastcall :PKTHREAD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeQueryRuntimeThread proto fastcall :PKTHREAD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryTotalCycleTimeThread proto fastcall :PKTHREAD, :PULONG64
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeSetTargetProcessorDpcEx proto fastcall :PKDPC, :PPROCESSOR_NUMBER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K) and defined(SINGLE_GROUP_LEGACY_API)
-    KeRevertToUserAffinityThread proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K) and defined(SINGLE_GROUP_LEGACY_API)
-    KeSetSystemAffinityThread proto fastcall :KAFFINITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA) and defined(SINGLE_GROUP_LEGACY_API)
-    KeRevertToUserAffinityThreadEx proto fastcall :KAFFINITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeSetSystemGroupAffinityThread proto fastcall :PGROUP_AFFINITY, :PGROUP_AFFINITY
-    KeRevertToUserGroupAffinityThread proto fastcall :PGROUP_AFFINITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_LONGHORN) and defined(SINGLE_GROUP_LEGACY_API)
-    KeSetSystemAffinityThreadEx proto fastcall :KAFFINITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeSetPriorityThread proto fastcall :PKTHREAD, :KPRIORITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeEnterCriticalRegion proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeLeaveCriticalRegion proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeEnterGuardedRegion proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeLeaveGuardedRegion proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeAreApcsDisabled proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInitializeTimer proto fastcall :PKTIMER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeInitializeTimerEx proto fastcall :PKTIMER, :TIMER_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeCancelTimer proto fastcall :PKTIMER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeReadStateTimer proto fastcall :PKTIMER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeSetTimer proto fastcall :PKTIMER, :LARGE_INTEGER, :PKDPC
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeSetTimerEx proto fastcall :PKTIMER, :LARGE_INTEGER, :SDWORD, :PKDPC
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeSetCoalescableTimer proto fastcall :PKTIMER, :LARGE_INTEGER, :DWORD, :DWORD, :PKDPC
-  endif
-  KeWaitForMutexObject equ <KeWaitForSingleObject>
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeWaitForMultipleObjects proto fastcall :DWORD, :ptr PVOID, :WAIT_TYPE, :KWAIT_REASON, :SDWORD, :__drv_typeConst :KPROCESSOR_MODE, :BOOLEAN, :PLARGE_INTEGER, :PKWAIT_BLOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeWaitForSingleObject proto fastcall :PVOID, :KWAIT_REASON, :SDWORD, :__drv_typeConst :KPROCESSOR_MODE, :BOOLEAN, :PLARGE_INTEGER
-  endif
-  KIPI_BROADCAST_WORKER typedef proto stdcall :ULONG_PTR
-  PKIPI_BROADCAST_WORKER typedef ptr KIPI_BROADCAST_WORKER
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeIpiGenericCall proto fastcall :PKIPI_BROADCAST_WORKER, :ULONG_PTR
-  endif
-  if ((defined(_X86_) and (defined(_WDM_INCLUDED_) or defined(WIN9X_COMPAT_SPINLOCK))) or ((NTDDI_VERSION gt NTDDI_WIN7) and  not defined(WIN9X_COMPAT_SPINLOCK) and (defined(_NTDRIVER_) or defined(_NTDDK_) or defined(_NTIFS_) or defined(_NTHAL_) or defined(_NTOSP_) or defined(_BLDR_))))
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeInitializeSpinLock proto stdcall :PKSPIN_LOCK
-    endif
-  else
-    KzInitializeSpinLock proto stdcall :PKSPIN_LOCK
-    KeInitializeSpinLock equ <KzInitializeSpinLock>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeTestSpinLock proto stdcall :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeTryToAcquireSpinLockAtDpcLevel proto fastcall :PKSPIN_LOCK
-  endif
-  if defined(_X86_)
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KefAcquireSpinLockAtDpcLevel proto fastcall :PKSPIN_LOCK
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KefReleaseSpinLockFromDpcLevel proto fastcall :PKSPIN_LOCK
-    endif
-    KeAcquireSpinLockAtDpcLevel macro a
-     exitm <KefAcquireSpinLockAtDpcLevel ( a ) >
-    endm
-    KeReleaseSpinLockFromDpcLevel macro a
-     exitm <KefReleaseSpinLockFromDpcLevel ( a ) >
-    endm
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KfAcquireSpinLock proto fastcall :PKSPIN_LOCK
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KfReleaseSpinLock proto fastcall :PKSPIN_LOCK, :KIRQL
-    endif
-    KeAcquireSpinLock macro a,b
-     exitm <* ( b ) = KfAcquireSpinLock ( a ) >
-    endm
-    KeReleaseSpinLock macro a,b
-     exitm <KfReleaseSpinLock ( a , b ) >
-    endm
-  else
-    KeAcquireSpinLock macro SpinLock,OldIrql
-     exitm <* ( OldIrql ) = KeAcquireSpinLockRaiseToDpc ( SpinLock ) >
-    endm
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeAcquireSpinLockAtDpcLevel( _Inout_ PKSPIN_LOCK SpinLock)
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeAcquireSpinLockRaiseToDpc proto fastcall :PKSPIN_LOCK
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeReleaseSpinLock( _Inout_ PKSPIN_LOCK SpinLock,  _In_ _IRQL_restores_ KIRQL NewIrql)
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeReleaseSpinLockFromDpcLevel( _Inout_ PKSPIN_LOCK SpinLock)
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeAcquireSpinLockForDpc proto fastcall :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeReleaseSpinLockForDpc proto fastcall :PKSPIN_LOCK, :KIRQL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeAcquireInStackQueuedSpinLock proto fastcall :PKSPIN_LOCK, :PKLOCK_QUEUE_HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeReleaseInStackQueuedSpinLock proto fastcall :PKLOCK_QUEUE_HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeAcquireInStackQueuedSpinLockAtDpcLevel proto fastcall :PKSPIN_LOCK, :PKLOCK_QUEUE_HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeReleaseInStackQueuedSpinLockFromDpcLevel proto fastcall :PKLOCK_QUEUE_HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    KeAcquireInStackQueuedSpinLockForDpc proto fastcall :PKSPIN_LOCK, :PKLOCK_QUEUE_HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    KeReleaseInStackQueuedSpinLockForDpc proto fastcall :PKLOCK_QUEUE_HANDLE
-  endif
+
+
   KDPC_WATCHDOG_INFORMATION struct
     DpcTimeLimit DWORD ?
     DpcTimeCount DWORD ?
@@ -6951,19 +5109,14 @@ ifndef _WDMDDK_
   KDPC_WATCHDOG_INFORMATION ends
 
   PKDPC_WATCHDOG_INFORMATION typedef ptr KDPC_WATCHDOG_INFORMATION
-  
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    KeQueryDpcWatchdogInformation proto fastcall :PKDPC_WATCHDOG_INFORMATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS4)
-    KeIsExecutingDpc proto fastcall
-  endif
+
+
   KBUGCHECK_BUFFER_DUMP_STATE typedef SDWORD
-  BufferEmpty = 0
-  BufferInserted = 1
-  BufferStarted = 2
-  BufferFinished = 3
-  BufferIncomplete = 4
+  BufferEmpty EQU 0
+  BufferInserted EQU 1
+  BufferStarted EQU 2
+  BufferFinished EQU 3
+  BufferIncomplete EQU 4
   
   KBUGCHECK_CALLBACK_ROUTINE typedef proto stdcall :PVOID,:DWORD
   PKBUGCHECK_CALLBACK_ROUTINE typedef ptr KBUGCHECK_CALLBACK_ROUTINE
@@ -6978,25 +5131,16 @@ ifndef _WDMDDK_
   KBUGCHECK_CALLBACK_RECORD ends
 
   PKBUGCHECK_CALLBACK_RECORD typedef ptr KBUGCHECK_CALLBACK_RECORD
-  
-  KeInitializeCallbackRecord macro CallbackRecord
-   exitm <( CallbackRecord ) - State = BufferEmpty >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeDeregisterBugCheckCallback proto fastcall :PKBUGCHECK_CALLBACK_RECORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeRegisterBugCheckCallback proto fastcall :PKBUGCHECK_CALLBACK_RECORD, :PKBUGCHECK_CALLBACK_ROUTINE, :PVOID, :DWORD, :PUCHAR
-  endif
+
   KBUGCHECK_CALLBACK_REASON typedef SDWORD
-  KbCallbackInvalid = 0
-  KbCallbackReserved1 = 1
-  KbCallbackSecondaryDumpData = 2
-  KbCallbackDumpIo = 3
-  KbCallbackAddPages = 4
-  KbCallbackSecondaryMultiPartDumpData = 5
-  KbCallbackRemovePages = 6
-  KbCallbackTriageDumpData = 7
+  KbCallbackInvalid EQU 0
+  KbCallbackReserved1 EQU 1
+  KbCallbackSecondaryDumpData EQU 2
+  KbCallbackDumpIo EQU 3
+  KbCallbackAddPages EQU 4
+  KbCallbackSecondaryMultiPartDumpData EQU 5
+  KbCallbackRemovePages EQU 6
+  KbCallbackTriageDumpData EQU 7
   
   KBUGCHECK_REASON_CALLBACK_ROUTINE typedef proto stdcall :KBUGCHECK_CALLBACK_REASON,:ptr _KBUGCHECK_REASON_CALLBACK_RECORD,:PVOID,:DWORD
   PKBUGCHECK_REASON_CALLBACK_ROUTINE typedef ptr KBUGCHECK_REASON_CALLBACK_ROUTINE
@@ -7044,11 +5188,11 @@ ifndef _WDMDDK_
   KB_SECONDARY_DATA_FLAG_ADDITIONAL_DATA equ 00000001h
   KB_SECONDARY_DATA_FLAG_NO_DEVICE_ACCESS equ 00000002h
   KBUGCHECK_DUMP_IO_TYPE typedef SDWORD
-  KbDumpIoInvalid = 0
-  KbDumpIoHeader = 1
-  KbDumpIoBody = 2
-  KbDumpIoSecondaryData = 3
-  KbDumpIoComplete = 4
+  KbDumpIoInvalid EQU 0
+  KbDumpIoHeader EQU 1
+  KbDumpIoBody EQU 2
+  KbDumpIoSecondaryData EQU 3
+  KbDumpIoComplete EQU 4
   
   KBUGCHECK_DUMP_IO struct
     Offset_ ULONG64 ?
@@ -7144,163 +5288,52 @@ ifndef _WDMDDK_
   EXCEPTION_NPX_ERROR equ 10h
   EXCEPTION_ALIGNMENT_CHECK equ 11h
   EXCEPTION_VIRTUALIZATION_FAULT equ 20h
-  if (NTDDI_VERSION ge NTDDI_WINXPSP1)
-    KeDeregisterBugCheckReasonCallback proto fastcall :PKBUGCHECK_REASON_CALLBACK_RECORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXPSP1)
-    KeRegisterBugCheckReasonCallback proto fastcall :PKBUGCHECK_REASON_CALLBACK_RECORD, :PKBUGCHECK_REASON_CALLBACK_ROUTINE, :KBUGCHECK_CALLBACK_REASON, :PUCHAR
-  endif
-  NMI_CALLBACK typedef proto stdcall :PVOID,:BOOLEAN
-  PNMI_CALLBACK typedef ptr NMI_CALLBACK
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeRegisterNmiCallback proto fastcall :PNMI_CALLBACK, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KeDeregisterNmiCallback proto fastcall :PVOID
-  endif
-  if defined(_X86_) or defined(_AMD64_)
-    if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
+
+
+
       BOUND_CALLBACK_STATUS typedef SDWORD
-      BoundExceptionContinueSearch = 0 
-      BoundExceptionHandled = 1
-      BoundExceptionError = 2
-      BoundExceptionMaximum = 3
+      BoundExceptionContinueSearch EQU 0 
+      BoundExceptionHandled EQU 1
+      BoundExceptionError EQU 2
+      BoundExceptionMaximum EQU 3
       
       PBOUND_CALLBACK_STATUS typedef ptr BOUND_CALLBACK_STATUS
       
-    endif
-    if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
+
       BOUND_CALLBACK typedef proto stdcall 
       PBOUND_CALLBACK typedef ptr BOUND_CALLBACK
-    endif
-    if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-      KeRegisterBoundCallback proto fastcall :PBOUND_CALLBACK
-    endif
-    if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-      KeDeregisterBoundCallback proto fastcall :PVOID
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeBugCheckEx proto stdcall :DWORD, :ULONG_PTR, :ULONG_PTR, :ULONG_PTR, :ULONG_PTR
-  endif
-  if  not defined(_AMD64_) and  not defined(_ARM64_)
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeQueryInterruptTime( VOID)
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      KeQuerySystemTime( _Out_ PLARGE_INTEGER CurrentTime)
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    KeQuerySystemTimePrecise proto fastcall :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    KeQueryInterruptTimePrecise proto fastcall :PULONG64
-  endif
-  if (NTDDI_VERSION ge NTDDI_THRESHOLD)
-    KeQueryUnbiasedInterruptTimePrecise proto fastcall :PULONG64
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KeQueryTimeIncrement proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryUnbiasedInterruptTime proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    KeGetRecommendedSharedDataAlignment proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K) and defined(SINGLE_GROUP_LEGACY_API)
-    KeQueryActiveProcessors proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA) and defined(SINGLE_GROUP_LEGACY_API)
-    KeQueryActiveProcessorCount proto fastcall :PKAFFINITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryActiveProcessorCountEx proto fastcall :WORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_LONGHORN) and defined(SINGLE_GROUP_LEGACY_API)
-    KeQueryMaximumProcessorCount proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryMaximumProcessorCountEx proto fastcall :WORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryActiveGroupCount proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryMaximumGroupCount proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryGroupAffinity proto fastcall :WORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeGetCurrentProcessorNumberEx proto fastcall :PPROCESSOR_NUMBER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryNodeActiveAffinity proto fastcall :WORD, :PGROUP_AFFINITY, :PUSHORT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryNodeMaximumProcessorCount proto fastcall :WORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryHighestNodeNumber proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeGetCurrentNodeNumber proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeQueryLogicalProcessorRelationship proto fastcall :PPROCESSOR_NUMBER, :LOGICAL_PROCESSOR_RELATIONSHIP, :PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, :PULONG
-  endif
-  KeShouldYieldProcessor proto fastcall
-  if defined(_X86_) or defined(_ARM_)
-    externdef c KeTickCount: KSYSTEM_TIME
-  endif
+
+
+
+
+
   MEMORY_CACHING_TYPE_ORIG typedef SDWORD
-  MmFrameBufferCached = 2 
+  MmFrameBufferCached EQU 2 
   
   MEMORY_CACHING_TYPE typedef SDWORD
-  MmNonCached = FALSE 
-  MmCached = TRUE 
-  MmWriteCombined = MmFrameBufferCached 
-  MmHardwareCoherentCached = 1
-  MmNonCachedUnordered = 2
-  MmUSWCCached = 3
-  MmMaximumCacheType = 4
-  MmNotMapped = - 1 
+  MmNonCached EQU FALSE 
+  MmCached EQU TRUE 
+  MmWriteCombined EQU MmFrameBufferCached 
+  MmHardwareCoherentCached EQU 1
+  MmNonCachedUnordered EQU 2
+  MmUSWCCached EQU 3
+  MmMaximumCacheType EQU 4
+  MmNotMapped EQU - 1 
   
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeAreAllApcsDisabled proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeInitializeGuardedMutex proto fastcall :PKGUARDED_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeAcquireGuardedMutex proto fastcall :PKGUARDED_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeReleaseGuardedMutex proto fastcall :PKGUARDED_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeTryToAcquireGuardedMutex proto fastcall :PKGUARDED_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeAcquireGuardedMutexUnsafe proto fastcall :PKGUARDED_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KeReleaseGuardedMutexUnsafe proto fastcall :PKGUARDED_MUTEX
-  endif
+
+
   KE_PROCESSOR_CHANGE_NOTIFY_STATE typedef SDWORD
-  KeProcessorAddStartNotify = 0 
-  KeProcessorAddCompleteNotify = 1
-  KeProcessorAddFailureNotify = 2
+  KeProcessorAddStartNotify EQU 0 
+  KeProcessorAddCompleteNotify EQU 1
+  KeProcessorAddFailureNotify EQU 2
   
   KE_PROCESSOR_CHANGE_NOTIFY_CONTEXT struct
     State KE_PROCESSOR_CHANGE_NOTIFY_STATE ?
     NtNumber DWORD ?
     Status NTSTATUS ?
-    if (NTDDI_VERSION ge NTDDI_WIN7)
+
       ProcNumber PROCESSOR_NUMBER <>
-    endif
+
   KE_PROCESSOR_CHANGE_NOTIFY_CONTEXT ends
 
   PKE_PROCESSOR_CHANGE_NOTIFY_CONTEXT typedef ptr KE_PROCESSOR_CHANGE_NOTIFY_CONTEXT
@@ -7308,45 +5341,24 @@ ifndef _WDMDDK_
   PROCESSOR_CALLBACK_FUNCTION typedef proto stdcall :PVOID,:PKE_PROCESSOR_CHANGE_NOTIFY_CONTEXT,:PNTSTATUS
   PPROCESSOR_CALLBACK_FUNCTION typedef ptr PROCESSOR_CALLBACK_FUNCTION
   KE_PROCESSOR_CHANGE_ADD_EXISTING equ 1
-  if (NTDDI_VERSION ge NTDDI_WS08)
-    KeRegisterProcessorChangeCallback proto fastcall :PPROCESSOR_CALLBACK_FUNCTION, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS08)
-    KeDeregisterProcessorChangeCallback proto fastcall :PVOID
-  endif
+
+
+
   INVALID_PROCESSOR_INDEX equ 0ffffffffh
-  KeGetProcessorNumberFromIndex proto fastcall :DWORD, :PPROCESSOR_NUMBER
-  KeGetProcessorIndexFromNumber proto fastcall :PPROCESSOR_NUMBER
+
   XSTATE_SAVE struct
-    if defined(_AMD64_)
+
       Prev POINTER ?
       Thread POINTER ?
       Level BYTE ?
       XStateContext XSTATE_CONTEXT <>
-    elseif defined(_ARM_) or defined(_ARM64_)
-      Dummy DWORD ?
-    elseif defined(_X86_)
-      union
-        struct
-          Reserved1 LONG64 ?
-          Reserved2 DWORD ?
-          Prev POINTER ?
-          Reserved3 PXSAVE_AREA ?
-          Thread POINTER ?
-          Reserved4 PVOID ?
-          Level BYTE ?
-        ends
-        XStateContext XSTATE_CONTEXT <>
-      ends
-    endif
+
   XSTATE_SAVE ends
 
   PXSTATE_SAVE typedef ptr XSTATE_SAVE
-  
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    KeSaveExtendedProcessorState proto stdcall :ULONG64, :PXSTATE_SAVE
-    KeRestoreExtendedProcessorState proto stdcall :PXSTATE_SAVE
-  endif
+
+
+
   EXT_SET_PARAMETERS struct
     Version DWORD ?
     Reserved DWORD ?
@@ -7357,369 +5369,86 @@ ifndef _WDMDDK_
   
   KT2_SET_PARAMETERS typedef EXT_SET_PARAMETERS
   PKT2_SET_PARAMETERS typedef ptr EXT_SET_PARAMETERS
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    KeInitializeTimer2SetParameters proto fastcall :PKT2_SET_PARAMETERS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    KeConvertAuxiliaryCounterToPerformanceCounter proto fastcall :ULONG64, :PULONG64, :PULONG64
-    KeConvertPerformanceCounterToAuxiliaryCounter proto fastcall :ULONG64, :PULONG64, :PULONG64
-    KeQueryAuxiliaryCounterFrequency proto fastcall :PULONG64
-  endif
+
+
   KWAIT_CHAIN struct
     Head PVOID ?
   KWAIT_CHAIN ends
 
   PKWAIT_CHAIN typedef ptr KWAIT_CHAIN
-  
-  if defined(_NTDDK_) or defined(_NTIFS_) or defined(_NTHAL_) or defined(_WDMDDK_) or defined(_NTOSP_)
-    externdef c KdDebuggerNotPresent: PBOOLEAN
-    externdef c KdDebuggerEnabled: PBOOLEAN
-    KD_DEBUGGER_ENABLED equ <* KdDebuggerEnabled>
-    KD_DEBUGGER_NOT_PRESENT equ <* KdDebuggerNotPresent>
-  else
-    externdef c KdDebuggerNotPresent: BOOLEAN
-    externdef c KdDebuggerEnabled: BOOLEAN
-    KD_DEBUGGER_ENABLED equ <KdDebuggerEnabled>
-    KD_DEBUGGER_NOT_PRESENT equ <KdDebuggerNotPresent>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KdDisableDebugger proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    KdEnableDebugger proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    KdRefreshDebuggerNotPresent proto fastcall
-  endif
+
+
   KD_OPTION typedef SDWORD
-  KD_OPTION_SET_BLOCK_ENABLE = 0
-  
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    KdChangeOption proto fastcall :KD_OPTION, :DWORD, :PVOID, :DWORD, :PVOID, :PULONG
-  endif
+  KD_OPTION_SET_BLOCK_ENABLE EQU 0
+
+
   _Enum_is_bitflag_ typedef SDWORD
-  NonPagedPool = 0
-  NonPagedPoolExecute = NonPagedPool 
-  PagedPool = 1
-  NonPagedPoolMustSucceed = NonPagedPool + 2 
-  DontUseThisType = 3
-  NonPagedPoolCacheAligned = NonPagedPool + 4 
-  PagedPoolCacheAligned = 5
-  NonPagedPoolCacheAlignedMustS = NonPagedPool + 6 
-  MaxPoolType = 7
-  NonPagedPoolBase = 0 
-  NonPagedPoolBaseMustSucceed = NonPagedPoolBase + 2 
-  NonPagedPoolBaseCacheAligned = NonPagedPoolBase + 4 
-  NonPagedPoolBaseCacheAlignedMustS = NonPagedPoolBase + 6 
-  NonPagedPoolSession = 32 
-  PagedPoolSession = NonPagedPoolSession + 1 
-  NonPagedPoolMustSucceedSession = PagedPoolSession + 1 
-  DontUseThisTypeSession = NonPagedPoolMustSucceedSession + 1 
-  NonPagedPoolCacheAlignedSession = DontUseThisTypeSession + 1 
-  PagedPoolCacheAlignedSession = NonPagedPoolCacheAlignedSession + 1 
-  NonPagedPoolCacheAlignedMustSSession = PagedPoolCacheAlignedSession + 1 
-  NonPagedPoolNx = 512 
-  NonPagedPoolNxCacheAligned = NonPagedPoolNx + 4 
-  NonPagedPoolSessionNx = NonPagedPoolNx + 32 
+  NonPagedPool EQU 0
+  NonPagedPoolExecute EQU NonPagedPool 
+  PagedPool EQU 1
+  NonPagedPoolMustSucceed EQU NonPagedPool + 2 
+  DontUseThisType EQU 3
+  NonPagedPoolCacheAligned EQU NonPagedPool + 4 
+  PagedPoolCacheAligned EQU 5
+  NonPagedPoolCacheAlignedMustS EQU NonPagedPool + 6 
+  MaxPoolType EQU 7
+  NonPagedPoolBase EQU 0 
+  NonPagedPoolBaseMustSucceed EQU NonPagedPoolBase + 2 
+  NonPagedPoolBaseCacheAligned EQU NonPagedPoolBase + 4 
+  NonPagedPoolBaseCacheAlignedMustS EQU NonPagedPoolBase + 6 
+  NonPagedPoolSession EQU 32 
+  PagedPoolSession EQU NonPagedPoolSession + 1 
+  NonPagedPoolMustSucceedSession EQU PagedPoolSession + 1 
+  DontUseThisTypeSession EQU NonPagedPoolMustSucceedSession + 1 
+  NonPagedPoolCacheAlignedSession EQU DontUseThisTypeSession + 1 
+  PagedPoolCacheAlignedSession EQU NonPagedPoolCacheAlignedSession + 1 
+  NonPagedPoolCacheAlignedMustSSession EQU PagedPoolCacheAlignedSession + 1 
+  NonPagedPoolNx EQU 512 
+  NonPagedPoolNxCacheAligned EQU NonPagedPoolNx + 4 
+  NonPagedPoolSessionNx EQU NonPagedPoolNx + 32 
   
-  POOL_TYPE typedef _Enum_is_bitflag_
+
   
   POOL_COLD_ALLOCATION equ 256
   POOL_NX_ALLOCATION equ 512
-  if ( not defined(_X86_) and  not defined(_AMD64_) and  not defined(_NTOS_))
+
     ;#undef  POOL_NX_OPTIN
     POOL_NX_OPTIN_AUTO equ 1
-  endif
-  if  not POOL_NX_OPTOUT
-    if POOL_NX_OPTIN_AUTO
-      NonPagedPool equ <NonPagedPoolNx>
-      NonPagedPoolCacheAligned equ <NonPagedPoolNxCacheAligned>
-    elseif POOL_NX_OPTIN
-      NonPagedPool equ <ExDefaultNonPagedPoolType>
-      NonPagedPoolCacheAligned equ ( ( POOL_TYPE ) ( ExDefaultNonPagedPoolType + 4 ) )
-    endif
-  endif
+
+
+
   POOL_QUOTA_FAIL_INSTEAD_OF_RAISE equ 8
   POOL_RAISE_IF_ALLOCATION_FAILURE equ 16
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAllocatePool proto fastcall :__drv_strictTypeMatch :POOL_TYPE, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAllocatePoolWithQuota proto fastcall :__drv_strictTypeMatch :POOL_TYPE, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAllocatePoolWithTag proto stdcall :__drv_strictTypeMatch :POOL_TYPE, :SIZE_T, :DWORD
-  endif
+
+
   EX_POOL_PRIORITY typedef SDWORD
-  LowPoolPriority = 0
-  LowPoolPrioritySpecialPoolOverrun = 8 
-  LowPoolPrioritySpecialPoolUnderrun = 9 
-  NormalPoolPriority = 16 
-  NormalPoolPrioritySpecialPoolOverrun = 24 
-  NormalPoolPrioritySpecialPoolUnderrun = 25 
-  HighPoolPriority = 32 
-  HighPoolPrioritySpecialPoolOverrun = 40 
-  HighPoolPrioritySpecialPoolUnderrun = 41 
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAllocatePoolWithTagPriority proto stdcall :__drv_strictTypeMatch :POOL_TYPE, :SIZE_T, :DWORD, :__drv_strictTypeMatch :EX_POOL_PRIORITY
-  endif
-  ifndef POOL_TAGGING
-    ExAllocatePoolWithTag macro a,b,c
-     exitm <ExAllocatePool ( a , b ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAllocatePoolWithQuotaTag proto fastcall :__drv_strictTypeMatch :POOL_TYPE, :SIZE_T, :DWORD
-  endif
-  ifndef POOL_TAGGING
-    ExAllocatePoolWithQuotaTag macro a,b,c
-     exitm <ExAllocatePoolWithQuota ( a , b ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExFreePool proto stdcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExFreePoolWithTag proto fastcall :PVOID, :DWORD
-  endif
+  LowPoolPriority EQU 0
+  LowPoolPrioritySpecialPoolOverrun EQU 8 
+  LowPoolPrioritySpecialPoolUnderrun EQU 9 
+  NormalPoolPriority EQU 16 
+  NormalPoolPrioritySpecialPoolOverrun EQU 24 
+  NormalPoolPrioritySpecialPoolUnderrun EQU 25 
+  HighPoolPriority EQU 32 
+  HighPoolPrioritySpecialPoolOverrun EQU 40 
+  HighPoolPrioritySpecialPoolUnderrun EQU 41 
+
+
+
   FM_LOCK_BIT equ 1h
   FM_LOCK_BIT_V equ 0h
-  ExInitializeFastMutex proto fastcall :PFAST_MUTEX
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAcquireFastMutexUnsafe proto fastcall :PFAST_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExReleaseFastMutexUnsafe proto fastcall :PFAST_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAcquireFastMutex proto fastcall :PFAST_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExReleaseFastMutex proto fastcall :PFAST_MUTEX
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExTryToAcquireFastMutex proto fastcall :PFAST_MUTEX
-  endif
-  if defined(_X86_)
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    ExInterlockedAddLargeStatistic macro Addend,Increment
-     exitm <_InterlockedAddLargeStatistic ( ( PLONGLONG ) and ( Addend ) - QuadPart , Increment ) >
-    endm
-    _InterlockedAddLargeStatistic proto fastcall :ptr QWORD, :SDWORD
-    ifdef __cplusplus
-      ;}
-    endif
-    ;#pragma intrinsic ( _InterlockedAddLargeStatistic )
-  else
-    ExInterlockedAddLargeStatistic macro Addend,Increment
-     exitm <InterlockedAddNoFence64 ( and ( Addend ) - QuadPart , Increment ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedAddLargeInteger proto fastcall :PLARGE_INTEGER, :LARGE_INTEGER, :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedAddUlong proto fastcall :PULONG, :DWORD, :PKSPIN_LOCK
-  endif
-  if defined(_AMD64_) or defined(_ARM_) or defined(_ARM64_)
-    ExInterlockedCompareExchange64 macro Destination,Exchange,Comperand,Lock
-     exitm <InterlockedCompareExchange64 ( Destination , * ( Exchange ) , * ( Comperand ) ) >
-    endm
-  else
-    ExInterlockedCompareExchange64 macro Destination,Exchange,Comperand,Lock
-     exitm <ExfInterlockedCompareExchange64 ( Destination , Exchange , Comperand ) >
-    endm
-    ExfInterlockedCompareExchange64 proto fastcall :ptr QWORD, :PLONGLONG, :PLONGLONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedInsertHeadList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY, :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedInsertTailList proto fastcall :PLIST_ENTRY, :PLIST_ENTRY, :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedRemoveHeadList proto fastcall :PLIST_ENTRY, :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedPopEntryList proto fastcall :PSINGLE_LIST_ENTRY, :PKSPIN_LOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInterlockedPushEntryList proto fastcall :PSINGLE_LIST_ENTRY, :PSINGLE_LIST_ENTRY, :PKSPIN_LOCK
-  endif
-  if  not defined(_WINBASE_)
-    if defined(_WIN64) and (defined(_NTDRIVER_) or defined(_NTDDK_) or defined(_NTIFS_) or defined(_NTHAL_) or defined(_NTOSP_))
-      InitializeSListHead proto fastcall :PSLIST_HEADER
-    else
-      InitializeSListHead proto fastcall :PSLIST_HEADER
-      if defined(_WIN64)
-      endif
-    endif
-  endif
-  ExInitializeSListHead equ <InitializeSListHead>
-  FirstEntrySList proto fastcall :PSLIST_HEADER
-  if  not defined(_X86_)
-    if (defined(_NTDRIVER_) or defined(_NTDDK_) or defined(_NTIFS_) or defined(_NTHAL_) or defined(_NTOSP_))
-      ExQueryDepthSList proto fastcall :PSLIST_HEADER
-    else
-      ExQueryDepthSList proto fastcall :PSLIST_HEADER
-      if defined(_WIN64)
-      else
-      endif
-    endif
-  else
-    ExQueryDepthSList macro _listhead_
-     exitm <( _listhead_ ) - Depth >
-    endm
-  endif
-  if  not defined(_WINBASE_)
-    QueryDepthSList macro Head
-     exitm <ExQueryDepthSList ( Head ) >
-    endm
-  endif
-  if  not defined(_X86_)
-    ExInterlockedPopEntrySList macro Head,Lock
-     exitm <ExpInterlockedPopEntrySList ( Head ) >
-    endm
-    ExInterlockedPushEntrySList macro Head,Entry,Lock
-     exitm <ExpInterlockedPushEntrySList ( Head , Entry ) >
-    endm
-    ExInterlockedFlushSList macro Head
-     exitm <ExpInterlockedFlushSList ( Head ) >
-    endm
-    if  not defined(_WINBASE_)
-      InterlockedPopEntrySList macro Head
-       exitm <ExpInterlockedPopEntrySList ( Head ) >
-      endm
-      InterlockedPushEntrySList macro Head,Entry
-       exitm <ExpInterlockedPushEntrySList ( Head , Entry ) >
-      endm
-      InterlockedFlushSList macro Head
-       exitm <ExpInterlockedFlushSList ( Head ) >
-      endm
-    endif
-    ExpInterlockedPopEntrySList proto fastcall :PSLIST_HEADER
-    ExpInterlockedPushEntrySList proto fastcall :PSLIST_HEADER, :PSLIST_ENTRY
-    ExpInterlockedFlushSList proto fastcall :PSLIST_HEADER
-  else
-    if defined(_WIN2K_COMPAT_SLIST_USAGE)
-      ExInterlockedPopEntrySList( _Inout_ PSLIST_HEADER ListHead,  _Inout_opt_ _Requires_lock_not_held_(* _Curr_) PKSPIN_LOCK Lock)
-      ExInterlockedPushEntrySList( _Inout_ PSLIST_HEADER ListHead,  _Inout_ __drv_aliasesMem PSLIST_ENTRY ListEntry,  _Inout_opt_ _Requires_lock_not_held_(* _Curr_) PKSPIN_LOCK Lock)
-    else
-      ExInterlockedPopEntrySList macro ListHead,Lock
-       exitm <InterlockedPopEntrySList ( ListHead ) >
-      endm
-      ExInterlockedPushEntrySList macro ListHead,ListEntry,Lock
-       exitm <InterlockedPushEntrySList ( ListHead , ListEntry ) >
-      endm
-    endif
-    ExInterlockedFlushSList( _Inout_ PSLIST_HEADER ListHead)
-    if  not defined(_WINBASE_)
-      InterlockedPopEntrySList( _Inout_ PSLIST_HEADER ListHead)
-      InterlockedPushEntrySList( _Inout_ PSLIST_HEADER ListHead,  _Inout_ __drv_aliasesMem PSLIST_ENTRY ListEntry)
-      InterlockedFlushSList macro Head
-       exitm <ExInterlockedFlushSList ( Head ) >
-      endm
-    endif
-  endif
-  LOOKASIDE_MINIMUM_BLOCK_SIZE equ <( RTL_SIZEOF_THROUGH_FIELD ( SLIST_ENTRY , Next ) )>
-  LOOKASIDE_LIST_EX struct
-    L GENERAL_LOOKASIDE_POOL <>
-  LOOKASIDE_LIST_EX ends
 
-  PLOOKASIDE_LIST_EX typedef ptr LOOKASIDE_LIST_EX
-  
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EX_LOOKASIDE_LIST_EX_FLAGS_RAISE_ON_FAIL equ 00000001h
-    EX_LOOKASIDE_LIST_EX_FLAGS_FAIL_NO_RAISE equ 00000002h
-    EX_MAXIMUM_LOOKASIDE_DEPTH_BASE equ 256
-    EX_MAXIMUM_LOOKASIDE_DEPTH_LIMIT equ 1024
-    ExInitializeLookasideListEx proto fastcall :PLOOKASIDE_LIST_EX, :PALLOCATE_FUNCTION_EX, :PFREE_FUNCTION_EX, :POOL_TYPE, :DWORD, :SIZE_T, :DWORD, :WORD
-    ExDeleteLookasideListEx proto fastcall :PLOOKASIDE_LIST_EX
-    ExFlushLookasideListEx proto fastcall :PLOOKASIDE_LIST_EX
-    ;#pragma warning ( suppress : 28195 )
-    ExAllocateFromLookasideListEx proto fastcall :PLOOKASIDE_LIST_EX
-    ExFreeToLookasideListEx proto fastcall :PLOOKASIDE_LIST_EX, :PVOID
-  endif
-  L typedef LOOKASIDE_ALIGN
-  
-  if defined(_X86_)
-  endif
-  ;}
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInitializeNPagedLookasideList proto fastcall :PNPAGED_LOOKASIDE_LIST, :PALLOCATE_FUNCTION, :PFREE_FUNCTION, :DWORD, :SIZE_T, :DWORD, :WORD
-    if  not POOL_NX_OPTOUT and (POOL_NX_OPTIN or POOL_NX_OPTIN_AUTO)
-      ExInitializeNPagedLookasideList_NXPoolOptIn proto fastcall :PNPAGED_LOOKASIDE_LIST, :PALLOCATE_FUNCTION, :PFREE_FUNCTION, :DWORD, :SIZE_T, :DWORD, :WORD
-      if POOL_NX_OPTIN_AUTO
-      else
-      endif
-      ExInitializeNPagedLookasideList equ <ExInitializeNPagedLookasideList_NXPoolOptIn>
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExDeleteNPagedLookasideList proto fastcall :PNPAGED_LOOKASIDE_LIST
-  endif
-  ;#pragma warning ( suppress : 28195 )
-  ExAllocateFromNPagedLookasideList proto fastcall :PNPAGED_LOOKASIDE_LIST
-  if defined(_WIN2K_COMPAT_SLIST_USAGE) and defined(_X86_)
-  else
-  endif
-  ExFreeToNPagedLookasideList proto fastcall :PNPAGED_LOOKASIDE_LIST, :PVOID
-  if defined(_WIN2K_COMPAT_SLIST_USAGE) and defined(_X86_)
-  else
-  endif
-  L typedef LOOKASIDE_ALIGN
-  
-  if defined(_X86_)
-  endif
-  ;}
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInitializePagedLookasideList proto fastcall :PPAGED_LOOKASIDE_LIST, :PALLOCATE_FUNCTION, :PFREE_FUNCTION, :DWORD, :SIZE_T, :DWORD, :WORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExDeletePagedLookasideList proto fastcall :PPAGED_LOOKASIDE_LIST
-  endif
-  if defined(_WIN2K_COMPAT_SLIST_USAGE) and defined(_X86_)
-    ExAllocateFromPagedLookasideList proto fastcall :PPAGED_LOOKASIDE_LIST
-  else
-    ;#pragma warning ( push )
-    ;#pragma warning ( disable : 28195 )
-    ExAllocateFromPagedLookasideList proto fastcall :PPAGED_LOOKASIDE_LIST
-    ;#pragma warning ( pop )
-  endif
-  if defined(_WIN2K_COMPAT_SLIST_USAGE) and defined(_X86_)
-    ExFreeToPagedLookasideList proto fastcall :PPAGED_LOOKASIDE_LIST, :PVOID
-  else
-    ExFreeToPagedLookasideList proto fastcall :PPAGED_LOOKASIDE_LIST, :PVOID
-  endif
-  if defined(_NTDDK_) or defined(_NTIFS_)
-    if (NTDDI_VERSION ge NTDDI_WIN2K)
-      if defined(_PREFAST_)
-        ProbeForRead proto stdcall :__in_data_source :ptr , :SIZE_T, :DWORD
-      else
-        ProbeForRead proto stdcall :__in_data_source :ptr , :SIZE_T, :DWORD
-      endif
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExRaiseStatus proto stdcall :NTSTATUS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ProbeForWrite proto stdcall :__in_data_source :ptr , :SIZE_T, :DWORD
-  endif
+
+
   WORK_QUEUE_TYPE typedef SDWORD
-  CriticalWorkQueue = 0
-  DelayedWorkQueue = 1
-  HyperCriticalWorkQueue = 2
-  NormalWorkQueue = 3
-  BackgroundWorkQueue = 4
-  RealTimeWorkQueue = 5
-  SuperCriticalWorkQueue = 6
-  MaximumWorkQueue = 7
-  CustomPriorityWorkQueue = 32 
+  CriticalWorkQueue EQU 0
+  DelayedWorkQueue EQU 1
+  HyperCriticalWorkQueue EQU 2
+  NormalWorkQueue EQU 3
+  BackgroundWorkQueue EQU 4
+  RealTimeWorkQueue EQU 5
+  SuperCriticalWorkQueue EQU 6
+  MaximumWorkQueue EQU 7
+  CustomPriorityWorkQueue EQU 32 
   
   WORKER_THREAD_ROUTINE typedef proto stdcall :PVOID
   PWORKER_THREAD_ROUTINE typedef ptr WORKER_THREAD_ROUTINE
@@ -7731,15 +5460,7 @@ ifndef _WDMDDK_
 
   PWORK_QUEUE_ITEM typedef ptr WORK_QUEUE_ITEM
   
-  ExInitializeWorkItem proto fastcall :PWORK_QUEUE_ITEM, :PWORKER_THREAD_ROUTINE, :PVOID
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ifdef _NTDDK_
-    endif
-    ExQueueWorkItem proto fastcall :PWORK_QUEUE_ITEM, :WORK_QUEUE_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExIsProcessorFeaturePresent proto fastcall :DWORD
-  endif
+
   ERESOURCE_THREAD typedef ULONG_PTR
   PERESOURCE_THREAD typedef ptr ERESOURCE_THREAD
   OWNER_ENTRY struct
@@ -7773,9 +5494,7 @@ ifndef _WDMDDK_
     ContentionCount DWORD ?
     NumberOfSharedWaiters DWORD ?
     NumberOfExclusiveWaiters DWORD ?
-    if defined(_WIN64)
       Reserved2 PVOID ?
-    endif
     union
       Address PVOID ?
       CreatorBackTraceIndex ULONG_PTR ?
@@ -7813,78 +5532,8 @@ ifndef _WDMDDK_
   RESOURCE_PERFORMANCE_DATA ends
 
   PRESOURCE_PERFORMANCE_DATA typedef ptr RESOURCE_PERFORMANCE_DATA
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExInitializeResourceLite proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExReinitializeResourceLite proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAcquireResourceSharedLite proto fastcall :PERESOURCE, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA or NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExEnterCriticalRegionAndAcquireResourceShared proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAcquireResourceExclusiveLite proto fastcall :PERESOURCE, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA or NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExEnterCriticalRegionAndAcquireResourceExclusive proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAcquireSharedStarveExclusive proto fastcall :PERESOURCE, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExAcquireSharedWaitForExclusive proto fastcall :PERESOURCE, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA or NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExEnterCriticalRegionAndAcquireSharedWaitForExclusive proto fastcall :PERESOURCE
-  endif
-  if PRAGMA_DEPRECATED_DDK
-    ;#pragma deprecated ( ExReleaseResource )
-  endif
-  ExReleaseResource macro R
-   exitm <( ExReleaseResourceLite ( R ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExReleaseResourceLite proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA or NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExReleaseResourceAndLeaveCriticalRegion proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExReleaseResourceForThreadLite proto fastcall :PERESOURCE, :ERESOURCE_THREAD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExSetResourceOwnerPointer proto fastcall :PERESOURCE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ExSetResourceOwnerPointerEx proto fastcall :PERESOURCE, :PVOID, :DWORD
-    FLAG_OWNER_POINTER_IS_THREAD equ 1h
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExConvertExclusiveToSharedLite proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExDeleteResourceLite proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExGetExclusiveWaiterCount proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExGetSharedWaiterCount proto fastcall :PERESOURCE
-  endif
-  ExGetCurrentResourceThread macro 
-   exitm <( PsGetCurrentThread ( ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExIsResourceAcquiredExclusiveLite proto fastcall :PERESOURCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExIsResourceAcquiredSharedLite proto fastcall :PERESOURCE
-  endif
-  ExIsResourceAcquiredLite equ <ExIsResourceAcquiredSharedLite>
+
+
   EX_RUNDOWN_REF struct
     EX_RUNDOWN_ACTIVE equ 1h
     EX_RUNDOWN_COUNT_SHIFT equ 1h
@@ -7899,234 +5548,101 @@ ifndef _WDMDDK_
   
   PEX_RUNDOWN_REF_CACHE_AWARE typedef ptr _EX_RUNDOWN_REF_CACHE_AWARE
   
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExGetPreviousMode proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExSetTimerResolution proto fastcall :DWORD, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    ExQueryTimerResolution proto fastcall :PULONG, :PULONG, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExSystemTimeToLocalTime proto fastcall :PLARGE_INTEGER, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExLocalTimeToSystemTime proto fastcall :PLARGE_INTEGER, :PLARGE_INTEGER
-  endif
   PEX_TIMER typedef ptr _EX_TIMER
   
-  EXT_CALLBACK proto fastcall :PEX_TIMER, :PVOID
-  PEXT_CALLBACK typedef ptr EXT_CALLBACK
-  EXT_DELETE_CALLBACK proto fastcall :PVOID
-  PEXT_DELETE_CALLBACK typedef ptr EXT_DELETE_CALLBACK
   PEXT_CANCEL_PARAMETERS typedef PVOID
   EXT_DELETE_PARAMETERS struct
     Version DWORD ?
     Reserved DWORD ?
-    DeleteCallback PEXT_DELETE_CALLBACK ?
+    DeleteCallback QWORD ?
     DeleteContext PVOID ?
   EXT_DELETE_PARAMETERS ends
 
   PEXT_DELETE_PARAMETERS typedef ptr EXT_DELETE_PARAMETERS
   
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
+
     EX_TIMER_HIGH_RESOLUTION equ 4h
     EX_TIMER_NO_WAKE equ 8h
     EX_TIMER_UNLIMITED_TOLERANCE equ - 1
     EX_TIMER_NOTIFICATION equ ( 1 shl 31 )
-    ExAllocateTimer proto fastcall :PEXT_CALLBACK, :PVOID, :DWORD
-    ExSetTimer proto fastcall :PEX_TIMER, :QWORD, :QWORD, :PEXT_SET_PARAMETERS
-    ExCancelTimer proto fastcall :PEX_TIMER, :PEXT_CANCEL_PARAMETERS
-    ExDeleteTimer proto fastcall :PEX_TIMER, :BOOLEAN, :BOOLEAN, :PEXT_DELETE_PARAMETERS
-    ExInitializeSetTimerParameters proto fastcall :PEXT_SET_PARAMETERS
-    ExInitializeDeleteTimerParameters proto fastcall :PEXT_DELETE_PARAMETERS
-  endif
+
+
   PCALLBACK_OBJECT typedef ptr _CALLBACK_OBJECT
   
   CALLBACK_FUNCTION typedef proto stdcall :PVOID,:PVOID,:PVOID
   PCALLBACK_FUNCTION typedef ptr CALLBACK_FUNCTION
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExCreateCallback proto fastcall :ptr PCALLBACK_OBJECT, :POBJECT_ATTRIBUTES, :BOOLEAN, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExRegisterCallback proto fastcall :PCALLBACK_OBJECT, :PCALLBACK_FUNCTION, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExUnregisterCallback proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ExNotifyCallback proto fastcall :PVOID, :PVOID, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExVerifySuite proto fastcall :__drv_strictTypeMatch :SUITE_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExInitializeRundownProtection proto fastcall :PEX_RUNDOWN_REF
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExReInitializeRundownProtection proto fastcall :PEX_RUNDOWN_REF
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExAcquireRundownProtection proto fastcall :PEX_RUNDOWN_REF
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXPSP2 or NTDDI_VERSION ge NTDDI_WS03)
-    ExAcquireRundownProtectionEx proto fastcall :PEX_RUNDOWN_REF, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExReleaseRundownProtection proto fastcall :PEX_RUNDOWN_REF
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXPSP2 or NTDDI_VERSION ge NTDDI_WS03)
-    ExReleaseRundownProtectionEx proto fastcall :PEX_RUNDOWN_REF, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExRundownCompleted proto fastcall :PEX_RUNDOWN_REF
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    ExWaitForRundownProtectionRelease proto fastcall :PEX_RUNDOWN_REF
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExAllocateCacheAwareRundownProtection proto fastcall :__drv_strictTypeMatch :POOL_TYPE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExSizeOfRundownProtectionCacheAware proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExInitializeRundownProtectionCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExFreeCacheAwareRundownProtection proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExAcquireRundownProtectionCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExReleaseRundownProtectionCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExAcquireRundownProtectionCacheAwareEx proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExReleaseRundownProtectionCacheAwareEx proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExWaitForRundownProtectionReleaseCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExReInitializeRundownProtectionCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    ExRundownCompletedCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
+
+
+
     EX_CARR_ALLOCATE_PAGED_POOL equ 00000000h
     EX_CARR_ALLOCATE_NONPAGED_POOL equ 00000001h
     EX_CARR_DISABLE_EXPANSION equ 00000002h
     EX_CARR_VALID_FLAGS equ <( EX_CARR_ALLOCATE_NONPAGED_POOL or EX_CARR_DISABLE_EXPANSION )>
-    ExInitializeRundownProtectionCacheAwareEx proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    ExCleanupRundownProtectionCacheAware proto fastcall :PEX_RUNDOWN_REF_CACHE_AWARE
-  endif
-  EX_SPIN_LOCK typedef volatile
-  PEX_SPIN_LOCK typedef ptr volatile
-  ALIGNED_EX_SPINLOCK equ <DECLSPEC_CACHEALIGN EX_SPIN_LOCK>
-  if (NTDDI_VERSION ge NTDDI_VISTASP1)
-    ExAcquireSpinLockSharedAtDpcLevel proto fastcall :PEX_SPIN_LOCK
-    ExAcquireSpinLockShared proto fastcall :PEX_SPIN_LOCK
-    ExReleaseSpinLockSharedFromDpcLevel proto fastcall :PEX_SPIN_LOCK
-    ExReleaseSpinLockShared proto fastcall :PEX_SPIN_LOCK, :KIRQL
-    ExTryConvertSharedSpinLockExclusive proto fastcall :PEX_SPIN_LOCK
-    ExAcquireSpinLockExclusiveAtDpcLevel proto fastcall :PEX_SPIN_LOCK
-    ExAcquireSpinLockExclusive proto fastcall :PEX_SPIN_LOCK
-    ExReleaseSpinLockExclusiveFromDpcLevel proto fastcall :PEX_SPIN_LOCK
-    ExReleaseSpinLockExclusive proto fastcall :PEX_SPIN_LOCK, :KIRQL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
-    ExTryAcquireSpinLockSharedAtDpcLevel proto fastcall :PEX_SPIN_LOCK
-    ExTryAcquireSpinLockExclusiveAtDpcLevel proto fastcall :PEX_SPIN_LOCK
-  endif
-  EX_CALLBACK_FUNCTION typedef proto stdcall :PVOID,:PVOID,:PVOID
-  PEX_CALLBACK_FUNCTION typedef ptr EX_CALLBACK_FUNCTION
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    ExGetFirmwareEnvironmentVariable proto fastcall :PUNICODE_STRING, :LPGUID, :PVOID, :PULONG, :PULONG
-    ExSetFirmwareEnvironmentVariable proto fastcall :PUNICODE_STRING, :LPGUID, :PVOID, :DWORD, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    ExIsManufacturingModeEnabled proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    ExIsSoftBoot proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    ExGetFirmwareType proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
-    ExEnumerateSystemFirmwareTables proto fastcall :DWORD, :PVOID, :DWORD, :PULONG
-    ExGetSystemFirmwareTable proto fastcall :DWORD, :DWORD, :PVOID, :DWORD, :PULONG
-  endif
+
+
+
   REG_NOTIFY_CLASS typedef SDWORD
-  RegNtDeleteKey = 0
-  RegNtPreDeleteKey = RegNtDeleteKey 
-  RegNtSetValueKey = 1
-  RegNtPreSetValueKey = RegNtSetValueKey 
-  RegNtDeleteValueKey = 1
-  RegNtPreDeleteValueKey = RegNtDeleteValueKey 
-  RegNtSetInformationKey = 1
-  RegNtPreSetInformationKey = RegNtSetInformationKey 
-  RegNtRenameKey = 1
-  RegNtPreRenameKey = RegNtRenameKey 
-  RegNtEnumerateKey = 1
-  RegNtPreEnumerateKey = RegNtEnumerateKey 
-  RegNtEnumerateValueKey = 1
-  RegNtPreEnumerateValueKey = RegNtEnumerateValueKey 
-  RegNtQueryKey = 1
-  RegNtPreQueryKey = RegNtQueryKey 
-  RegNtQueryValueKey = 1
-  RegNtPreQueryValueKey = RegNtQueryValueKey 
-  RegNtQueryMultipleValueKey = 1
-  RegNtPreQueryMultipleValueKey = RegNtQueryMultipleValueKey 
-  RegNtPreCreateKey = 1
-  RegNtPostCreateKey = 2
-  RegNtPreOpenKey = 3
-  RegNtPostOpenKey = 4
-  RegNtKeyHandleClose = 5
-  RegNtPreKeyHandleClose = RegNtKeyHandleClose 
-  RegNtPostDeleteKey = 1
-  RegNtPostSetValueKey = 2
-  RegNtPostDeleteValueKey = 3
-  RegNtPostSetInformationKey = 4
-  RegNtPostRenameKey = 5
-  RegNtPostEnumerateKey = 6
-  RegNtPostEnumerateValueKey = 7
-  RegNtPostQueryKey = 8
-  RegNtPostQueryValueKey = 9
-  RegNtPostQueryMultipleValueKey = 10
-  RegNtPostKeyHandleClose = 11
-  RegNtPreCreateKeyEx = 12
-  RegNtPostCreateKeyEx = 13
-  RegNtPreOpenKeyEx = 14
-  RegNtPostOpenKeyEx = 15
-  RegNtPreFlushKey = 16
-  RegNtPostFlushKey = 17
-  RegNtPreLoadKey = 18
-  RegNtPostLoadKey = 19
-  RegNtPreUnLoadKey = 20
-  RegNtPostUnLoadKey = 21
-  RegNtPreQueryKeySecurity = 22
-  RegNtPostQueryKeySecurity = 23
-  RegNtPreSetKeySecurity = 24
-  RegNtPostSetKeySecurity = 25
-  RegNtCallbackObjectContextCleanup = 26
-  RegNtPreRestoreKey = 27
-  RegNtPostRestoreKey = 28
-  RegNtPreSaveKey = 29
-  RegNtPostSaveKey = 30
-  RegNtPreReplaceKey = 31
-  RegNtPostReplaceKey = 32
-  RegNtPreQueryKeyName = 33
-  RegNtPostQueryKeyName = 34
-  MaxRegNtNotifyClass = 35
+  RegNtDeleteKey EQU 0
+  RegNtPreDeleteKey EQU RegNtDeleteKey 
+  RegNtSetValueKey EQU 1
+  RegNtPreSetValueKey EQU RegNtSetValueKey 
+  RegNtDeleteValueKey EQU 1
+  RegNtPreDeleteValueKey EQU RegNtDeleteValueKey 
+  RegNtSetInformationKey EQU 1
+  RegNtPreSetInformationKey EQU RegNtSetInformationKey 
+  RegNtRenameKey EQU 1
+  RegNtPreRenameKey EQU RegNtRenameKey 
+  RegNtEnumerateKey EQU 1
+  RegNtPreEnumerateKey EQU RegNtEnumerateKey 
+  RegNtEnumerateValueKey EQU 1
+  RegNtPreEnumerateValueKey EQU RegNtEnumerateValueKey 
+  RegNtQueryKey EQU 1
+  RegNtPreQueryKey EQU RegNtQueryKey 
+  RegNtQueryValueKey EQU 1
+  RegNtPreQueryValueKey EQU RegNtQueryValueKey 
+  RegNtQueryMultipleValueKey EQU 1
+  RegNtPreQueryMultipleValueKey EQU RegNtQueryMultipleValueKey 
+  RegNtPreCreateKey EQU 1
+  RegNtPostCreateKey EQU 2
+  RegNtPreOpenKey EQU 3
+  RegNtPostOpenKey EQU 4
+  RegNtKeyHandleClose EQU 5
+  RegNtPreKeyHandleClose EQU RegNtKeyHandleClose 
+  RegNtPostDeleteKey EQU 1
+  RegNtPostSetValueKey EQU 2
+  RegNtPostDeleteValueKey EQU 3
+  RegNtPostSetInformationKey EQU 4
+  RegNtPostRenameKey EQU 5
+  RegNtPostEnumerateKey EQU 6
+  RegNtPostEnumerateValueKey EQU 7
+  RegNtPostQueryKey EQU 8
+  RegNtPostQueryValueKey EQU 9
+  RegNtPostQueryMultipleValueKey EQU 10
+  RegNtPostKeyHandleClose EQU 11
+  RegNtPreCreateKeyEx EQU 12
+  RegNtPostCreateKeyEx EQU 13
+  RegNtPreOpenKeyEx EQU 14
+  RegNtPostOpenKeyEx EQU 15
+  RegNtPreFlushKey EQU 16
+  RegNtPostFlushKey EQU 17
+  RegNtPreLoadKey EQU 18
+  RegNtPostLoadKey EQU 19
+  RegNtPreUnLoadKey EQU 20
+  RegNtPostUnLoadKey EQU 21
+  RegNtPreQueryKeySecurity EQU 22
+  RegNtPostQueryKeySecurity EQU 23
+  RegNtPreSetKeySecurity EQU 24
+  RegNtPostSetKeySecurity EQU 25
+  RegNtCallbackObjectContextCleanup EQU 26
+  RegNtPreRestoreKey EQU 27
+  RegNtPostRestoreKey EQU 28
+  RegNtPreSaveKey EQU 29
+  RegNtPostSaveKey EQU 30
+  RegNtPreReplaceKey EQU 31
+  RegNtPostReplaceKey EQU 32
+  RegNtPreQueryKeyName EQU 33
+  RegNtPostQueryKeyName EQU 34
+  MaxRegNtNotifyClass EQU 35
   
   REG_DELETE_KEY_INFORMATION struct
     Object_ PVOID ?
@@ -8135,10 +5651,10 @@ ifndef _WDMDDK_
     Reserved PVOID ?
   REG_DELETE_KEY_INFORMATION ends
 
-  if (NTDDI_VERSION ge NTDDI_VISTA)
+
     PREG_DELETE_KEY_INFORMATION typedef ptr REG_DELETE_KEY_INFORMATION
     REG_FLUSH_KEY_INFORMATION typedef REG_DELETE_KEY_INFORMATION
-  endif
+
   PREG_FLUSH_KEY_INFORMATION typedef ptr REG_DELETE_KEY_INFORMATION
   
   REG_SET_VALUE_KEY_INFORMATION struct
@@ -8343,7 +5859,7 @@ ifndef _WDMDDK_
   PREG_POST_CREATE_KEY_INFORMATION typedef ptr REG_POST_CREATE_KEY_INFORMATION
   PREG_POST_OPEN_KEY_INFORMATION typedef ptr REG_POST_CREATE_KEY_INFORMATION
   
-  if (NTDDI_VERSION ge NTDDI_VISTA)
+
     REG_LOAD_KEY_INFORMATION struct
       Object_ PVOID ?
       KeyName PUNICODE_STRING ?
@@ -8433,8 +5949,7 @@ ifndef _WDMDDK_
     REG_REPLACE_KEY_INFORMATION ends
 
     PREG_REPLACE_KEY_INFORMATION typedef ptr REG_REPLACE_KEY_INFORMATION
-    
-  endif
+
   REG_QUERY_KEY_NAME struct
     Object_ PVOID ?
     ObjectNameInfo POBJECT_NAME_INFORMATION ?
@@ -8446,22 +5961,8 @@ ifndef _WDMDDK_
   REG_QUERY_KEY_NAME ends
 
   PREG_QUERY_KEY_NAME typedef ptr REG_QUERY_KEY_NAME
-  
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    CmRegisterCallback proto fastcall :PEX_CALLBACK_FUNCTION, :PVOID, :PLARGE_INTEGER
-    CmUnRegisterCallback proto fastcall :LARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    CmRegisterCallbackEx proto fastcall :PEX_CALLBACK_FUNCTION, :PCUNICODE_STRING, :PVOID, :PVOID, :PLARGE_INTEGER, :PVOID
-    CmGetCallbackVersion proto fastcall :PULONG, :PULONG
-    CmSetCallbackObjectContext proto fastcall :PVOID, :PLARGE_INTEGER, :PVOID, :ptr PVOID
-    CmCallbackGetKeyObjectID proto fastcall :PLARGE_INTEGER, :PVOID, :PULONG_PTR, :ptr PCUNICODE_STRING
-    CmGetBoundTransaction proto fastcall :PLARGE_INTEGER, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    CmCallbackGetKeyObjectIDEx proto fastcall :PLARGE_INTEGER, :PVOID, :PULONG_PTR, :ptr PCUNICODE_STRING, :DWORD
-    CmCallbackReleaseKeyObjectIDEx proto fastcall :PCUNICODE_STRING
-  endif
+
+
   EVENT_INCREMENT equ 1
   IO_NO_INCREMENT equ 0
   IO_CD_ROM_INCREMENT equ 1
@@ -8476,10 +5977,8 @@ ifndef _WDMDDK_
   IO_SOUND_INCREMENT equ 8
   IO_VIDEO_INCREMENT equ 1
   SEMAPHORE_INCREMENT equ 1
-  externdef c Mm64BitPhysicalAddress: PBOOLEAN
-  externdef c MmBadPointer: PVOID
-  MM_BAD_POINTER equ ( __pragma ( warning ( push ) ) __pragma ( warning ( disable : 4995 ) ) * MmBadPointer __pragma ( warning ( pop ) ) )
-  ;#pragma deprecated ( MmBadPointer )
+
+
   MM_MAXIMUM_DISK_IO_SIZE equ 10000h
   ROUND_TO_PAGES macro Size
    exitm <( ( ( Size ) + PAGE_SIZE - 1 ) and not ( PAGE_SIZE - 1 ) ) >
@@ -8496,9 +5995,7 @@ ifndef _WDMDDK_
   ADDRESS_AND_SIZE_TO_SPAN_PAGES macro Va,Size
    exitm <( ( BYTE_OFFSET ( Va ) + ( ( Size ) ) + ( PAGE_SIZE - 1 ) ) shr PAGE_SHIFT ) >
   endm
-  if PRAGMA_DEPRECATED_DDK
-    ;#pragma deprecated ( COMPUTE_PAGES_SPANNED )
-  endif
+
   COMPUTE_PAGES_SPANNED macro Va,Size
    exitm <ADDRESS_AND_SIZE_TO_SPAN_PAGES ( Va , Size ) >
   endm
@@ -8518,102 +6015,29 @@ ifndef _WDMDDK_
    exitm <( ( Mdl ) - StartVa ) >
   endm
   MM_SYSTEMSIZE typedef SDWORD
-  MmSmallSystem = 0
-  MmMediumSystem = 1
-  MmLargeSystem = 2
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmQuerySystemSize proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmIsVerifierEnabled proto fastcall :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmAddVerifierThunks proto fastcall :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmAddVerifierSpecialThunks proto fastcall :ULONG_PTR, :PVOID, :DWORD
-  endif
-  MmProbeAndLockSelectedPages proto fastcall :PMDL, :PFILE_SEGMENT_ELEMENT, :KPROCESSOR_MODE, :LOCK_OPERATION
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmProbeAndLockProcessPages proto fastcall :PMDL, :PEPROCESS, :KPROCESSOR_MODE, :LOCK_OPERATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmProbeAndLockPages proto fastcall :PMDL, :KPROCESSOR_MODE, :LOCK_OPERATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmUnlockPages proto fastcall :PMDL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmBuildMdlForNonPagedPool proto fastcall :PMDL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
+  MmSmallSystem EQU 0
+  MmMediumSystem EQU 1
+  MmLargeSystem EQU 2
+
+
     MM_PHYSICAL_ADDRESS_LIST struct
-      PhysicalAddress PHYSICAL_ADDRESS ?
+      PhysicalAddress PHYSICAL_ADDRESS <>
       NumberOfBytes SIZE_T ?
     MM_PHYSICAL_ADDRESS_LIST ends
 
     PMM_PHYSICAL_ADDRESS_LIST typedef ptr MM_PHYSICAL_ADDRESS_LIST
-    
-    MmAllocateMdlForIoSpace proto fastcall :PMM_PHYSICAL_ADDRESS_LIST, :SIZE_T, :ptr PMDL
-    MmAreMdlPagesCached proto fastcall :PMDL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
     MM_PERMANENT_ADDRESS_IS_IO_SPACE equ 1h
-    MmSetPermanentCacheAttribute proto fastcall :PHYSICAL_ADDRESS, :LARGE_INTEGER, :MEMORY_CACHING_TYPE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmMapLockedPages proto fastcall :PMDL, :SDWORD, :__drv_typeConst :KPROCESSOR_MODE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    MM_MDL_ROUTINE typedef proto stdcall :PVOID,:PVOID
-    PMM_MDL_ROUTINE typedef ptr MM_MDL_ROUTINE
-    MmMapMdl proto fastcall :PMDL, :DWORD, :PMM_MDL_ROUTINE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    MmIsIoSpaceActive proto fastcall :PHYSICAL_ADDRESS, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmGetSystemRoutineAddress proto stdcall :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmAdvanceMdl proto fastcall :PMDL, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmProtectMdlSystemAddress proto fastcall :PMDL, :DWORD
-  endif
+
+
   MM_PAGE_PRIORITY typedef SDWORD
-  LowPagePriority = 0
-  NormalPagePriority = 16 
-  HighPagePriority = 32 
+  LowPagePriority EQU 0
+  NormalPagePriority EQU 16 
+  HighPagePriority EQU 32 
   
   MdlMappingNoWrite equ 80000000h
   MdlMappingNoExecute equ 40000000h
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmMapLockedPagesSpecifyCache proto fastcall :PMDL, :SDWORD, :__drv_typeConst :KPROCESSOR_MODE, :__drv_strictTypeMatch :MEMORY_CACHING_TYPE, :PVOID, :DWORD, :DWORD
-    if  not POOL_NX_OPTOUT and (POOL_NX_OPTIN or POOL_NX_OPTIN_AUTO)
-      MmMapLockedPagesSpecifyCache_NXOptIn proto fastcall :PMDL, :SDWORD, :__drv_typeConst :KPROCESSOR_MODE, :__drv_strictTypeMatch :MEMORY_CACHING_TYPE, :PVOID, :DWORD, :DWORD
-      if POOL_NX_OPTIN_AUTO
-      else
-      endif
-      MmMapLockedPagesSpecifyCache equ <MmMapLockedPagesSpecifyCache_NXOptIn>
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmUnmapLockedPages proto fastcall :PVOID, :PMDL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmAllocateMappingAddress proto fastcall :SIZE_T, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmFreeMappingAddress proto fastcall :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmMapLockedPagesWithReservedMapping proto fastcall :PVOID, :DWORD, :PMDL, :__drv_strictTypeMatch :MEMORY_CACHING_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    MmUnmapReservedMapping proto fastcall :PVOID, :DWORD, :PMDL
-  endif
+
+
   MM_DONT_ZERO_ALLOCATION equ 00000001h
   MM_ALLOCATE_FROM_LOCAL_NODE_ONLY equ 00000002h
   MM_ALLOCATE_FULLY_REQUIRED equ 00000004h
@@ -8623,91 +6047,25 @@ ifndef _WDMDDK_
   MM_ALLOCATE_FAST_LARGE_PAGES equ 00000040h
   MM_ALLOCATE_TRIM_IF_NECESSARY equ 00000080h
   MM_ALLOCATE_AND_HOT_REMOVE equ 00000100h
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    MmAllocateNodePagesForMdlEx proto fastcall :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :SIZE_T, :MEMORY_CACHING_TYPE, :DWORD, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
-    MmAllocatePartitionNodePagesForMdlEx proto fastcall :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :SIZE_T, :MEMORY_CACHING_TYPE, :DWORD, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    MmAllocatePagesForMdlEx proto fastcall :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :SIZE_T, :MEMORY_CACHING_TYPE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmAllocatePagesForMdl proto fastcall :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
+
+
+
     MM_FREE_MDL_PAGES_ZERO equ 1h
-    MmFreePagesFromMdlEx proto fastcall :PMDL, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmFreePagesFromMdl proto fastcall :PMDL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmMapIoSpace proto fastcall :PHYSICAL_ADDRESS, :SIZE_T, :MEMORY_CACHING_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmUnmapIoSpace proto fastcall :PVOID, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    MmMapIoSpaceEx proto fastcall :PHYSICAL_ADDRESS, :SIZE_T, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmAllocateContiguousMemory proto fastcall :SIZE_T, :PHYSICAL_ADDRESS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmAllocateContiguousMemorySpecifyCache proto fastcall :SIZE_T, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :MEMORY_CACHING_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
+
+
     NODE_REQUIREMENT typedef DWORD
     MM_ANY_NODE_OK equ 80000000h
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    MmAllocateContiguousMemorySpecifyCacheNode proto fastcall :SIZE_T, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :MEMORY_CACHING_TYPE, :NODE_REQUIREMENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    MmAllocateContiguousNodeMemory proto fastcall :SIZE_T, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :DWORD, :NODE_REQUIREMENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmFreeContiguousMemory proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmFreeContiguousMemorySpecifyCache proto fastcall :PVOID, :SIZE_T, :MEMORY_CACHING_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmSizeOfMdl proto fastcall :PVOID, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmCreateMdl proto fastcall :PMDL, :PVOID, :SIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
+
+ 
     MM_MDL_PAGE_CONTENTS_STATE typedef SDWORD
-    MmMdlPageContentsDynamic = 0
-    MmMdlPageContentsInvariant = 1
-    MmMdlPageContentsQuery = 2
+    MmMdlPageContentsDynamic EQU 0
+    MmMdlPageContentsInvariant EQU 1
+    MmMdlPageContentsQuery EQU 2
     
     PMM_MDL_PAGE_CONTENTS_STATE typedef MM_MDL_PAGE_CONTENTS_STATE
     
-    MmMdlPageContentsState proto fastcall :PMDL, :MM_MDL_PAGE_CONTENTS_STATE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmLockPagableDataSection proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmResetDriverPaging proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmPageEntireDriver proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmUnlockPagableImageSection proto fastcall :PVOID
-  endif
-  MmInitializeMdl proto fastcall :PMDL, :PVOID, :SIZE_T
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    MmGetSystemAddressForMdlSafe proto fastcall :PMDL, :DWORD
-  endif
-  if PRAGMA_DEPRECATED_DDK
-    ;#pragma deprecated ( MmGetSystemAddressForMdl )
-  endif
+
+
   MmGetSystemAddressForMdl macro MDL
    exitm <( ( ( MDL ) - MdlFlags and ( MDL_MAPPED_TO_SYSTEM_VA or MDL_SOURCE_IS_NONPAGED_POOL ) ) ? ( ( MDL ) - MappedSystemVa ) : ( MmMapLockedPages ( ( MDL ) , KernelMode ) ) ) >
   endm
@@ -8716,20 +6074,18 @@ ifndef _WDMDDK_
   PMM_DLL_INITIALIZE typedef ptr proto_PMM_DLL_INITIALIZE
   proto_PMM_DLL_UNLOAD typedef proto fastcall 
   PMM_DLL_UNLOAD typedef ptr proto_PMM_DLL_UNLOAD
-  if (NTDDI_VERSION ge NTDDI_WIN8)
+
     MmIsDriverSuspectForVerifier proto fastcall :ptr _DRIVER_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
+
     MmIsDriverVerifying proto fastcall :ptr _DRIVER_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
+
     MmIsDriverVerifyingByAddress proto fastcall :PVOID
-  endif
+
   SECURITY_OPERATION_CODE typedef SDWORD
-  SetSecurityDescriptor = 0
-  QuerySecurityDescriptor = 1
-  DeleteSecurityDescriptor = 2
-  AssignSecurityDescriptor = 3
+  SetSecurityDescriptor EQU 0
+  QuerySecurityDescriptor EQU 1
+  DeleteSecurityDescriptor EQU 2
+  AssignSecurityDescriptor EQU 3
   
   PSECURITY_OPERATION_CODE typedef ptr SECURITY_OPERATION_CODE
   
@@ -8777,89 +6133,30 @@ ifndef _WDMDDK_
   
   NTFS_DEREF_EXPORTED_SECURITY_DESCRIPTOR typedef proto stdcall :PVOID,:PSECURITY_DESCRIPTOR
   PNTFS_DEREF_EXPORTED_SECURITY_DESCRIPTOR typedef ptr NTFS_DEREF_EXPORTED_SECURITY_DESCRIPTOR
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeCaptureSubjectContext proto fastcall :PSECURITY_SUBJECT_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeLockSubjectContext proto fastcall :PSECURITY_SUBJECT_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeUnlockSubjectContext proto fastcall :PSECURITY_SUBJECT_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeReleaseSubjectContext proto fastcall :PSECURITY_SUBJECT_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeAssignSecurity proto fastcall :PSECURITY_DESCRIPTOR, :PSECURITY_DESCRIPTOR, :ptr PSECURITY_DESCRIPTOR, :BOOLEAN, :PSECURITY_SUBJECT_CONTEXT, :PGENERIC_MAPPING, :POOL_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    SeComputeAutoInheritByObjectType proto fastcall :PVOID, :PSECURITY_DESCRIPTOR, :PSECURITY_DESCRIPTOR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeAssignSecurityEx proto fastcall :PSECURITY_DESCRIPTOR, :PSECURITY_DESCRIPTOR, :ptr PSECURITY_DESCRIPTOR, :ptr GUID, :BOOLEAN, :DWORD, :PSECURITY_SUBJECT_CONTEXT, :PGENERIC_MAPPING, :POOL_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeDeassignSecurity proto fastcall :ptr PSECURITY_DESCRIPTOR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeObjectCreateSaclAccessBits proto fastcall :PSECURITY_DESCRIPTOR
-    SeAccessCheck proto fastcall :PSECURITY_DESCRIPTOR, :PSECURITY_SUBJECT_CONTEXT, :BOOLEAN, :ACCESS_MASK, :ACCESS_MASK, :ptr PPRIVILEGE_SET, :PGENERIC_MAPPING, :KPROCESSOR_MODE, :PACCESS_MASK, :PNTSTATUS
-  endif
-  ifdef SE_NTFS_WORLD_CACHE
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      SeGetWorldRights proto fastcall :PSECURITY_DESCRIPTOR, :PGENERIC_MAPPING, :PACCESS_MASK
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    SeSetAuditParameter proto fastcall :PSE_ADT_PARAMETER_ARRAY, :SE_ADT_PARAMETER_TYPE, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1)
-    SeReportSecurityEvent proto fastcall :DWORD, :PUNICODE_STRING, :PSID, :PSE_ADT_PARAMETER_ARRAY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    SeValidSecurityDescriptor proto fastcall :DWORD, :PSECURITY_DESCRIPTOR
-  endif
+ 
+
+
   SE_IMAGE_TYPE typedef SDWORD
-  SeImageTypeElamDriver = 0 
-  SeImageTypeDriver = 1
-  SeImageTypePlatformSecureFile = 2
-  SeImageTypeDynamicCodeFile = 3
-  SeImageTypeMax = 4
+  SeImageTypeElamDriver EQU 0 
+  SeImageTypeDriver EQU 1
+  SeImageTypePlatformSecureFile EQU 2
+  SeImageTypeDynamicCodeFile EQU 3
+  SeImageTypeMax EQU 4
   
   PSE_IMAGE_TYPE typedef ptr SE_IMAGE_TYPE
-  
-  PBDCB_IMAGE_INFORMATION typedef ptr _BDCB_IMAGE_INFORMATION
+
   
   SE_IMAGE_VERIFICATION_CALLBACK_FUNCTION typedef proto stdcall :PVOID,:SE_IMAGE_TYPE,:PBDCB_IMAGE_INFORMATION
   PSE_IMAGE_VERIFICATION_CALLBACK_FUNCTION typedef ptr SE_IMAGE_VERIFICATION_CALLBACK_FUNCTION
   SE_IMAGE_VERIFICATION_CALLBACK_TYPE typedef SDWORD
-  SeImageVerificationCallbackInformational = 0 
+  SeImageVerificationCallbackInformational EQU 0 
   
   PSE_IMAGE_VERIFICATION_CALLBACK_TYPE typedef ptr SE_IMAGE_VERIFICATION_CALLBACK_TYPE
   
   SE_IMAGE_VERIFICATION_CALLBACK_TOKEN typedef PVOID
   PSE_IMAGE_VERIFICATION_CALLBACK_TOKEN typedef ptr PVOID
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    SeRegisterImageVerificationCallback proto fastcall :SE_IMAGE_TYPE, :SE_IMAGE_VERIFICATION_CALLBACK_TYPE, :PSE_IMAGE_VERIFICATION_CALLBACK_FUNCTION, :PVOID, :SE_IMAGE_VERIFICATION_CALLBACK_TOKEN, :ptr PVOID
-    SeUnregisterImageVerificationCallback proto fastcall :PVOID
-  endif
-  if  not defined(_PSGETCURRENTTHREAD_)
-    _PSGETCURRENTTHREAD_ equ <>
-    PsGetCurrentThread proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PsCreateSystemThread proto fastcall :PHANDLE, :DWORD, :POBJECT_ATTRIBUTES, :HANDLE, :PCLIENT_ID, :PKSTART_ROUTINE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PsTerminateSystemThread proto fastcall :NTSTATUS
-  endif
-  PsWrapApcWow64Thread proto fastcall :ptr PVOID, :ptr PVOID
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PsGetVersion proto fastcall :PULONG, :PULONG, :PULONG, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PsQueryTotalCycleTimeProcess proto fastcall :PEPROCESS, :PULONG64
-  endif
+
+
   IO_TYPE_ADAPTER equ 00000001h
   IO_TYPE_CONTROLLER equ 00000002h
   IO_TYPE_DEVICE equ 00000003h
@@ -8873,88 +6170,90 @@ ifndef _WDMDDK_
   IO_TYPE_ERROR_LOG equ 0000000bh
   IO_TYPE_ERROR_MESSAGE equ 0000000ch
   IO_TYPE_DEVICE_OBJECT_EXTENSION equ 0000000dh
-  IRP_MJ_CREATE equ 00h
-  IRP_MJ_CREATE_NAMED_PIPE equ 01h
-  IRP_MJ_CLOSE equ 02h
-  IRP_MJ_READ equ 03h
-  IRP_MJ_WRITE equ 04h
-  IRP_MJ_QUERY_INFORMATION equ 05h
-  IRP_MJ_SET_INFORMATION equ 06h
-  IRP_MJ_QUERY_EA equ 07h
-  IRP_MJ_SET_EA equ 08h
-  IRP_MJ_FLUSH_BUFFERS equ 09h
-  IRP_MJ_QUERY_VOLUME_INFORMATION equ 0ah
-  IRP_MJ_SET_VOLUME_INFORMATION equ 0bh
-  IRP_MJ_DIRECTORY_CONTROL equ 0ch
-  IRP_MJ_FILE_SYSTEM_CONTROL equ 0dh
-  IRP_MJ_DEVICE_CONTROL equ 0eh
-  IRP_MJ_INTERNAL_DEVICE_CONTROL equ 0fh
-  IRP_MJ_SHUTDOWN equ 10h
-  IRP_MJ_LOCK_CONTROL equ 11h
-  IRP_MJ_CLEANUP equ 12h
-  IRP_MJ_CREATE_MAILSLOT equ 13h
-  IRP_MJ_QUERY_SECURITY equ 14h
-  IRP_MJ_SET_SECURITY equ 15h
-  IRP_MJ_POWER equ 16h
-  IRP_MJ_SYSTEM_CONTROL equ 17h
-  IRP_MJ_DEVICE_CHANGE equ 18h
-  IRP_MJ_QUERY_QUOTA equ 19h
-  IRP_MJ_SET_QUOTA equ 1ah
-  IRP_MJ_PNP equ 1bh
-  IRP_MJ_PNP_POWER equ <IRP_MJ_PNP>
-  IRP_MJ_MAXIMUM_FUNCTION equ 1bh
-  IRP_MJ_SCSI equ <IRP_MJ_INTERNAL_DEVICE_CONTROL>
-  IRP_MN_SCSI_CLASS equ 01h
-  IRP_MN_START_DEVICE equ 00h
-  IRP_MN_QUERY_REMOVE_DEVICE equ 01h
-  IRP_MN_REMOVE_DEVICE equ 02h
-  IRP_MN_CANCEL_REMOVE_DEVICE equ 03h
-  IRP_MN_STOP_DEVICE equ 04h
-  IRP_MN_QUERY_STOP_DEVICE equ 05h
-  IRP_MN_CANCEL_STOP_DEVICE equ 06h
-  IRP_MN_QUERY_DEVICE_RELATIONS equ 07h
-  IRP_MN_QUERY_INTERFACE equ 08h
-  IRP_MN_QUERY_CAPABILITIES equ 09h
-  IRP_MN_QUERY_RESOURCES equ 0Ah
-  IRP_MN_QUERY_RESOURCE_REQUIREMENTS equ 0Bh
-  IRP_MN_QUERY_DEVICE_TEXT equ 0Ch
-  IRP_MN_FILTER_RESOURCE_REQUIREMENTS equ 0Dh
-  IRP_MN_READ_CONFIG equ 0Fh
-  IRP_MN_WRITE_CONFIG equ 10h
-  IRP_MN_EJECT equ 11h
-  IRP_MN_SET_LOCK equ 12h
-  IRP_MN_QUERY_ID equ 13h
-  IRP_MN_QUERY_PNP_DEVICE_STATE equ 14h
-  IRP_MN_QUERY_BUS_INFORMATION equ 15h
-  IRP_MN_DEVICE_USAGE_NOTIFICATION equ 16h
-  IRP_MN_SURPRISE_REMOVAL equ 17h
-  if (NTDDI_VERSION ge NTDDI_WIN7)
+  
+    IRP_MJ_CREATE					equ 0
+    IRP_MJ_CREATE_NAMED_PIPE		equ 1
+    IRP_MJ_CLOSE					equ 2
+    IRP_MJ_READ						equ 3
+    IRP_MJ_WRITE					equ 4
+    IRP_MJ_QUERY_INFORMATION		equ 5
+    IRP_MJ_SET_INFORMATION			equ 6
+    IRP_MJ_QUERY_EA					equ 7
+    IRP_MJ_SET_EA					equ 8
+    IRP_MJ_FLUSH_BUFFERS			equ 9
+    IRP_MJ_QUERY_VOLUME_INFORMATION	equ 0Ah
+    IRP_MJ_SET_VOLUME_INFORMATION	equ 0Bh
+    IRP_MJ_DIRECTORY_CONTROL		equ 0Ch
+    IRP_MJ_FILE_SYSTEM_CONTROL		equ 0Dh
+    IRP_MJ_DEVICE_CONTROL			equ 0Eh
+    IRP_MJ_INTERNAL_DEVICE_CONTROL	equ 0Fh
+    IRP_MJ_SHUTDOWN					equ 10h
+    IRP_MJ_LOCK_CONTROL				equ 11h
+    IRP_MJ_CLEANUP					equ 12h
+    IRP_MJ_CREATE_MAILSLOT			equ 13h
+    IRP_MJ_QUERY_SECURITY			equ 14h
+    IRP_MJ_SET_SECURITY				equ 15h
+    IRP_MJ_POWER					equ 16h
+    IRP_MJ_SYSTEM_CONTROL			equ 17h
+    IRP_MJ_DEVICE_CHANGE			equ 18h
+    IRP_MJ_QUERY_QUOTA				equ 19h
+    IRP_MJ_SET_QUOTA				equ 1Ah
+    IRP_MJ_PNP						equ 1Bh
+    IRP_MJ_PNP_POWER				equ IRP_MJ_PNP	; Obsolete....
+    IRP_MJ_MAXIMUM_FUNCTION			equ 1Bh
+    IRP_MJ_SCSI                     equ IRP_MJ_INTERNAL_DEVICE_CONTROL
+  
+    IRP_MN_SCSI_CLASS equ 01h
+    IRP_MN_START_DEVICE equ 00h
+    IRP_MN_QUERY_REMOVE_DEVICE equ 01h
+    IRP_MN_REMOVE_DEVICE equ 02h
+    IRP_MN_CANCEL_REMOVE_DEVICE equ 03h
+    IRP_MN_STOP_DEVICE equ 04h
+    IRP_MN_QUERY_STOP_DEVICE equ 05h
+    IRP_MN_CANCEL_STOP_DEVICE equ 06h
+    IRP_MN_QUERY_DEVICE_RELATIONS equ 07h
+    IRP_MN_QUERY_INTERFACE equ 08h
+    IRP_MN_QUERY_CAPABILITIES equ 09h
+    IRP_MN_QUERY_RESOURCES equ 0Ah
+    IRP_MN_QUERY_RESOURCE_REQUIREMENTS equ 0Bh
+    IRP_MN_QUERY_DEVICE_TEXT equ 0Ch
+    IRP_MN_FILTER_RESOURCE_REQUIREMENTS equ 0Dh
+    IRP_MN_READ_CONFIG equ 0Fh
+    IRP_MN_WRITE_CONFIG equ 10h
+    IRP_MN_EJECT equ 11h
+    IRP_MN_SET_LOCK equ 12h
+    IRP_MN_QUERY_ID equ 13h
+    IRP_MN_QUERY_PNP_DEVICE_STATE equ 14h
+    IRP_MN_QUERY_BUS_INFORMATION equ 15h
+    IRP_MN_DEVICE_USAGE_NOTIFICATION equ 16h
+    IRP_MN_SURPRISE_REMOVAL equ 17h
     IRP_MN_DEVICE_ENUMERATED equ 19h
-  endif
-  IRP_MN_WAIT_WAKE equ 00h
-  IRP_MN_POWER_SEQUENCE equ 01h
-  IRP_MN_SET_POWER equ 02h
-  IRP_MN_QUERY_POWER equ 03h
-  IRP_MN_QUERY_ALL_DATA equ 00h
-  IRP_MN_QUERY_SINGLE_INSTANCE equ 01h
-  IRP_MN_CHANGE_SINGLE_INSTANCE equ 02h
-  IRP_MN_CHANGE_SINGLE_ITEM equ 03h
-  IRP_MN_ENABLE_EVENTS equ 04h
-  IRP_MN_DISABLE_EVENTS equ 05h
-  IRP_MN_ENABLE_COLLECTION equ 06h
-  IRP_MN_DISABLE_COLLECTION equ 07h
-  IRP_MN_REGINFO equ 08h
-  IRP_MN_EXECUTE_METHOD equ 09h
-  IRP_MN_REGINFO_EX equ 0bh
+    IRP_MN_WAIT_WAKE equ 00h
+    IRP_MN_POWER_SEQUENCE equ 01h
+    IRP_MN_SET_POWER equ 02h
+    IRP_MN_QUERY_POWER equ 03h
+    IRP_MN_QUERY_ALL_DATA equ 00h
+    IRP_MN_QUERY_SINGLE_INSTANCE equ 01h
+    IRP_MN_CHANGE_SINGLE_INSTANCE equ 02h
+    IRP_MN_CHANGE_SINGLE_ITEM equ 03h
+    IRP_MN_ENABLE_EVENTS equ 04h
+    IRP_MN_DISABLE_EVENTS equ 05h
+    IRP_MN_ENABLE_COLLECTION equ 06h
+    IRP_MN_DISABLE_COLLECTION equ 07h
+    IRP_MN_REGINFO equ 08h
+    IRP_MN_EXECUTE_METHOD equ 09h
+    IRP_MN_REGINFO_EX equ 0bh
+  
+  
   IO_FORCE_ACCESS_CHECK equ 0001h
   IO_NO_PARAMETER_CHECKING equ 0100h
   IO_REPARSE equ 0h
   IO_REMOUNT equ 1h
   IO_REPARSE_GLOBAL equ 2h
   CREATE_FILE_TYPE typedef SDWORD
-  CreateFileTypeNone = 0
-  CreateFileTypeNamedPipe = 1
-  CreateFileTypeMailslot = 2
+  CreateFileTypeNone EQU 0
+  CreateFileTypeNamedPipe EQU 1
+  CreateFileTypeMailslot EQU 2
   
   NAMED_PIPE_CREATE_PARAMETERS struct
     NamedPipeType DWORD ?
@@ -8977,123 +6276,119 @@ ifndef _WDMDDK_
   MAILSLOT_CREATE_PARAMETERS ends
 
   PMAILSLOT_CREATE_PARAMETERS typedef ptr MAILSLOT_CREATE_PARAMETERS
-  
-  if defined(_WIN64)
-    POINTER_ALIGNMENT equ DECLSPEC_ALIGN ( 8 )
-  else
-    POINTER_ALIGNMENT equ <>
-  endif
-  DECLSPEC_ALIGN proto fastcall :MEMORY_ALLOCATION_ALIGNMENT
-  IO_DPC_ROUTINE proto fastcall :PKDPC, :ptr _DEVICE_OBJECT, :ptr _IRP, :PVOID
-  PIO_DPC_ROUTINE typedef ptr IO_DPC_ROUTINE
-  IO_TIMER_ROUTINE proto fastcall :ptr _DEVICE_OBJECT, :PVOID
-  PIO_TIMER_ROUTINE typedef ptr IO_TIMER_ROUTINE
-  DRIVER_INITIALIZE proto fastcall :ptr _DRIVER_OBJECT, :PUNICODE_STRING
-  PDRIVER_INITIALIZE typedef ptr DRIVER_INITIALIZE
-  DRIVER_CANCEL proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
-  PDRIVER_CANCEL typedef ptr DRIVER_CANCEL
-  DRIVER_DISPATCH proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
-  PDRIVER_DISPATCH typedef ptr DRIVER_DISPATCH
-  DRIVER_DISPATCH_RAISED typedef DRIVER_DISPATCH
-  DRIVER_DISPATCH_PAGED proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
-  PDRIVER_DISPATCH_PAGED typedef ptr DRIVER_DISPATCH_PAGED
-  DRIVER_STARTIO proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
-  PDRIVER_STARTIO typedef ptr DRIVER_STARTIO
-  DRIVER_UNLOAD proto fastcall :ptr _DRIVER_OBJECT
-  PDRIVER_UNLOAD typedef ptr DRIVER_UNLOAD
-  DRIVER_ADD_DEVICE proto fastcall :ptr _DRIVER_OBJECT, :ptr _DEVICE_OBJECT
-  PDRIVER_ADD_DEVICE typedef ptr DRIVER_ADD_DEVICE
-  FAST_IO_CHECK_IF_POSSIBLE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :BOOLEAN, :DWORD, :BOOLEAN, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_CHECK_IF_POSSIBLE typedef ptr FAST_IO_CHECK_IF_POSSIBLE
-  FAST_IO_READ proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :BOOLEAN, :DWORD, :PVOID, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_READ typedef ptr FAST_IO_READ
-  FAST_IO_WRITE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :BOOLEAN, :DWORD, :PVOID, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_WRITE typedef ptr FAST_IO_WRITE
-  FAST_IO_QUERY_BASIC_INFO proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :PFILE_BASIC_INFORMATION, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_QUERY_BASIC_INFO typedef ptr FAST_IO_QUERY_BASIC_INFO
-  FAST_IO_QUERY_STANDARD_INFO proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :PFILE_STANDARD_INFORMATION, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_QUERY_STANDARD_INFO typedef ptr FAST_IO_QUERY_STANDARD_INFO
-  FAST_IO_LOCK proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PLARGE_INTEGER, :PEPROCESS, :DWORD, :BOOLEAN, :BOOLEAN, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_LOCK typedef ptr FAST_IO_LOCK
-  FAST_IO_UNLOCK_SINGLE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PLARGE_INTEGER, :PEPROCESS, :DWORD, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_UNLOCK_SINGLE typedef ptr FAST_IO_UNLOCK_SINGLE
-  FAST_IO_UNLOCK_ALL proto fastcall :ptr _FILE_OBJECT, :PEPROCESS, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_UNLOCK_ALL typedef ptr FAST_IO_UNLOCK_ALL
-  FAST_IO_UNLOCK_ALL_BY_KEY proto fastcall :ptr _FILE_OBJECT, :PVOID, :DWORD, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_UNLOCK_ALL_BY_KEY typedef ptr FAST_IO_UNLOCK_ALL_BY_KEY
-  FAST_IO_DEVICE_CONTROL proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :PVOID, :DWORD, :PVOID, :DWORD, :DWORD, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_DEVICE_CONTROL typedef ptr FAST_IO_DEVICE_CONTROL
-  FAST_IO_ACQUIRE_FILE proto fastcall :ptr _FILE_OBJECT
-  PFAST_IO_ACQUIRE_FILE typedef ptr FAST_IO_ACQUIRE_FILE
-  FAST_IO_RELEASE_FILE proto fastcall :ptr _FILE_OBJECT
-  PFAST_IO_RELEASE_FILE typedef ptr FAST_IO_RELEASE_FILE
-  FAST_IO_DETACH_DEVICE proto fastcall :ptr _DEVICE_OBJECT, :ptr _DEVICE_OBJECT
-  PFAST_IO_DETACH_DEVICE typedef ptr FAST_IO_DETACH_DEVICE
-  FAST_IO_QUERY_NETWORK_OPEN_INFO proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :ptr _FILE_NETWORK_OPEN_INFORMATION, :ptr _IO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_QUERY_NETWORK_OPEN_INFO typedef ptr FAST_IO_QUERY_NETWORK_OPEN_INFO
-  FAST_IO_MDL_READ proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_MDL_READ typedef ptr FAST_IO_MDL_READ
-  FAST_IO_MDL_READ_COMPLETE proto fastcall :ptr _FILE_OBJECT, :PMDL, :ptr _DEVICE_OBJECT
-  PFAST_IO_MDL_READ_COMPLETE typedef ptr FAST_IO_MDL_READ_COMPLETE
-  FAST_IO_PREPARE_MDL_WRITE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
-  PFAST_IO_PREPARE_MDL_WRITE typedef ptr FAST_IO_PREPARE_MDL_WRITE
-  FAST_IO_MDL_WRITE_COMPLETE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PMDL, :ptr _DEVICE_OBJECT
-  PFAST_IO_MDL_WRITE_COMPLETE typedef ptr FAST_IO_MDL_WRITE_COMPLETE
-  FAST_IO_ACQUIRE_FOR_MOD_WRITE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :ptr ptr _ERESOURCE, :ptr _DEVICE_OBJECT
-  PFAST_IO_ACQUIRE_FOR_MOD_WRITE typedef ptr FAST_IO_ACQUIRE_FOR_MOD_WRITE
-  FAST_IO_RELEASE_FOR_MOD_WRITE proto fastcall :ptr _FILE_OBJECT, :ptr _ERESOURCE, :ptr _DEVICE_OBJECT
-  PFAST_IO_RELEASE_FOR_MOD_WRITE typedef ptr FAST_IO_RELEASE_FOR_MOD_WRITE
-  FAST_IO_ACQUIRE_FOR_CCFLUSH proto fastcall :ptr _FILE_OBJECT, :ptr _DEVICE_OBJECT
-  PFAST_IO_ACQUIRE_FOR_CCFLUSH typedef ptr FAST_IO_ACQUIRE_FOR_CCFLUSH
-  FAST_IO_RELEASE_FOR_CCFLUSH proto fastcall :ptr _FILE_OBJECT, :ptr _DEVICE_OBJECT
-  PFAST_IO_RELEASE_FOR_CCFLUSH typedef ptr FAST_IO_RELEASE_FOR_CCFLUSH
-  FAST_IO_READ_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :PVOID, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _COMPRESSED_DATA_INFO, :DWORD, :ptr _DEVICE_OBJECT
-  PFAST_IO_READ_COMPRESSED typedef ptr FAST_IO_READ_COMPRESSED
-  FAST_IO_WRITE_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :PVOID, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _COMPRESSED_DATA_INFO, :DWORD, :ptr _DEVICE_OBJECT
-  PFAST_IO_WRITE_COMPRESSED typedef ptr FAST_IO_WRITE_COMPRESSED
-  FAST_IO_MDL_READ_COMPLETE_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PMDL, :ptr _DEVICE_OBJECT
-  PFAST_IO_MDL_READ_COMPLETE_COMPRESSED typedef ptr FAST_IO_MDL_READ_COMPLETE_COMPRESSED
-  FAST_IO_MDL_WRITE_COMPLETE_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PMDL, :ptr _DEVICE_OBJECT
-  PFAST_IO_MDL_WRITE_COMPLETE_COMPRESSED typedef ptr FAST_IO_MDL_WRITE_COMPLETE_COMPRESSED
-  FAST_IO_QUERY_OPEN proto fastcall :ptr _IRP, :PFILE_NETWORK_OPEN_INFORMATION, :ptr _DEVICE_OBJECT
-  PFAST_IO_QUERY_OPEN typedef ptr FAST_IO_QUERY_OPEN
-  FAST_IO_DISPATCH struct
-    SizeOfFastIoDispatch DWORD ?
-    FastIoCheckIfPossible PFAST_IO_CHECK_IF_POSSIBLE ?
-    FastIoRead PFAST_IO_READ ?
-    FastIoWrite PFAST_IO_WRITE ?
-    FastIoQueryBasicInfo PFAST_IO_QUERY_BASIC_INFO ?
-    FastIoQueryStandardInfo PFAST_IO_QUERY_STANDARD_INFO ?
-    FastIoLock PFAST_IO_LOCK ?
-    FastIoUnlockSingle PFAST_IO_UNLOCK_SINGLE ?
-    FastIoUnlockAll PFAST_IO_UNLOCK_ALL ?
-    FastIoUnlockAllByKey PFAST_IO_UNLOCK_ALL_BY_KEY ?
-    FastIoDeviceControl PFAST_IO_DEVICE_CONTROL ?
-    AcquireFileForNtCreateSection PFAST_IO_ACQUIRE_FILE ?
-    ReleaseFileForNtCreateSection PFAST_IO_RELEASE_FILE ?
-    FastIoDetachDevice PFAST_IO_DETACH_DEVICE ?
-    FastIoQueryNetworkOpenInfo PFAST_IO_QUERY_NETWORK_OPEN_INFO ?
-    AcquireForModWrite PFAST_IO_ACQUIRE_FOR_MOD_WRITE ?
-    MdlRead PFAST_IO_MDL_READ ?
-    MdlReadComplete PFAST_IO_MDL_READ_COMPLETE ?
-    PrepareMdlWrite PFAST_IO_PREPARE_MDL_WRITE ?
-    MdlWriteComplete PFAST_IO_MDL_WRITE_COMPLETE ?
-    FastIoReadCompressed PFAST_IO_READ_COMPRESSED ?
-    FastIoWriteCompressed PFAST_IO_WRITE_COMPRESSED ?
-    MdlReadCompleteCompressed PFAST_IO_MDL_READ_COMPLETE_COMPRESSED ?
-    MdlWriteCompleteCompressed PFAST_IO_MDL_WRITE_COMPLETE_COMPRESSED ?
-    FastIoQueryOpen PFAST_IO_QUERY_OPEN ?
-    ReleaseForModWrite PFAST_IO_RELEASE_FOR_MOD_WRITE ?
-    AcquireForCcFlush PFAST_IO_ACQUIRE_FOR_CCFLUSH ?
-    ReleaseForCcFlush PFAST_IO_RELEASE_FOR_CCFLUSH ?
-  FAST_IO_DISPATCH ends
 
-  PFAST_IO_DISPATCH typedef ptr FAST_IO_DISPATCH
+
+  IO_DPC_ROUTINE proto fastcall :PKDPC, :ptr _DEVICE_OBJECT, :ptr _IRP, :PVOID
+
+  IO_TIMER_ROUTINE proto fastcall :ptr _DEVICE_OBJECT, :PVOID
+
+  DRIVER_INITIALIZE proto fastcall :ptr _DRIVER_OBJECT, :PUNICODE_STRING
+
+  DRIVER_CANCEL proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
+
+  DRIVER_DISPATCH proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
+
+
+  DRIVER_DISPATCH_PAGED proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
+
+  DRIVER_STARTIO proto fastcall :ptr _DEVICE_OBJECT, :ptr _IRP
+
+  DRIVER_UNLOAD proto fastcall :ptr _DRIVER_OBJECT
+
+  DRIVER_ADD_DEVICE proto fastcall :ptr _DRIVER_OBJECT, :ptr _DEVICE_OBJECT
+
+  FAST_IO_CHECK_IF_POSSIBLE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :BOOLEAN, :DWORD, :BOOLEAN, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_READ proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :BOOLEAN, :DWORD, :PVOID, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_WRITE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :BOOLEAN, :DWORD, :PVOID, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_QUERY_BASIC_INFO proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :PFILE_BASIC_INFORMATION, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_QUERY_STANDARD_INFO proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :PFILE_STANDARD_INFORMATION, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_LOCK proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PLARGE_INTEGER, :PEPROCESS, :DWORD, :BOOLEAN, :BOOLEAN, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_UNLOCK_SINGLE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PLARGE_INTEGER, :PEPROCESS, :DWORD, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_UNLOCK_ALL proto fastcall :ptr _FILE_OBJECT, :PEPROCESS, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_UNLOCK_ALL_BY_KEY proto fastcall :ptr _FILE_OBJECT, :PVOID, :DWORD, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_DEVICE_CONTROL proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :PVOID, :DWORD, :PVOID, :DWORD, :DWORD, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_ACQUIRE_FILE proto fastcall :ptr _FILE_OBJECT
+
+  FAST_IO_RELEASE_FILE proto fastcall :ptr _FILE_OBJECT
+
+  FAST_IO_DETACH_DEVICE proto fastcall :ptr _DEVICE_OBJECT, :ptr _DEVICE_OBJECT
+
+  FAST_IO_QUERY_NETWORK_OPEN_INFO proto fastcall :ptr _FILE_OBJECT, :BOOLEAN, :ptr _FILE_NETWORK_OPEN_INFORMATION, :ptr _IO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_MDL_READ proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_MDL_READ_COMPLETE proto fastcall :ptr _FILE_OBJECT, :PMDL, :ptr _DEVICE_OBJECT
+
+  FAST_IO_PREPARE_MDL_WRITE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _DEVICE_OBJECT
+
+  FAST_IO_MDL_WRITE_COMPLETE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PMDL, :ptr _DEVICE_OBJECT
+
+  FAST_IO_ACQUIRE_FOR_MOD_WRITE proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :ptr ptr _ERESOURCE, :ptr _DEVICE_OBJECT
+
+  FAST_IO_RELEASE_FOR_MOD_WRITE proto fastcall :ptr _FILE_OBJECT, :ptr _ERESOURCE, :ptr _DEVICE_OBJECT
+
+  FAST_IO_ACQUIRE_FOR_CCFLUSH proto fastcall :ptr _FILE_OBJECT, :ptr _DEVICE_OBJECT
+
+  FAST_IO_RELEASE_FOR_CCFLUSH proto fastcall :ptr _FILE_OBJECT, :ptr _DEVICE_OBJECT
+
+  FAST_IO_READ_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :PVOID, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _COMPRESSED_DATA_INFO, :DWORD, :ptr _DEVICE_OBJECT
+
+  FAST_IO_WRITE_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :DWORD, :DWORD, :PVOID, :ptr PMDL, :PIO_STATUS_BLOCK, :ptr _COMPRESSED_DATA_INFO, :DWORD, :ptr _DEVICE_OBJECT
+
+  FAST_IO_MDL_READ_COMPLETE_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PMDL, :ptr _DEVICE_OBJECT
+
+  FAST_IO_MDL_WRITE_COMPLETE_COMPRESSED proto fastcall :ptr _FILE_OBJECT, :PLARGE_INTEGER, :PMDL, :ptr _DEVICE_OBJECT
+
+  FAST_IO_QUERY_OPEN proto fastcall :ptr _IRP, :PFILE_NETWORK_OPEN_INFORMATION, :ptr _DEVICE_OBJECT
+
+    IFNDEF FAST_IO_DISPATCH
+    FAST_IO_DISPATCH                    STRUCT
+        SizeOfFastIoDispatch            DWORD ?
+        FastIoCheckIfPossible           QWORD ? ;PFAST_IO_CHECK_IF_POSSIBLE ?
+        FastIoRead                      QWORD ? ;PFAST_IO_READ ?
+        FastIoWrite                     QWORD ? ;PFAST_IO_WRITE ?
+        FastIoQueryBasicInfo            QWORD ? ;PFAST_IO_QUERY_BASIC_INFO ?
+        FastIoQueryStandardInfo         QWORD ? ;PFAST_IO_QUERY_STANDARD_INFO ?
+        FastIoLock                      QWORD ? ;PFAST_IO_LOCK ?
+        FastIoUnlockSingle              QWORD ? ;PFAST_IO_UNLOCK_SINGLE ?
+        FastIoUnlockAll                 QWORD ? ;PFAST_IO_UNLOCK_ALL ?
+        FastIoUnlockAllByKey            QWORD ? ;PFAST_IO_UNLOCK_ALL_BY_KEY ?
+        FastIoDeviceControl             QWORD ? ;PFAST_IO_DEVICE_CONTROL ?
+        AcquireFileForNtCreateSection   QWORD ? ;PFAST_IO_ACQUIRE_FILE ?
+        ReleaseFileForNtCreateSection   QWORD ? ;PFAST_IO_RELEASE_FILE ?
+        FastIoDetachDevice              QWORD ? ;PFAST_IO_DETACH_DEVICE ?
+        FastIoQueryNetworkOpenInfo      QWORD ? ;PFAST_IO_QUERY_NETWORK_OPEN_INFO ?
+        AcquireForModWrite              QWORD ? ;PFAST_IO_ACQUIRE_FOR_MOD_WRITE ?
+        MdlRead                         QWORD ? ;PFAST_IO_MDL_READ ?
+        MdlReadComplete                 QWORD ? ;PFAST_IO_MDL_READ_COMPLETE ?
+        PrepareMdlWrite                 QWORD ? ;PFAST_IO_PREPARE_MDL_WRITE ?
+        MdlWriteComplete                QWORD ? ;PFAST_IO_MDL_WRITE_COMPLETE ?
+        FastIoReadCompressed            QWORD ? ;PFAST_IO_READ_COMPRESSED ?
+        FastIoWriteCompressed           QWORD ? ;PFAST_IO_WRITE_COMPRESSED ?
+        MdlReadCompleteCompressed       QWORD ? ;PFAST_IO_MDL_READ_COMPLETE_COMPRESSED ?
+        MdlWriteCompleteCompressed      QWORD ? ;PFAST_IO_MDL_WRITE_COMPLETE_COMPRESSED ?
+        FastIoQueryOpen                 QWORD ? ;PFAST_IO_QUERY_OPEN ?
+        ReleaseForModWrite              QWORD ? ;PFAST_IO_RELEASE_FOR_MOD_WRITE ?
+        AcquireForCcFlush               QWORD ? ;PFAST_IO_ACQUIRE_FOR_CCFLUSH ?
+        ReleaseForCcFlush               QWORD ? ;PFAST_IO_RELEASE_FOR_CCFLUSH ?
+    FAST_IO_DISPATCH                    ENDS
+    ENDIF
+    PFAST_IO_DISPATCH typedef ptr FAST_IO_DISPATCH
   
   IO_ALLOCATION_ACTION typedef SDWORD
-  KeepObject = 1 
-  DeallocateObject = 2
-  DeallocateObjectKeepRegisters = 3
+  KeepObject EQU 1 
+  DeallocateObject EQU 2
+  DeallocateObjectKeepRegisters EQU 3
   
   PIO_ALLOCATION_ACTION typedef ptr IO_ALLOCATION_ACTION
   
@@ -9115,57 +6410,36 @@ ifndef _WDMDDK_
   VPB_RAW_MOUNT equ 00000010h
   VPB_DIRECT_WRITES_ALLOWED equ 00000020h
   MAXIMUM_VOLUME_LABEL_LENGTH equ ( 32 * sizeof ( WCHAR ) )
-  VPB struct
-    Type_ CSHORT ?
-    Size_ CSHORT ?
-    Flags WORD ?
-    VolumeLabelLength WORD ?
-    DeviceObject POINTER ?
-    RealDevice POINTER ?
-    SerialNumber DWORD ?
-    ReferenceCount DWORD ?
-    VolumeLabel WCHAR MAXIMUM_VOLUME_LABEL_LENGTH/sizeof(WCHAR) dup (?)
-  VPB ends
 
-  PVPB typedef ptr VPB
+    IFNDEF VPB
+    VPB STRUCT				; sizeof = 58h
+    	fwType				WORD			IO_TYPE_VPB	; 0Ah
+    	cbSize				WORD			?			; cb
+    	Flags				WORD			?
+    	VolumeLabelLength	WORD			?			; in bytes without terminat. zero
+    	DeviceObject		QWORD			?			; PDEVICE_OBJECT
+    	RealDevice			QWORD			?			; PDEVICE_OBJECT
+    	SerialNumber		DWORD			?
+    	ReferenceCount		DWORD			?
+    	VolumeLabel			WORD			(MAXIMUM_VOLUME_LABEL_LENGTH / (sizeof WCHAR)) dup(?)
+    VPB ENDS
+    ENDIF
+    PVPB typedef ptr VPB
+
+    IFNDEF WAIT_CONTEXT_BLOCK
+    WAIT_CONTEXT_BLOCK STRUCT	; sizeof = 28h
+    	WaitQueueEntry			KDEVICE_QUEUE_ENTRY	<>
+    	DeviceRoutine			QWORD				?	; PDRIVER_CONTROL
+    	DeviceContext			QWORD				?
+    	NumberOfMapRegisters	DWORD				?
+    	DeviceObject			QWORD				?
+    	CurrentIrp				QWORD				?
+    	BufferChainingDpc		QWORD				?	; PKDPC
+    WAIT_CONTEXT_BLOCK ENDS
+    ENDIF
+    PWAIT_CONTEXT_BLOCK typedef ptr WAIT_CONTEXT_BLOCK
   
-  if defined(_WIN64) or defined(_ARM_)
-    ifndef USE_DMA_MACROS
-      USE_DMA_MACROS equ <>
-    endif
-    ifndef NO_LEGACY_DRIVERS
-      NO_LEGACY_DRIVERS equ <>
-    endif
-  endif
-  if defined(USE_DMA_MACROS) and  not defined(_NTHAL_) and (defined(_NTDDK_) or defined(_NTDRIVER_) or defined(_NTOSP_))
-    PADAPTER_OBJECT typedef ptr _DMA_ADAPTER
-    
-  elseif defined(_WDM_INCLUDED_)
-    PADAPTER_OBJECT typedef ptr _DMA_ADAPTER
-    
-  else
-    PADAPTER_OBJECT typedef ptr _ADAPTER_OBJECT
-    
-  endif
-  WAIT_CONTEXT_BLOCK struct
-    union
-      WaitQueueEntry KDEVICE_QUEUE_ENTRY <>
-      struct
-        DmaWaitEntry LIST_ENTRY <>
-        NumberOfChannels DWORD ?
-        WAIT_CONTEXT_BLOCK_??28 record SyncCallback_??28:1, DmaContext_??28:1, ZeroMapRegisters_??28:1, Reserved_??28:29
-        WAIT_CONTEXT_BLOCK_??28 <>
-      ends
-    ends
-    DeviceRoutine PDRIVER_CONTROL ?
-    DeviceContext PVOID ?
-    NumberOfMapRegisters DWORD ?
-    DeviceObject PVOID ?
-    CurrentIrp PVOID ?
-    BufferChainingDpc PKDPC ?
-  WAIT_CONTEXT_BLOCK ends
-
-  PWAIT_CONTEXT_BLOCK typedef ptr WAIT_CONTEXT_BLOCK
+  PADAPTER_OBJECT typedef ptr _DMA_ADAPTER
   
   DO_VERIFY_VOLUME equ 00000002h
   DO_BUFFERED_IO equ 00000004h
@@ -9179,74 +6453,106 @@ ifndef _WDMDDK_
   DO_POWER_INRUSH equ 00004000h
   DO_DEVICE_TO_BE_RESET equ 04000000h
   DO_DAX_VOLUME equ 10000000h
-  if _MSC_VER ge 1200
-    ;#pragma warning ( push )
-    ;#pragma warning ( disable : 4324 )
-  endif
-  Type_ typedef DECLSPEC_ALIGN
+
+
   
   Queue union
     ListEntry LIST_ENTRY <>
     Wcb WAIT_CONTEXT_BLOCK <>
   Queue ends
 
-  ;}
-  PDEVICE_OBJECT typedef ptr _DEVICE_OBJECT
+  PDEVICE_OBJECT typedef ptr DEVICE_OBJECT
   
-  if _MSC_VER ge 1200
-    ;#pragma warning ( pop )
-  endif
-  DEVOBJ_EXTENSION struct
-    Type_ CSHORT ?
-    Size_ WORD ?
-    DeviceObject PDEVICE_OBJECT ?
-    PowerFlags DWORD ?
-    Dope POINTER ?
-    ExtensionFlags DWORD ?
-    DeviceNode PVOID ?
-    AttachedTo PDEVICE_OBJECT ?
-    StartIoCount SDWORD ?
-    StartIoKey SDWORD ?
-    StartIoFlags DWORD ?
-    Vpb PVPB ?
-    DependencyNode PVOID ?
-    InterruptContext PVOID ?
-    VerifierContext PVOID ?
-  DEVOBJ_EXTENSION ends
-
-  PDEVOBJ_EXTENSION typedef ptr DEVOBJ_EXTENSION
+    IFNDEF DEVOBJ_EXTENSION
+    DEVOBJ_EXTENSION STRUCT		; sizeof = 8h
+    	woType			WORD			IO_TYPE_DEVICE_OBJECT_EXTENSION	; 00h (original name Type)
+    	cbSize			WORD			?						; 02h (original name Size)
+    	; Public part of the DeviceObjectExtension structure
+    	DeviceObject	PDEVICE_OBJECT	?						; 04h owning device object
+        PowerFlags DWORD ?
+        Dope POINTER ?
+        ExtensionFlags DWORD ?
+        DeviceNode PVOID ?
+        AttachedTo PDEVICE_OBJECT ?
+        StartIoCount SDWORD ?
+        StartIoKey SDWORD ?
+        StartIoFlags DWORD ?
+        Vpb PVPB ?
+        DependencyNode PVOID ?
+        InterruptContext PVOID ?
+        VerifierContext PVOID ?
+    DEVOBJ_EXTENSION ENDS
+    ENDIF
+    PDEVOBJ_EXTENSION typedef ptr DEVOBJ_EXTENSION
+  
   
   DRVO_UNLOAD_INVOKED equ 00000001h
   DRVO_LEGACY_DRIVER equ 00000002h
   DRVO_BUILTIN_DRIVER equ 00000004h
-  DRIVER_EXTENSION struct
-    DriverObject POINTER ?
-    AddDevice PDRIVER_ADD_DEVICE ?
-    Count DWORD ?
-    ServiceKeyName UNICODE_STRING <>
-  DRIVER_EXTENSION ends
-
-  PDRIVER_EXTENSION typedef ptr DRIVER_EXTENSION
   
-  DRIVER_OBJECT struct
-    Type_ CSHORT ?
-    Size_ CSHORT ?
-    DeviceObject PDEVICE_OBJECT ?
-    Flags DWORD ?
-    DriverStart PVOID ?
-    DriverSize DWORD ?
-    DriverSection PVOID ?
-    DriverExtension PDRIVER_EXTENSION ?
-    DriverName UNICODE_STRING <>
-    HardwareDatabase PUNICODE_STRING ?
-    FastIoDispatch PFAST_IO_DISPATCH ?
-    DriverInit PDRIVER_INITIALIZE ?
-    DriverStartIo PDRIVER_STARTIO ?
-    DriverUnload PDRIVER_UNLOAD ?
-    MajorFunction PDRIVER_DISPATCH IRP_MJ_MAXIMUM_FUNCTION+1 dup (?)
-  DRIVER_OBJECT ends
+  
+    PDRIVER_ADD_DEVICE typedef QWORD
 
-  PDRIVER_OBJECT typedef ptr _DRIVER_OBJECT
+    IFNDEF DRIVER_EXTENSION
+    DRIVER_EXTENSION STRUCT		; sizeof = 14h
+    	; Back pointer to Driver Object
+    	DriverObject	POINTER			?	; PDRIVER_OBJECT
+    	; The AddDevice entry point is called by the Plug & Play manager
+    	; to inform the driver when a new device instance arrives that this
+    	; driver must control.
+    	AddDevice		PDRIVER_ADD_DEVICE			?	; 04h PDRIVER_ADD_DEVICE
+    	; The count field is used to count the number of times the driver has
+    	; had its registered reinitialization routine invoked.
+    	Count			DWORD			?	; 08h
+    	; The service name field is used by the pnp manager to determine
+    	; where the driver related info is stored in the registry.
+    	ServiceKeyName	UNICODE_STRING	<>	; 0Ch
+    	; Note: any new shared fields get added here.
+    ; kd displays additional field
+    ;+14 struct   _IO_CLIENT_EXTENSION *ClientDriverExtension
+    DRIVER_EXTENSION ENDS
+    ENDIF
+    PDRIVER_EXTENSION typedef PTR DRIVER_EXTENSION
+    
+    IFNDEF DRIVER_OBJECT
+    DRIVER_OBJECT STRUCT	; sizeof= 0A8h
+    	fwType			WORD			IO_TYPE_DRIVER	; 4
+    	cbSize			WORD			?			; cb
+    	; The following links all of the devices created by a single driver
+    	; together on a list, and the Flags word provides an extensible flag
+    	; location for driver objects.
+    	DeviceObject	PDEVICE_OBJECT	?
+    	Flags			DWORD			?
+    	; The following section describes where the driver is loaded.  The count
+    	; field is used to count the number of times the driver has had its
+    	; registered reinitialization routine invoked.
+    	DriverStart		PVOID			?
+    	DriverSize		DWORD			?
+    	DriverSection	PVOID			?
+    	DriverExtension	PDRIVER_EXTENSION	?
+    	; The driver name field is used by the error log thread
+    	; determine the name of the driver that an I/O request is/was bound.
+    	DriverName		UNICODE_STRING	<>
+    	; The following section is for registry support.  Thise is a pointer
+    	; to the path to the hardware information in the registry
+    	HardwareDatabase	PUNICODE_STRING	?
+    	; The following section contains the optional pointer to an array of
+    	; alternate entry points to a driver for "fast I/O" support.  Fast I/O
+    	; is performed by invoking the driver routine directly with separate
+    	; parameters, rather than using the standard IRP call mechanism.  Note
+    	; that these functions may only be used for synchronous I/O, and when
+    	; the file is cached.
+    	FastIoDispatch	PVOID			?
+    	; The following section describes the entry points to this particular
+    	; driver.  Note that the major function dispatch table must be the last
+    	; field in the object so that it remains extensible.
+    	DriverInit		PVOID			?
+    	DriverStartIo	PVOID			?
+    	DriverUnload	PVOID			?
+    	MajorFunction	PVOID			(IRP_MJ_MAXIMUM_FUNCTION + 1) dup(?)
+    DRIVER_OBJECT ENDS
+    ENDIF
+    PDRIVER_OBJECT typedef PTR DRIVER_OBJECT
   
   SECTION_OBJECT_POINTERS struct
     DataSectionObject PVOID ?
@@ -9294,40 +6600,228 @@ ifndef _WDMDDK_
   FO_INDIRECT_WAIT_OBJECT equ 10000000h
   FO_SECTION_MINSTORE_TREATMENT equ 20000000h
   FO_FLAGS_VALID_ONLY_DURING_CREATE equ <FO_DISALLOW_EXCLUSIVE>
-  FILE_OBJECT struct
-    Type_ CSHORT ?
-    Size_ CSHORT ?
-    DeviceObject PDEVICE_OBJECT ?
-    Vpb PVPB ?
-    FsContext PVOID ?
-    FsContext2 PVOID ?
-    SectionObjectPointer PSECTION_OBJECT_POINTERS ?
-    PrivateCacheMap PVOID ?
-    FinalStatus NTSTATUS ?
-    RelatedFileObject POINTER ?
-    LockOperation BOOLEAN ?
-    DeletePending BOOLEAN ?
-    ReadAccess BOOLEAN ?
-    WriteAccess BOOLEAN ?
-    DeleteAccess BOOLEAN ?
-    SharedRead BOOLEAN ?
-    SharedWrite BOOLEAN ?
-    SharedDelete BOOLEAN ?
-    Flags DWORD ?
-    FileName UNICODE_STRING <>
-    CurrentByteOffset LARGE_INTEGER <>
-    Waiters DWORD ?
-    Busy DWORD ?
-    LastLock PVOID ?
-    Lock_ KEVENT <>
-    Event_ KEVENT <>
-    CompletionContext PIO_COMPLETION_CONTEXT ?
-    IrpListLock KSPIN_LOCK ?
-    IrpList LIST_ENTRY <>
-    FileObjectExtension PVOID ?
-  FILE_OBJECT ends
+  
+    IFNDEF FILE_OBJECT
+    FILE_OBJECT STRUCT		; sizeof = 70h
+    	fwType				WORD				IO_TYPE_FILE	; 5
+    	cbSize				WORD				?				; cb
+    	DeviceObject		PVOID				?				; 04h PTR DEVICE_OBJECT
+    	Vpb					PVOID				?				; 08h PVPB
+    	FsContext			PVOID				?				; 0Ch
+    	FsContext2			PVOID				?				; 10h
+    	SectionObjectPointer	PSECTION_OBJECT_POINTERS ?		; 14h
+    	PrivateCacheMap		PVOID				?				; 18h
+    	FinalStatus			NTSTATUS			?				; 1Ch
+    	RelatedFileObject	PVOID				?				; 20h PTR FILE_OBJECT
+    	LockOperation		BOOLEAN				?				; 24h
+    	DeletePending		BOOLEAN				?				; 25h
+    	ReadAccess			BOOLEAN				?				; 26h
+    	WriteAccess			BOOLEAN				?				; 27h
+    	DeleteAccess		BOOLEAN				?				; 28h
+    	SharedRead			BOOLEAN				?				; 29h
+    	SharedWrite			BOOLEAN				?				; 2Ah
+    	SharedDelete		BOOLEAN				?				; 2Bh
+    	Flags				DWORD				?				; 2Ch FO_*
+    	FileName			UNICODE_STRING		<>				; 30h
+    	CurrentByteOffset	LARGE_INTEGER		<>				; 38h
+    	Waiters				DWORD				?				; 40h
+    	Busy				DWORD				?				; 44h
+    	LastLock			PVOID				?				; 48h
+    	kevLock				KEVENT				<>				; 4Ch Lock is masm reserved symbol
+    	Event_			    KEVENT				<>				; 5Ch
+    	CompletionContext	PIO_COMPLETION_CONTEXT	?			; 6Ch
+        IrpListLock         KSPIN_LOCK ?
+        IrpList             LIST_ENTRY <>
+        FileObjectExtension PVOID ?    	
+    FILE_OBJECT ENDS
+    ENDIF
+    PFILE_OBJECT typedef ptr FILE_OBJECT
 
-  PFILE_OBJECT typedef ptr _FILE_OBJECT
+    IFNDEF _IRP
+    _IRP STRUCT			; sizeof = 70h
+    	fwType			WORD	?
+    	cbSize			WORD	?	; 02h
+    
+    	; Define the common fields used to control the IRP.
+    
+    	; Define a pointer to the Memory Descriptor List (MDL) for this I/O
+    	; request.  This field is only used if the I/O is "direct I/O".
+    
+    	MdlAddress		PVOID	?		; 04h PMDL
+    
+    	; Flags word - used to remember various flags.
+    
+    	Flags			DWORD	?		; 08h
+    
+    	; The following union is used for one of three purposes:
+    	;
+    	; 1. This IRP is an associated IRP.  The field is a pointer to a master IRP.
+    	;
+    	; 2. This is the master IRP.  The field is the count of the number of
+    	; IRPs which must complete (associated IRPs) before the master can
+    	; complete.
+    	;
+    	; 3. This operation is being buffered and the field is the address of
+    	; the system space buffer.
+    
+    	UNION AssociatedIrp
+    		MasterIrp		PVOID	?	; 0Ch PIRP
+    		IrpCount		DWORD	?	; 0Ch 
+    		SystemBuffer	PVOID	?	; 0Ch 
+    	ENDS	; AssociatedIrp
+    
+    	; Thread list entry - allows queueing the IRP to the thread pending I/O
+    	; request packet list.
+    
+    	ThreadListEntry	LIST_ENTRY	<>	; 10h
+    
+    	; I/O status - final status of operation.
+    
+    	IoStatus		IO_STATUS_BLOCK	<>	; 18h
+    
+    	; Requestor mode - mode of the original requestor of this operation.
+    
+    	RequestorMode	BYTE	?	; 20h KPROCESSOR_MODE
+    
+    	; Pending returned - TRUE if pending was initially returned as the
+    	; status for this packet.
+    
+    	PendingReturned	BYTE	?	; 21h
+    
+    	; Stack state information.
+    
+    	StackCount		BYTE	?	; 22h
+    	CurrentLocation	BYTE	?	; 23h
+    
+    	; Cancel - packet has been canceled.
+    
+    	Cancel			BYTE	?	; 24h
+    
+    	; Cancel Irql - Irql at which the cancel spinlock was acquired.
+    
+    	CancelIrql		BYTE	?	; 25h
+    
+    	; ApcEnvironment - Used to save the APC environment at the time that the
+    	; packet was initialized.
+    
+    	ApcEnvironment	BYTE	?	; 26h
+    
+    	; Allocation control flags.
+    
+    	AllocationFlags	BYTE	?	; 27h
+    
+    	; User parameters.
+    
+    	UserIosb		PIO_STATUS_BLOCK	?	; 28h
+    	UserEvent		PKEVENT				?	; 2Ch
+    	UNION Overlay							; 30h
+    		STRUCT AsynchronousParameters		; 30h
+    			UserApcRoutine	PVOID	?	; 30h PIO_APC_ROUTINE
+    			UserApcContext	PVOID	?	; 34h
+    		ENDS	; AsynchronousParameters
+    		AllocationSize		LARGE_INTEGER	<>	; 30h
+    	ENDS	; Overlay
+    
+    	; CancelRoutine - Used to contain the address of a cancel routine supplied
+    	; by a device driver when the IRP is in a cancelable state.
+    
+    	CancelRoutine	PVOID		?		; 38h PDRIVER_CANCEL
+    
+    	; Note that the UserBuffer parameter is outside of the stack so that I/O
+    	; completion can copy data back into the user's address space without
+    	; having to know exactly which service was being invoked.  The length
+    	; of the copy is stored in the second half of the I/O status block. If
+    	; the UserBuffer field is NULL, then no copy is performed.
+    
+    	UserBuffer		PVOID		?	; 3Ch
+    
+    	; Kernel structures
+    	;
+    	; The following section contains kernel structures which the IRP needs
+    	; in order to place various work information in kernel controller system
+    	; queues.  Because the size and alignment cannot be controlled, they are
+    	; placed here at the end so they just hang off and do not affect the
+    	; alignment of other fields in the IRP.
+    
+    	UNION Tail
+    		STRUCT Overlay
+    			UNION
+    				; DeviceQueueEntry - The device queue entry field is used to
+    				; queue the IRP to the device driver device queue.
+    
+    				DeviceQueueEntry	KDEVICE_QUEUE_ENTRY	<>
+    
+    				STRUCT
+    					; The following are available to the driver to use in
+    					; whatever manner is desired, while the driver owns the
+    					; packet.
+    					DriverContext	PVOID	4 dup(?)
+    				ENDS
+    
+    			ENDS
+    
+    			; Thread - pointer to caller's Thread Control Block.
+    
+    			Thread				PVOID	?			; PETHREAD
+    
+    			; Auxiliary buffer - pointer to any auxiliary buffer that is
+    			; required to pass information to a driver that is not contained
+    			; in a normal buffer.
+    
+    			AuxiliaryBuffer		PCHAR	?
+    
+    			; The following unnamed structure must be exactly identical
+    			; to the unnamed structure used in the minipacket header used
+    			; for completion queue entries.
+    
+    			STRUCT
+    
+    				; List entry - used to queue the packet to completion queue, among
+    				; others.
+    
+    				ListEntry		LIST_ENTRY	<>
+    
+    				UNION
+    
+    					; Current stack location - contains a pointer to the current
+    					; IO_STACK_LOCATION structure in the IRP stack.  This field
+    					; should never be directly accessed by drivers.  They should
+    					; use the standard functions.
+    					CurrentStackLocation	PVOID	?	; PTR IO_STACK_LOCATION
+    
+    					; Minipacket type.
+    
+    					PacketType				DWORD	?
+    				ENDS
+    			ENDS
+    
+    			; Original file object - pointer to the original file object
+    			; that was used to open the file.  This field is owned by the
+    			; I/O system and should not be used by any other drivers.
+    
+    			OriginalFileObject	PFILE_OBJECT	?
+    
+    		ENDS	; Overlay
+    
+    		; APC - This APC control block is used for the special kernel APC as
+    		; well as for the caller's APC, if one was specified in the original
+    		; argument list.  If so, then the APC is reused for the normal APC for
+    		; whatever mode the caller was in and the "special" routine that is
+    		; invoked before the APC gets control simply deallocates the IRP.
+    
+    		Apc		KAPC	<>
+    
+    		; CompletionKey - This is the key that is used to distinguish
+    		; individual I/O operations initiated on a single file handle.
+    
+    		CompletionKey	PVOID	?
+    
+    	ENDS	;Tail
+    
+    _IRP ENDS
+    ENDIF
+    PIRP typedef PTR _IRP
+
   
   IRP_NOCACHE equ 00000001h
   IRP_PAGING_IO equ 00000002h
@@ -9350,7 +6844,7 @@ ifndef _WDMDDK_
   IRP_ALLOCATED_MUST_SUCCEED equ 02h
   IRP_ALLOCATED_FIXED_SIZE equ 04h
   IRP_LOOKASIDE_ALLOCATION equ 08h
-  Type_ typedef DECLSPEC_ALIGN
+
   
   AssociatedIrp union
     MasterIrp POINTER ?
@@ -9392,10 +6886,13 @@ ifndef _WDMDDK_
     CompletionKey PVOID ?
   Tail ends
 
-  ;}
-  PIRP typedef ptr IRP_
+
+
+
+
+
   IO_COMPLETION_ROUTINE proto fastcall :PDEVICE_OBJECT, :PIRP, :PVOID
-  PIO_COMPLETION_ROUTINE typedef ptr IO_COMPLETION_ROUTINE
+
   SL_PENDING_RETURNED equ 01h
   SL_ERROR_RETURNED equ 02h
   SL_INVOKE_ON_CANCEL equ 20h
@@ -9428,13 +6925,13 @@ ifndef _WDMDDK_
   SL_ALLOW_RAW_MOUNT equ 01h
   SL_BYPASS_ACCESS_CHECK equ 01h
   DEVICE_RELATION_TYPE typedef SDWORD
-  BusRelations = 0
-  EjectionRelations = 1
-  PowerRelations = 2
-  RemovalRelations = 3
-  TargetDeviceRelation = 4
-  SingleBusRelations = 5
-  TransportRelations = 6
+  BusRelations EQU 0
+  EjectionRelations EQU 1
+  PowerRelations EQU 2
+  RemovalRelations EQU 3
+  TargetDeviceRelation EQU 4
+  SingleBusRelations EQU 5
+  TransportRelations EQU 6
   
   PDEVICE_RELATION_TYPE typedef ptr DEVICE_RELATION_TYPE
   
@@ -9446,14 +6943,14 @@ ifndef _WDMDDK_
   PDEVICE_RELATIONS typedef ptr DEVICE_RELATIONS
   
   DEVICE_USAGE_NOTIFICATION_TYPE typedef SDWORD
-  DeviceUsageTypeUndefined = 0
-  DeviceUsageTypePaging = 1
-  DeviceUsageTypeHibernation = 2
-  DeviceUsageTypeDumpFile = 3
-  DeviceUsageTypeBoot = 4
-  DeviceUsageTypePostDisplay = 5
+  DeviceUsageTypeUndefined EQU 0
+  DeviceUsageTypePaging EQU 1
+  DeviceUsageTypeHibernation EQU 2
+  DeviceUsageTypeDumpFile EQU 3
+  DeviceUsageTypeBoot EQU 4
+  DeviceUsageTypePostDisplay EQU 5
   
-  ;#undef  INTERFACE
+
   INTERFACE struct
     Size_ WORD ?
     Version WORD ?
@@ -9490,12 +6987,12 @@ ifndef _WDMDDK_
   PPOWER_SEQUENCE typedef ptr POWER_SEQUENCE
   
   BUS_QUERY_ID_TYPE typedef SDWORD
-  BusQueryDeviceID = 0 
-  BusQueryHardwareIDs = 1 
-  BusQueryCompatibleIDs = 2 
-  BusQueryInstanceID = 3 
-  BusQueryDeviceSerialNumber = 4 
-  BusQueryContainerID = 5 
+  BusQueryDeviceID EQU 0 
+  BusQueryHardwareIDs EQU 1 
+  BusQueryCompatibleIDs EQU 2 
+  BusQueryInstanceID EQU 3 
+  BusQueryDeviceSerialNumber EQU 4 
+  BusQueryContainerID EQU 5 
   
   PBUS_QUERY_ID_TYPE typedef ptr BUS_QUERY_ID_TYPE
   
@@ -9509,246 +7006,128 @@ ifndef _WDMDDK_
   PNP_DEVICE_NOT_DISABLEABLE equ 00000020h
   PNP_DEVICE_DISCONNECTED equ 00000040h
   DEVICE_TEXT_TYPE typedef SDWORD
-  DeviceTextDescription = 0 
-  DeviceTextLocationInformation = 1 
+  DeviceTextDescription EQU 0 
+  DeviceTextLocationInformation EQU 1 
   
   PDEVICE_TEXT_TYPE typedef ptr DEVICE_TEXT_TYPE
   
-  if  not defined(_AMD64_) and  not defined(_ARM_) and  not defined(_ARM64_)
-    include pshpack4.inc
-  endif
-  if defined(_WIN64)
-    POINTER_ALIGNMENT equ DECLSPEC_ALIGN ( 8 )
-  else
-    POINTER_ALIGNMENT equ <>
-  endif
-  if _MSC_VER ge 1200
-    ;#pragma warning ( push )
-    ;#pragma warning ( disable : 4324 )
-  endif
-  IO_STACK_LOCATION struct
-    MajorFunction BYTE ?
-    MinorFunction BYTE ?
-    Flags BYTE ?
-    Control BYTE ?
-    union Parameters
-      struct Create
-        SecurityContext PIO_SECURITY_CONTEXT ?
-        Options DWORD ?
-        FileAttributes POINTER_ALIGNMENT ?
-        ShareAccess WORD ?
-        EaLength POINTER_ALIGNMENT ?
-      ends
-      struct CreatePipe
-        SecurityContext PIO_SECURITY_CONTEXT ?
-        Options DWORD ?
-        Reserved POINTER_ALIGNMENT ?
-        ShareAccess WORD ?
-        Parameters PNAMED_PIPE_CREATE_PARAMETERS ?
-      ends
-      struct CreateMailslot
-        SecurityContext PIO_SECURITY_CONTEXT ?
-        Options DWORD ?
-        Reserved POINTER_ALIGNMENT ?
-        ShareAccess WORD ?
-        Parameters PMAILSLOT_CREATE_PARAMETERS ?
-      ends
-      struct Read
-        Length_ DWORD ?
-        Key POINTER_ALIGNMENT ?
-        ByteOffset LARGE_INTEGER <>
-      ends
-      struct Write
-        Length_ DWORD ?
-        Key POINTER_ALIGNMENT ?
-        ByteOffset LARGE_INTEGER <>
-      ends
-      struct QueryDirectory
-        Length_ DWORD ?
-        FileName PUNICODE_STRING ?
-        FileInformationClass FILE_INFORMATION_CLASS ?
-        FileIndex POINTER_ALIGNMENT ?
-      ends
-      struct NotifyDirectory
-        Length_ DWORD ?
-        CompletionFilter POINTER_ALIGNMENT ?
-      ends
-      struct NotifyDirectoryEx
-        Length_ DWORD ?
-        CompletionFilter POINTER_ALIGNMENT ?
-        DirectoryNotifyInformationClass POINTER_ALIGNMENT ?
-      ends
-      struct QueryFile
-        Length_ DWORD ?
-        FileInformationClass POINTER_ALIGNMENT ?
-      ends
-      struct SetFile
-        Length_ DWORD ?
-        FileInformationClass POINTER_ALIGNMENT ?
-        FileObject PFILE_OBJECT ?
-        union
-          struct
-            ReplaceIfExists BOOLEAN ?
-            AdvanceOnly BOOLEAN ?
-          ends
-          ClusterCount DWORD ?
-          DeleteHandle HANDLE ?
-        ends
-      ends
-      struct QueryEa
-        Length_ DWORD ?
-        EaList PVOID ?
-        EaListLength DWORD ?
-        EaIndex POINTER_ALIGNMENT ?
-      ends
-      struct SetEa
-        Length_ DWORD ?
-      ends
-      struct QueryVolume
-        Length_ DWORD ?
-        FsInformationClass POINTER_ALIGNMENT ?
-      ends
-      struct SetVolume
-        Length_ DWORD ?
-        FsInformationClass POINTER_ALIGNMENT ?
-      ends
-      struct FileSystemControl
-        OutputBufferLength DWORD ?
-        InputBufferLength POINTER_ALIGNMENT ?
-        FsControlCode POINTER_ALIGNMENT ?
-        Type3InputBuffer PVOID ?
-      ends
-      struct LockControl
-        Length_ PLARGE_INTEGER ?
-        Key POINTER_ALIGNMENT ?
-        ByteOffset LARGE_INTEGER <>
-      ends
-      struct DeviceIoControl
-        OutputBufferLength DWORD ?
-        InputBufferLength POINTER_ALIGNMENT ?
-        IoControlCode POINTER_ALIGNMENT ?
-        Type3InputBuffer PVOID ?
-      ends
-      struct QuerySecurity
-        SecurityInformation SECURITY_INFORMATION ?
-        Length_ POINTER_ALIGNMENT ?
-      ends
-      struct SetSecurity
-        SecurityInformation SECURITY_INFORMATION ?
-        SecurityDescriptor PSECURITY_DESCRIPTOR ?
-      ends
-      struct MountVolume
-        Vpb PVPB ?
-        DeviceObject PDEVICE_OBJECT ?
-      ends
-      struct VerifyVolume
-        Vpb PVPB ?
-        DeviceObject PDEVICE_OBJECT ?
-      ends
-      struct Scsi
-        Srb POINTER ?
-      ends
-      struct QueryQuota
-        Length_ DWORD ?
-        StartSid PSID ?
-        SidList PFILE_GET_QUOTA_INFORMATION ?
-        SidListLength DWORD ?
-      ends
-      struct SetQuota
-        Length_ DWORD ?
-      ends
-      struct QueryDeviceRelations
-        Type_ DEVICE_RELATION_TYPE ?
-      ends
-      struct QueryInterface
-        InterfaceType POINTER ?
-        Size_ WORD ?
-        Version WORD ?
-        Interface PINTERFACE ?
-        InterfaceSpecificData PVOID ?
-      ends
-      struct DeviceCapabilities
-        Capabilities PDEVICE_CAPABILITIES ?
-      ends
-      struct FilterResourceRequirements
-        IoResourceRequirementList PIO_RESOURCE_REQUIREMENTS_LIST ?
-      ends
-      struct ReadWriteConfig
-        WhichSpace DWORD ?
-        Buffer PVOID ?
-        Offset_ DWORD ?
-        Length_ POINTER_ALIGNMENT ?
-      ends
-      struct SetLock
-        Lock_ BOOLEAN ?
-      ends
-      struct QueryId
-        IdType BUS_QUERY_ID_TYPE ?
-      ends
-      struct QueryDeviceText
-        DeviceTextType DEVICE_TEXT_TYPE ?
-        LocaleId POINTER_ALIGNMENT ?
-      ends
-      struct UsageNotification
-        InPath BOOLEAN ?
-        Reserved BOOLEAN 3 dup (?)
-        Type_ POINTER_ALIGNMENT ?
-      ends
-      struct WaitWake
-        PowerState SYSTEM_POWER_STATE ?
-      ends
-      struct PowerSequence
-        PowerSequence PPOWER_SEQUENCE ?
-      ends
-      if (NTDDI_VERSION ge NTDDI_VISTA)
-        struct Power
-          union
-            SystemContext DWORD ?
-            SystemPowerStateContext SYSTEM_POWER_STATE_CONTEXT <>
-          ends
-          Type_ POINTER_ALIGNMENT ?
-          State POINTER_ALIGNMENT ?
-          ShutdownType POINTER_ALIGNMENT ?
-        ends
-      else
-        struct Power
-          SystemContext DWORD ?
-          Type_ POINTER_ALIGNMENT ?
-          State POINTER_ALIGNMENT ?
-          ShutdownType POINTER_ALIGNMENT ?
-        ends
-      endif
-      struct StartDevice
-        AllocatedResources PCM_RESOURCE_LIST ?
-        AllocatedResourcesTranslated PCM_RESOURCE_LIST ?
-      ends
-      struct WMI
-        ProviderId ULONG_PTR ?
-        DataPath PVOID ?
-        BufferSize DWORD ?
-        Buffer PVOID ?
-      ends
-      struct Others
-        Argument1 PVOID ?
-        Argument2 PVOID ?
-        Argument3 PVOID ?
-        Argument4 PVOID ?
-      ends
-    ends
-    DeviceObject PDEVICE_OBJECT ?
-    FileObject PFILE_OBJECT ?
-    CompletionRoutine PIO_COMPLETION_ROUTINE ?
-    Context PVOID ?
-  IO_STACK_LOCATION ends
 
-  PIO_STACK_LOCATION typedef ptr IO_STACK_LOCATION
-  
-  if _MSC_VER ge 1200
-    ;#pragma warning ( pop )
-  endif
-  if  not defined(_AMD64_) and  not defined(_ARM_) and  not defined(_ARM64_)
-    include poppack.inc
-  endif
+IFNDEF IO_STACK_LOCATION
+    IO_STACK_LOCATION STRUCT	; sizeof = 24h
+    	MajorFunction		BYTE	?	; 00h
+    	MinorFunction		BYTE	?	; 01h
+    	Flags				BYTE	?	; 02h
+    	Control				BYTE	?	; 03h
+    
+    	; The following user parameters are based on the service that is being
+    	; invoked.  Drivers and file systems can determine which set to use based
+    	; on the above major and minor function codes.
+    
+    	union Parameters				; 04h
+    
+    		; System service parameters for:  NtCreateFile
+    
+    		struct Create				; 04h
+    			SecurityContext		PVOID	?	; 04h PTR IO_SECURITY_CONTEXT
+    			Options				DWORD	?	; 08h
+    			; if _WIN64
+    			;	POINTER_ALIGNMENT DECLSPEC_ALIGN(8)
+    			; endif
+    			FileAttributes		WORD	?	; 0Ch POINTER_ALIGNMENT
+    			ShareAccess			WORD	?	; 0Eh
+    			EaLength			DWORD	?	; 10h POINTER_ALIGNMENT
+    		ends	; Create
+    
+    		; System service parameters for:  NtReadFile
+    
+    		struct Read					; 04h
+    			dwLength			DWORD	?	; 04h
+    			Key					DWORD	?	; 08h POINTER_ALIGNMENT
+    			ByteOffset			LARGE_INTEGER	<>	; 0Ch
+    		ends	; Read
+    
+    		; System service parameters for:  NtWriteFile
+    
+    		struct Write				; 04h
+    			dwLength			DWORD	?	; 04h
+    			Key					DWORD	?	; 08h POINTER_ALIGNMENT
+    			ByteOffset			LARGE_INTEGER	<>	; 0Ch
+    		ends	; Write
+    
+    		; System service parameters for:  NtQueryInformationFile
+    
+    		struct QueryFile
+    			dwLength				DWORD	?	; 04h original field name Length
+    			FileInformationClass	DWORD	?	; 08h POINTER_ALIGNMENT
+    		ends	; QueryFile
+    
+    
+    		; System service parameters for:  NtFlushBuffersFile
+    		;
+    		; No extra user-supplied parameters.
+    
+    		; System service parameters for:  NtDeviceIoControlFile
+    		; 
+    		; Note that the user's output buffer is stored in the UserBuffer field
+    		; and the user's input buffer is stored in the SystemBuffer field.
+    
+    		struct DeviceIoControl		; 04h
+    			OutputBufferLength		DWORD	?	; 04h
+    			InputBufferLength		DWORD	?	; 08h POINTER_ALIGNMENT
+    			IoControlCode			DWORD	?	; 0Ch POINTER_ALIGNMENT
+    			Type3InputBuffer		PVOID	?	; 10h
+    		ends	; DeviceIoControl
+    
+    		; Parameters for IRP_MN_READ_CONFIG and IRP_MN_WRITE_CONFIG
+    
+    		struct ReadWriteConfig			; 04h
+    			WhichSpace		DWORD	?	; 04h
+    			Buffer			PVOID	?	; 08h
+    			dwOffset		DWORD	?	; 0Ch
+    			wdLength		DWORD	?	; 10h POINTER_ALIGNMENT (original field name Length)
+    		ends
+    
+    		; Parameters for IRP_MN_SET_LOCK
+    
+    		struct SetLock					; 04h
+    			bLock			BOOLEAN	?	; 04h (original name Lock)
+    							db 3 dup(?)	; padding ???
+    		ends
+    
+    		; Others - driver-specific
+    
+    		struct Others
+    			Argument1	PVOID	?
+    			Argument2	PVOID	?
+    			Argument3	PVOID	?
+    			Argument4	PVOID	?
+    		ends
+    
+    	ends	; Parameters
+    
+    	; Save a pointer to this device driver's device object for this request
+    	; so it can be passed to the completion routine if needed.
+    
+    	DeviceObject		PDEVICE_OBJECT	?
+    
+    	; The following location contains a pointer to the file object for this
+    
+    	FileObject			PFILE_OBJECT	?
+    
+    	; The following routine is invoked depending on the flags in the above
+    	; flags field.
+    
+    	CompletionRoutine	PVOID	?	; PIO_COMPLETION_ROUTINE
+    
+    	; The following is used to store the address of the context parameter
+    	; that should be passed to the CompletionRoutine.
+    
+    	Context				PVOID	?
+    
+    IO_STACK_LOCATION ENDS
+    ENDIF
+    PIO_STACK_LOCATION typedef ptr IO_STACK_LOCATION
+
   SHARE_ACCESS struct
     OpenCount DWORD ?
     Readers DWORD ?
@@ -9769,49 +7148,14 @@ ifndef _WDMDDK_
 
   PLINK_SHARE_ACCESS typedef ptr LINK_SHARE_ACCESS
   
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAcquireCancelSpinLock proto fastcall :PKIRQL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAllocateDriverObjectExtension proto fastcall :PDRIVER_OBJECT, :PVOID, :DWORD, :ptr PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAllocateErrorLogEntry proto fastcall :PVOID, :BYTE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAllocateIrp proto fastcall :CCHAR, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    IoAllocateIrpEx proto fastcall :PDEVICE_OBJECT, :CCHAR, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    DEVICE_WITH_IRP_EXTENSION equ ( ( PDEVICE_OBJECT ) - 1 )
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAllocateMdl proto fastcall :PVOID, :DWORD, :BOOLEAN, :BOOLEAN, :PIRP
-  endif
+
   IO_PAGING_PRIORITY typedef SDWORD
-  IoPagingPriorityInvalid = 0
-  IoPagingPriorityNormal = 1
-  IoPagingPriorityHigh = 2
-  IoPagingPriorityReserved1 = 3
-  IoPagingPriorityReserved2 = 4
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAttachDevice proto fastcall :PDEVICE_OBJECT, :PUNICODE_STRING, :ptr PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAttachDeviceToDeviceStack proto fastcall :PDEVICE_OBJECT, :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoBuildAsynchronousFsdRequest proto fastcall :DWORD, :PDEVICE_OBJECT, :PVOID, :DWORD, :PLARGE_INTEGER, :PIO_STATUS_BLOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoBuildDeviceIoControlRequest proto fastcall :DWORD, :PDEVICE_OBJECT, :PVOID, :DWORD, :PVOID, :DWORD, :BOOLEAN, :PKEVENT, :PIO_STATUS_BLOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoBuildPartialMdl proto fastcall :PMDL, :PMDL, :PVOID, :DWORD
-  endif
+  IoPagingPriorityInvalid EQU 0
+  IoPagingPriorityNormal EQU 1
+  IoPagingPriorityHigh EQU 2
+  IoPagingPriorityReserved1 EQU 3
+  IoPagingPriorityReserved2 EQU 4
+
   BOOTDISK_INFORMATION struct
     BootPartitionOffset QWORD ?
     SystemPartitionOffset QWORD ?
@@ -9834,7 +7178,7 @@ ifndef _WDMDDK_
 
   PBOOTDISK_INFORMATION_EX typedef ptr BOOTDISK_INFORMATION_EX
   
-  if (NTDDI_VERSION ge NTDDI_WIN7)
+
     LOADER_PARTITION_INFORMATION_EX struct
       PartitionStyle DWORD ?
       PartitionNumber DWORD ?
@@ -9846,16 +7190,7 @@ ifndef _WDMDDK_
     LOADER_PARTITION_INFORMATION_EX ends
 
     PLOADER_PARTITION_INFORMATION_EX typedef ptr LOADER_PARTITION_INFORMATION_EX
-    
-    BOOTDISK_INFORMATION_LITE struct
-      NumberEntries DWORD ?
-      Entries LOADER_PARTITION_INFORMATION_EX 1 dup (<>)
-    BOOTDISK_INFORMATION_LITE ends
 
-    PBOOTDISK_INFORMATION_LITE typedef ptr BOOTDISK_INFORMATION_LITE
-    
-  else
-    if (NTDDI_VERSION ge NTDDI_VISTA)
       BOOTDISK_INFORMATION_LITE struct
         BootDeviceSignature DWORD ?
         SystemDeviceSignature DWORD ?
@@ -9866,36 +7201,8 @@ ifndef _WDMDDK_
       BOOTDISK_INFORMATION_LITE ends
 
       PBOOTDISK_INFORMATION_LITE typedef ptr BOOTDISK_INFORMATION_LITE
-      
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetBootDiskInformation proto fastcall :PBOOTDISK_INFORMATION, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoGetBootDiskInformationLite proto fastcall :ptr PBOOTDISK_INFORMATION_LITE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoBuildSynchronousFsdRequest proto fastcall :DWORD, :PDEVICE_OBJECT, :PVOID, :DWORD, :PLARGE_INTEGER, :PKEVENT, :PIO_STATUS_BLOCK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IofCallDriver proto fastcall :PDEVICE_OBJECT, :PIRP
-  endif
-  IoCallDriver macro a,b
-   exitm <IofCallDriver ( a , b ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCancelIrp proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCheckShareAccess proto fastcall :ACCESS_MASK, :DWORD, :PFILE_OBJECT, :PSHARE_ACCESS, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoCheckShareAccessEx proto fastcall :ACCESS_MASK, :DWORD, :PFILE_OBJECT, :PSHARE_ACCESS, :BOOLEAN, :PBOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    IoCheckLinkShareAccess proto fastcall :ACCESS_MASK, :DWORD, :PFILE_OBJECT, :PSHARE_ACCESS, :PLINK_SHARE_ACCESS, :DWORD
-  endif
+
+
   IO_SHARE_ACCESS_NO_WRITE_PERMISSION equ 80000000h
   IO_CHECK_SHARE_ACCESS_UPDATE_SHARE_ACCESS equ 00000001h
   IO_CHECK_SHARE_ACCESS_DONT_UPDATE_FILE_OBJECT equ 00000002h
@@ -9905,22 +7212,13 @@ ifndef _WDMDDK_
   IO_CHECK_SHARE_ACCESS_FORCE_CHECK equ 00000020h
   STATUS_CONTINUE_COMPLETION equ <STATUS_SUCCESS>
   IO_COMPLETION_ROUTINE_RESULT typedef SDWORD
-  ContinueCompletion = STATUS_CONTINUE_COMPLETION 
-  StopCompletion = STATUS_MORE_PROCESSING_REQUIRED 
+  ContinueCompletion EQU STATUS_CONTINUE_COMPLETION 
+  StopCompletion EQU STATUS_MORE_PROCESSING_REQUIRED 
   
   PIO_COMPLETION_ROUTINE_RESULT typedef ptr IO_COMPLETION_ROUTINE_RESULT
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IofCompleteRequest proto fastcall :PIRP, :CCHAR
-  endif
-  IoCompleteRequest macro a,b
-   exitm <IofCompleteRequest ( a , b ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoConnectInterrupt proto fastcall :ptr PKINTERRUPT, :PKSERVICE_ROUTINE, :PVOID, :PKSPIN_LOCK, :DWORD, :KIRQL, :KIRQL, :KINTERRUPT_MODE, :BOOLEAN, :KAFFINITY, :BOOLEAN
-  endif
+
   IO_INTERRUPT_MESSAGE_INFO_ENTRY struct
-    MessageAddress PHYSICAL_ADDRESS ?
+    MessageAddress PHYSICAL_ADDRESS <>
     TargetProcessorSet KAFFINITY ?
     InterruptObject PKINTERRUPT ?
     MessageData DWORD ?
@@ -10003,46 +7301,11 @@ ifndef _WDMDDK_
   IO_CONNECT_INTERRUPT_PARAMETERS ends
 
   PIO_CONNECT_INTERRUPT_PARAMETERS typedef ptr IO_CONNECT_INTERRUPT_PARAMETERS
-  
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoConnectInterruptEx proto fastcall :PIO_CONNECT_INTERRUPT_PARAMETERS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCreateDevice proto fastcall :PDRIVER_OBJECT, :DWORD, :PUNICODE_STRING, :DEVICE_TYPE, :DWORD, :BOOLEAN, :ptr PDEVICE_OBJECT
-  endif
+
   WDM_MAJORVERSION equ 06h
   WDM_MINORVERSION equ 00h
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoIsWdmVersionAvailable proto fastcall :BYTE, :BYTE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCreateFile proto fastcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PIO_STATUS_BLOCK, :PLARGE_INTEGER, :DWORD, :DWORD, :DWORD, :DWORD, :PVOID, :DWORD, :CREATE_FILE_TYPE, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCreateNotificationEvent proto fastcall :PUNICODE_STRING, :PHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCreateSymbolicLink proto fastcall :PUNICODE_STRING, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCreateSynchronizationEvent proto fastcall :PUNICODE_STRING, :PHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoCreateUnprotectedSymbolicLink proto fastcall :PUNICODE_STRING, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    _Kernel_clear_do_init_ proto fastcall :__yes
-    IoDeleteDevice proto fastcall :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoDeleteSymbolicLink proto fastcall :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoDetachDevice proto fastcall :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoDisconnectInterrupt proto fastcall :PKINTERRUPT
-  endif
+
+
   IO_DISCONNECT_INTERRUPT_PARAMETERS struct
     Version DWORD ?
     union ConnectionContext
@@ -10053,10 +7316,7 @@ ifndef _WDMDDK_
   IO_DISCONNECT_INTERRUPT_PARAMETERS ends
 
   PIO_DISCONNECT_INTERRUPT_PARAMETERS typedef ptr IO_DISCONNECT_INTERRUPT_PARAMETERS
-  
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoDisconnectInterruptEx proto fastcall :PIO_DISCONNECT_INTERRUPT_PARAMETERS
-  endif
+
   IO_REPORT_INTERRUPT_ACTIVE_STATE_PARAMETERS struct
     Version DWORD ?
     union ConnectionContext
@@ -10067,138 +7327,8 @@ ifndef _WDMDDK_
   IO_REPORT_INTERRUPT_ACTIVE_STATE_PARAMETERS ends
 
   PIO_REPORT_INTERRUPT_ACTIVE_STATE_PARAMETERS typedef ptr IO_REPORT_INTERRUPT_ACTIVE_STATE_PARAMETERS
-  
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoReportInterruptActive proto fastcall :PIO_REPORT_INTERRUPT_ACTIVE_STATE_PARAMETERS
-    IoReportInterruptInactive proto fastcall :PIO_REPORT_INTERRUPT_ACTIVE_STATE_PARAMETERS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    IoGetAffinityInterrupt proto fastcall :PKINTERRUPT, :PGROUP_AFFINITY
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoFreeIrp proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoFreeMdl proto fastcall :PMDL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetAttachedDeviceReference proto fastcall :PDEVICE_OBJECT
-  endif
-  IoGetCurrentIrpStackLocation proto fastcall :PIRP
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetDriverObjectExtension proto fastcall :PDRIVER_OBJECT, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetCurrentProcess proto fastcall
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetDeviceObjectPointer proto fastcall :PUNICODE_STRING, :ACCESS_MASK, :ptr PFILE_OBJECT, :ptr PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetDmaAdapter proto fastcall :PDEVICE_OBJECT, :ptr _DEVICE_DESCRIPTION, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS4)
-    DMA_IOMMU_INTERFACE typedef _DMA_IOMMU_INTERFACE
-    PDMA_IOMMU_INTERFACE typedef ptr _DMA_IOMMU_INTERFACE
-    
-    IoGetIommuInterface proto fastcall :DWORD, :PDMA_IOMMU_INTERFACE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoForwardIrpSynchronously proto fastcall :PDEVICE_OBJECT, :PIRP
-    IoForwardAndCatchIrp equ <IoForwardIrpSynchronously>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoSynchronousCallDriver proto fastcall :PDEVICE_OBJECT, :PIRP
-  endif
-  IoGetFunctionCodeFromCtlCode macro ControlCode
-   exitm <( ( ControlCode shr 2 ) and 00000FFFh ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetInitialStack proto fastcall
-  endif
-  IoGetStackLimits proto fastcall :PULONG_PTR, :PULONG_PTR
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoWithinStackLimits proto fastcall :ULONG_PTR, :SIZE_T
-  endif
-  IoCallDriverStackSafeDefault macro a,b
-   exitm <IoCallDriver ( a , b ) >
-  endm
-  IoGetRemainingStackSize proto fastcall
-  IoGetNextIrpStackLocation proto fastcall :PIRP
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetRelatedDeviceObject proto fastcall :PFILE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetTopLevelIrp proto fastcall
-  endif
-  IoInitializeDpcRequest proto fastcall :PDEVICE_OBJECT, :PIO_DPC_ROUTINE
-  ;#pragma warning ( suppress : 28024 )
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    IoInitializeThreadedDpcRequest proto fastcall :PDEVICE_OBJECT, :PIO_DPC_ROUTINE
-    ;#pragma warning ( suppress : 28128 )
-    ;#pragma warning ( suppress : 28165 28024 )
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoInitializeIrp proto fastcall :PIRP, :WORD, :CCHAR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
-    IoCleanupIrp proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    IoInitializeIrpEx proto fastcall :PIRP, :PDEVICE_OBJECT, :WORD, :CCHAR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    if defined(_AMD64_) or defined(_X86_)
-      IoInitializeTimer proto fastcall :PDEVICE_OBJECT, :PIO_TIMER_ROUTINE, :PVOID
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoReuseIrp proto fastcall :PIRP, :NTSTATUS
-  endif
-  IoIsErrorUserInduced macro Status
-   exitm <( ( ( ( Status ) == STATUS_DEVICE_NOT_READY ) or ( ( Status ) == STATUS_IO_TIMEOUT ) or ( ( Status ) == STATUS_MEDIA_WRITE_PROTECTED ) or ( ( Status ) == STATUS_NO_MEDIA_IN_DEVICE ) or ( ( Status ) == STATUS_VERIFY_REQUIRED ) or ( ( Status ) == STATUS_UNRECOGNIZED_MEDIA ) or ( ( Status ) == STATUS_WRONG_VOLUME ) ) ) >
-  endm
-  IoMarkIrpPending proto fastcall :PIRP
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRegisterShutdownNotification proto fastcall :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRegisterLastChanceShutdownNotification proto fastcall :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoReleaseCancelSpinLock proto fastcall :KIRQL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRemoveShareAccess proto fastcall :PFILE_OBJECT, :PSHARE_ACCESS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    IoRemoveLinkShareAccess proto fastcall :PFILE_OBJECT, :PSHARE_ACCESS, :PLINK_SHARE_ACCESS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRequestDpc proto fastcall :PDEVICE_OBJECT, :PIRP, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoSetCancelRoutine proto fastcall :PIRP, :PDRIVER_CANCEL
-  endif
-  IoSetCompletionRoutine proto fastcall :PIRP, :PIO_COMPLETION_ROUTINE, :PVOID, :BOOLEAN, :BOOLEAN, :BOOLEAN
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoSetCompletionRoutineEx proto fastcall :PDEVICE_OBJECT, :PIRP, :PIO_COMPLETION_ROUTINE, :PVOID, :BOOLEAN, :BOOLEAN, :BOOLEAN
-  endif
-  IoSetNextIrpStackLocation proto fastcall :PIRP
-  IoCopyCurrentIrpStackLocationToNext proto fastcall :PIRP
-  IoSkipCurrentIrpStackLocation proto fastcall :PIRP
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoSetShareAccess proto fastcall :ACCESS_MASK, :DWORD, :PFILE_OBJECT, :PSHARE_ACCESS
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoSetShareAccessEx proto fastcall :ACCESS_MASK, :DWORD, :PFILE_OBJECT, :PSHARE_ACCESS, :PBOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    IoSetLinkShareAccess proto fastcall :ACCESS_MASK, :DWORD, :PFILE_OBJECT, :PSHARE_ACCESS, :PLINK_SHARE_ACCESS, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoSetTopLevelIrp proto fastcall :PIRP
-  endif
+
+
   PIO_REMOVE_LOCK_TRACKING_BLOCK typedef ptr _IO_REMOVE_LOCK_TRACKING_BLOCK
   
   IO_REMOVE_LOCK_COMMON_BLOCK struct
@@ -10223,109 +7353,15 @@ ifndef _WDMDDK_
 
   IO_REMOVE_LOCK struct
     Common IO_REMOVE_LOCK_COMMON_BLOCK <>
-    if DBG
       Dbg IO_REMOVE_LOCK_DBG_BLOCK <>
-    endif
   IO_REMOVE_LOCK ends
 
   PIO_REMOVE_LOCK typedef ptr IO_REMOVE_LOCK
-  
-  IoInitializeRemoveLock macro Lock,Tag,Maxmin,HighWater
-   exitm <IoInitializeRemoveLockEx ( Lock , Tag , Maxmin , HighWater , sizeof ( IO_REMOVE_LOCK ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoInitializeRemoveLockEx proto stdcall :PIO_REMOVE_LOCK, :DWORD, :DWORD, :DWORD, :DWORD
-  endif
-  if DBG
-    IoAcquireRemoveLock macro RemoveLock,Tag
-     exitm <IoAcquireRemoveLockEx ( RemoveLock , Tag , __FILE__ , __LINE__ , sizeof ( IO_REMOVE_LOCK ) ) >
-    endm
-  else
-    IoAcquireRemoveLock macro RemoveLock,Tag
-     exitm <IoAcquireRemoveLockEx ( RemoveLock , Tag , ,0 , 1 , sizeof ( IO_REMOVE_LOCK ) ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAcquireRemoveLockEx proto stdcall :PIO_REMOVE_LOCK, :PVOID, :PCSTR, :DWORD, :DWORD
-  endif
-  IoReleaseRemoveLock macro RemoveLock,Tag
-   exitm <IoReleaseRemoveLockEx ( RemoveLock , Tag , sizeof ( IO_REMOVE_LOCK ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoReleaseRemoveLockEx proto stdcall :PIO_REMOVE_LOCK, :PVOID, :DWORD
-  endif
-  IoReleaseRemoveLockAndWait macro RemoveLock,Tag
-   exitm <IoReleaseRemoveLockAndWaitEx ( RemoveLock , Tag , sizeof ( IO_REMOVE_LOCK ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoReleaseRemoveLockAndWaitEx proto stdcall :PIO_REMOVE_LOCK, :PVOID, :DWORD
-  endif
-  IoSizeOfIrp macro StackSize
-   exitm <( ( sizeof ( IRP ) + ( ( StackSize ) * ( sizeof ( IO_STACK_LOCATION ) ) ) ) ) >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    IoSizeOfIrpEx proto fastcall :PDEVICE_OBJECT, :CCHAR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoStartNextPacket proto fastcall :PDEVICE_OBJECT, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoStartNextPacketByKey proto fastcall :PDEVICE_OBJECT, :BOOLEAN, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoStartPacket proto fastcall :PDEVICE_OBJECT, :PIRP, :PULONG, :PDRIVER_CANCEL
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoSetStartIoAttributes proto fastcall :PDEVICE_OBJECT, :BOOLEAN, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    if defined(_AMD64_) or defined(_X86_)
-      IoStartTimer proto fastcall :PDEVICE_OBJECT
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    if defined(_AMD64_) or defined(_X86_)
-      IoStopTimer proto fastcall :PDEVICE_OBJECT
-    endif
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoUnregisterShutdownNotification proto fastcall :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoUpdateShareAccess proto fastcall :PFILE_OBJECT, :PSHARE_ACCESS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS3)
-    IoUpdateLinkShareAccess proto fastcall :PFILE_OBJECT, :PSHARE_ACCESS, :PLINK_SHARE_ACCESS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoWriteErrorLogEntry proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoCreateSystemThread proto fastcall :PVOID, :PHANDLE, :DWORD, :POBJECT_ATTRIBUTES, :HANDLE, :PCLIENT_ID, :PKSTART_ROUTINE, :PVOID
-  endif
+
+
   PIO_WORKITEM typedef ptr _IO_WORKITEM
   
-  IO_WORKITEM_ROUTINE proto fastcall :PDEVICE_OBJECT, :PVOID
-  PIO_WORKITEM_ROUTINE typedef ptr IO_WORKITEM_ROUTINE
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoAllocateWorkItem proto fastcall :PDEVICE_OBJECT
-    IoFreeWorkItem proto fastcall :PIO_WORKITEM
-    IoQueueWorkItem proto fastcall :PIO_WORKITEM, :PIO_WORKITEM_ROUTINE, :WORK_QUEUE_TYPE, :PVOID
-  endif
-  IO_WORKITEM_ROUTINE_EX proto fastcall :PVOID, :PVOID, :PIO_WORKITEM
-  PIO_WORKITEM_ROUTINE_EX typedef ptr IO_WORKITEM_ROUTINE_EX
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoQueueWorkItemEx proto fastcall :PIO_WORKITEM, :PIO_WORKITEM_ROUTINE_EX, :WORK_QUEUE_TYPE, :PVOID
-    IoSizeofWorkItem proto fastcall
-    IoInitializeWorkItem proto fastcall :PVOID, :PIO_WORKITEM
-    IoUninitializeWorkItem proto fastcall :PIO_WORKITEM
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoTryQueueWorkItem proto fastcall :!=, :PIO_WORKITEM, :PIO_WORKITEM_ROUTINE_EX, :WORK_QUEUE_TYPE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoWMIRegistrationControl proto fastcall :PDEVICE_OBJECT, :DWORD
-  endif
+
   WMIREG_ACTION_REGISTER equ 1
   WMIREG_ACTION_DEREGISTER equ 2
   WMIREG_ACTION_REREGISTER equ 3
@@ -10333,66 +7369,23 @@ ifndef _WDMDDK_
   WMIREG_ACTION_BLOCK_IRPS equ 5
   WMIREGISTER equ 0
   WMIUPDATE equ 1
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoWMIAllocateInstanceIds proto fastcall :LPCGUID, :DWORD, :ptr DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoWMISuggestInstanceName proto fastcall :PDEVICE_OBJECT, :PUNICODE_STRING, :BOOLEAN, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoWMIWriteEvent proto fastcall :PVOID
-  endif
-  if defined(_WIN64)
-    IoWMIDeviceObjectToProviderId proto fastcall :PDEVICE_OBJECT
-  else
-    IoWMIDeviceObjectToProviderId macro DeviceObject
-     exitm <( ( DeviceObject ) ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIOpenBlock proto fastcall :LPCGUID, :DWORD, :ptr PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIQueryAllData proto fastcall :PVOID, :PULONG, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIQueryAllDataMultiple proto fastcall :ptr PVOID, :DWORD, :PULONG, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIQuerySingleInstance proto fastcall :PVOID, :PUNICODE_STRING, :PULONG, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoWMIQuerySingleInstanceMultiple proto fastcall :ptr PVOID, :PUNICODE_STRING, :DWORD, :PULONG, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMISetSingleInstance proto fastcall :PVOID, :PUNICODE_STRING, :DWORD, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMISetSingleItem proto fastcall :PVOID, :PUNICODE_STRING, :DWORD, :DWORD, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIExecuteMethod proto fastcall :PVOID, :PUNICODE_STRING, :DWORD, :DWORD, :PULONG, :PUCHAR
-  endif
+
+
+
   FWMI_NOTIFICATION_CALLBACK typedef proto stdcall :PVOID,:PVOID
   WMI_NOTIFICATION_CALLBACK typedef ptr FWMI_NOTIFICATION_CALLBACK
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMISetNotificationCallback proto fastcall :PVOID, :WMI_NOTIFICATION_CALLBACK, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIHandleToInstanceName proto fastcall :PVOID, :HANDLE, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoWMIDeviceObjectToInstanceName proto fastcall :PVOID, :PDEVICE_OBJECT, :PUNICODE_STRING
-  endif
-  IoIs32bitProcess proto fastcall :PIRP
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoIsInitiator32bitProcess proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoFreeErrorLogEntry proto fastcall :PVOID
-  endif
-  IO_CSQ typedef _IO_CSQ
-  PIO_CSQ typedef ptr _IO_CSQ
+
+  IO_CSQ struct
+    Type_ DWORD ?
+    CsqInsertIrp QWORD ? ; PIO_CSQ_INSERT_IRP ?
+    CsqRemoveIrp QWORD ? ; PIO_CSQ_REMOVE_IRP ?
+    CsqPeekNextIrp QWORD ? ; PIO_CSQ_PEEK_NEXT_IRP ?
+    CsqAcquireLock QWORD ? ; PIO_CSQ_ACQUIRE_LOCK ?
+    CsqReleaseLock QWORD ? ; PIO_CSQ_RELEASE_LOCK ?
+    CsqCompleteCanceledIrp QWORD ? ; PIO_CSQ_COMPLETE_CANCELED_IRP ?
+    ReservePointer PVOID ?
+  IO_CSQ ends
+  PIO_CSQ typedef ptr IO_CSQ
   
   IO_TYPE_CSQ_IRP_CONTEXT equ 1
   IO_TYPE_CSQ equ 2
@@ -10403,73 +7396,9 @@ ifndef _WDMDDK_
     Csq PIO_CSQ ?
   IO_CSQ_IRP_CONTEXT ends
 
-  PIO_CSQ_IRP_CONTEXT typedef ptr IO_CSQ_IRP_CONTEXT
-  
-  IO_CSQ_INSERT_IRP typedef proto stdcall :ptr _IO_CSQ,:PIRP
-  PIO_CSQ_INSERT_IRP typedef ptr IO_CSQ_INSERT_IRP
-  IO_CSQ_INSERT_IRP_EX typedef proto stdcall :ptr _IO_CSQ,:PIRP,:PVOID
-  PIO_CSQ_INSERT_IRP_EX typedef ptr IO_CSQ_INSERT_IRP_EX
-  IO_CSQ_REMOVE_IRP typedef proto stdcall :PIO_CSQ,:PIRP
-  PIO_CSQ_REMOVE_IRP typedef ptr IO_CSQ_REMOVE_IRP
-  IO_CSQ_PEEK_NEXT_IRP typedef proto stdcall :PIO_CSQ,:PIRP,:PVOID
-  PIO_CSQ_PEEK_NEXT_IRP typedef ptr IO_CSQ_PEEK_NEXT_IRP
-  IO_CSQ_ACQUIRE_LOCK typedef proto stdcall :PIO_CSQ,:PKIRQL
-  PIO_CSQ_ACQUIRE_LOCK typedef ptr IO_CSQ_ACQUIRE_LOCK
-  IO_CSQ_RELEASE_LOCK typedef proto stdcall :PIO_CSQ,:KIRQL
-  PIO_CSQ_RELEASE_LOCK typedef ptr IO_CSQ_RELEASE_LOCK
-  IO_CSQ_COMPLETE_CANCELED_IRP typedef proto stdcall :PIO_CSQ,:PIRP
-  PIO_CSQ_COMPLETE_CANCELED_IRP typedef ptr IO_CSQ_COMPLETE_CANCELED_IRP
-  IO_CSQ struct
-    Type_ DWORD ?
-    CsqInsertIrp PIO_CSQ_INSERT_IRP ?
-    CsqRemoveIrp PIO_CSQ_REMOVE_IRP ?
-    CsqPeekNextIrp PIO_CSQ_PEEK_NEXT_IRP ?
-    CsqAcquireLock PIO_CSQ_ACQUIRE_LOCK ?
-    CsqReleaseLock PIO_CSQ_RELEASE_LOCK ?
-    CsqCompleteCanceledIrp PIO_CSQ_COMPLETE_CANCELED_IRP ?
-    ReservePointer PVOID ?
-  IO_CSQ ends
+  PIO_CSQ_IRP_CONTEXT typedef ptr IO_CSQ_IRP_CONTEXT  
 
-  PIO_CSQ typedef ptr IO_CSQ
-  
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoCsqInitialize proto fastcall :PIO_CSQ, :PIO_CSQ_INSERT_IRP, :PIO_CSQ_REMOVE_IRP, :PIO_CSQ_PEEK_NEXT_IRP, :PIO_CSQ_ACQUIRE_LOCK, :PIO_CSQ_RELEASE_LOCK, :PIO_CSQ_COMPLETE_CANCELED_IRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    IoCsqInitializeEx proto fastcall :PIO_CSQ, :PIO_CSQ_INSERT_IRP_EX, :PIO_CSQ_REMOVE_IRP, :PIO_CSQ_PEEK_NEXT_IRP, :PIO_CSQ_ACQUIRE_LOCK, :PIO_CSQ_RELEASE_LOCK, :PIO_CSQ_COMPLETE_CANCELED_IRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoCsqInsertIrp proto fastcall :PIO_CSQ, :PIRP, :PIO_CSQ_IRP_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    IoCsqInsertIrpEx proto fastcall :PIO_CSQ, :PIRP, :PIO_CSQ_IRP_CONTEXT, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoCsqRemoveNextIrp proto fastcall :PIO_CSQ, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXP)
-    IoCsqRemoveIrp proto fastcall :PIO_CSQ, :PIO_CSQ_IRP_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINXPSP1)
-    IoValidateDeviceIoControlAccess proto fastcall :PIRP, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoGetIoPriorityHint proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoSetIoPriorityHint proto fastcall :PIRP, :IO_PRIORITY_HINT
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoAllocateSfioStreamIdentifier proto fastcall :PFILE_OBJECT, :DWORD, :PVOID, :ptr PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoGetSfioStreamIdentifier proto fastcall :PFILE_OBJECT, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoFreeSfioStreamIdentifier proto fastcall :PFILE_OBJECT, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS1)
-    IoGetIoAttributionHandle proto fastcall :PIRP, :ptr PVOID
+
     IO_ATTRIBUTION_INFO_V1 equ 1
     IO_ATTRIBUTION_INFORMATION struct
       Version DWORD ?
@@ -10487,24 +7416,24 @@ ifndef _WDMDDK_
 
     PIO_ATTRIBUTION_INFORMATION typedef ptr IO_ATTRIBUTION_INFORMATION
     
-    IoRecordIoAttribution proto fastcall :PVOID, :ptr IO_ATTRIBUTION_INFORMATION
+
     IO_SET_IRP_IO_ATTRIBUTION_FROM_THREAD equ 1h
     IO_SET_IRP_IO_ATTRIBUTION_FROM_PROCESS equ 2h
     IO_SET_IRP_IO_ATTRIBUTION_FLAGS_MASK equ 3h
-    IoSetIoAttributionIrp proto fastcall :PIRP, :PVOID, :DWORD
-  endif
+
+
   IO_ACCESS_TYPE typedef SDWORD
-  ReadAccess = 0
-  WriteAccess = 1
-  ModifyAccess = 2
+  ReadAccess EQU 0
+  WriteAccess EQU 1
+  ModifyAccess EQU 2
   
   IO_ACCESS_MODE typedef SDWORD
-  SequentialAccess = 0
-  RandomAccess = 1
+  SequentialAccess EQU 0
+  RandomAccess EQU 1
   
   IO_CONTAINER_NOTIFICATION_CLASS typedef SDWORD
-  IoSessionStateNotification = 0
-  IoMaxContainerNotificationClass = 1
+  IoSessionStateNotification EQU 0
+  IoMaxContainerNotificationClass EQU 1
   
   IO_SESSION_STATE_NOTIFICATION struct
     Size_ DWORD ?
@@ -10517,8 +7446,8 @@ ifndef _WDMDDK_
   PIO_SESSION_STATE_NOTIFICATION typedef ptr IO_SESSION_STATE_NOTIFICATION
   
   IO_CONTAINER_INFORMATION_CLASS typedef SDWORD
-  IoSessionStateInformation = 0
-  IoMaxContainerInformationClass = 1
+  IoSessionStateInformation EQU 0
+  IoMaxContainerInformationClass EQU 1
   
   IO_SESSION_STATE_INFORMATION struct
     SessionId DWORD ?
@@ -10528,39 +7457,11 @@ ifndef _WDMDDK_
 
   PIO_SESSION_STATE_INFORMATION typedef ptr IO_SESSION_STATE_INFORMATION
   
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    IoGetContainerInformation proto fastcall :IO_CONTAINER_INFORMATION_CLASS, :PVOID, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    proto_PIO_CONTAINER_NOTIFICATION_FUNCTION typedef proto fastcall 
-    PIO_CONTAINER_NOTIFICATION_FUNCTION typedef ptr proto_PIO_CONTAINER_NOTIFICATION_FUNCTION
-    IO_SESSION_NOTIFICATION_FUNCTION typedef proto stdcall :PVOID,:PVOID,:DWORD,:PVOID,:PVOID,:DWORD
-    PIO_SESSION_NOTIFICATION_FUNCTION typedef ptr IO_SESSION_NOTIFICATION_FUNCTION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    IoRegisterContainerNotification proto fastcall :IO_CONTAINER_NOTIFICATION_CLASS, :PIO_CONTAINER_NOTIFICATION_FUNCTION, :PVOID, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    IoUnregisterContainerNotification proto fastcall :PVOID
-  endif
-  ifdef RUN_WPP
-    include evntrace.inc
-    include stdarg.inc
-  endif
-  ifndef _TRACEHANDLE_DEFINED
     _TRACEHANDLE_DEFINED equ <>
     TRACEHANDLE typedef ULONG64
     PTRACEHANDLE typedef ptr ULONG64
-  endif
-  ifdef RUN_WPP
-    if (NTDDI_VERSION ge NTDDI_WINXP)
-      WmiTraceMessage proto fastcall :TRACEHANDLE, :DWORD, :LPCGUID, :WORD, :VARARG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WINXP)
-      WmiTraceMessageVa proto fastcall :TRACEHANDLE, :DWORD, :LPCGUID, :WORD, :va_list
-    endif
-  endif
-  ifndef TRACE_INFORMATION_CLASS_DEFINE
+
+
     ETW_TRACE_SESSION_SETTINGS struct
       Version DWORD ?
       BufferSize DWORD ?
@@ -10575,116 +7476,67 @@ ifndef _WDMDDK_
     PETW_TRACE_SESSION_SETTINGS typedef ptr ETW_TRACE_SESSION_SETTINGS
     
     TRACE_INFORMATION_CLASS typedef SDWORD
-    TraceIdClass = 0
-    TraceHandleClass = 1
-    TraceEnableFlagsClass = 2
-    TraceEnableLevelClass = 3
-    GlobalLoggerHandleClass = 4
-    EventLoggerHandleClass = 5
-    AllLoggerHandlesClass = 6
-    TraceHandleByNameClass = 7
-    LoggerEventsLostClass = 8
-    TraceSessionSettingsClass = 9
-    LoggerEventsLoggedClass = 10
-    DiskIoNotifyRoutinesClass = 11
-    TraceInformationClassReserved1 = 12
-    FltIoNotifyRoutinesClass = 13
-    TraceInformationClassReserved2 = 14
-    WdfNotifyRoutinesClass = 15
-    MaxTraceInformationClass = 16
-    
-    if (NTDDI_VERSION ge NTDDI_WINXP)
-      WmiQueryTraceInformation proto fastcall :TRACE_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG, :PVOID
-    endif
-    TRACE_INFORMATION_CLASS_DEFINE equ <>
-  endif
-  ifndef _ETW_KM_
-    _ETW_KM_ equ <>
-  endif
-  include evntprov.inc
-  ETWENABLECALLBACK typedef proto stdcall :LPCGUID,:DWORD,:BYTE,:QWORD,:QWORD,:PEVENT_FILTER_DESCRIPTOR,:PVOID
-  PETWENABLECALLBACK typedef ptr ETWENABLECALLBACK
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwRegister proto fastcall :LPCGUID, :PETWENABLECALLBACK, :PVOID, :PREGHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwUnregister proto fastcall :REGHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_THRESHOLD)
-    EtwSetInformation proto fastcall :REGHANDLE, :EVENT_INFO_CLASS, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwEventEnabled proto fastcall :REGHANDLE, :PCEVENT_DESCRIPTOR
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwProviderEnabled proto fastcall :REGHANDLE, :BYTE, :QWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwActivityIdControl proto fastcall :DWORD, :LPGUID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwWrite proto fastcall :REGHANDLE, :PCEVENT_DESCRIPTOR, :LPCGUID, :DWORD, :PEVENT_DATA_DESCRIPTOR
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwWriteTransfer proto fastcall :REGHANDLE, :PCEVENT_DESCRIPTOR, :LPCGUID, :LPCGUID, :DWORD, :PEVENT_DATA_DESCRIPTOR
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    EtwWriteString proto fastcall :REGHANDLE, :BYTE, :QWORD, :LPCGUID, :PCWSTR
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    EtwWriteEx proto fastcall :REGHANDLE, :PCEVENT_DESCRIPTOR, :ULONG64, :DWORD, :LPCGUID, :LPCGUID, :DWORD, :PEVENT_DATA_DESCRIPTOR
-  endif
-  if (NTDDI_VERSION ge NTDDI_THRESHOLD)
-    SeEtwWriteKMCveEvent proto fastcall :PCUNICODE_STRING, :PCUNICODE_STRING
-  endif
-  ifdef _PREFAST_
-    __string_type equ 1000h
-    __guid_type equ 2000h
-    __multiString_type equ 4000h
-  else
+    TraceIdClass EQU 0
+    TraceHandleClass EQU 1
+    TraceEnableFlagsClass EQU 2
+    TraceEnableLevelClass EQU 3
+    GlobalLoggerHandleClass EQU 4
+    EventLoggerHandleClass EQU 5
+    AllLoggerHandlesClass EQU 6
+    TraceHandleByNameClass EQU 7
+    LoggerEventsLostClass EQU 8
+    TraceSessionSettingsClass EQU 9
+    LoggerEventsLoggedClass EQU 10
+    DiskIoNotifyRoutinesClass EQU 11
+    TraceInformationClassReserved1 EQU 12
+    FltIoNotifyRoutinesClass EQU 13
+    TraceInformationClassReserved2 EQU 14
+    WdfNotifyRoutinesClass EQU 15
+    MaxTraceInformationClass EQU 16
+
+
+
     __string_type equ 0
     __guid_type equ 0
     __multiString_type equ 0
-  endif
+
   DEVICE_REGISTRY_PROPERTY typedef SDWORD
-  DevicePropertyDeviceDescription = 0h or __string_type 
-  DevicePropertyHardwareID = 1h or __multiString_type 
-  DevicePropertyCompatibleIDs = 2h or __multiString_type 
-  DevicePropertyBootConfiguration = 3h 
-  DevicePropertyBootConfigurationTranslated = 4h 
-  DevicePropertyClassName = 5h or __string_type 
-  DevicePropertyClassGuid = 6h or __string_type 
-  DevicePropertyDriverKeyName = 7h or __string_type 
-  DevicePropertyManufacturer = 8h or __string_type 
-  DevicePropertyFriendlyName = 9h or __string_type 
-  DevicePropertyLocationInformation = 0ah or __string_type 
-  DevicePropertyPhysicalDeviceObjectName = 0bh or __string_type 
-  DevicePropertyBusTypeGuid = 0ch or __guid_type 
-  DevicePropertyLegacyBusType = 0dh 
-  DevicePropertyBusNumber = 0eh 
-  DevicePropertyEnumeratorName = 0fh or __string_type 
-  DevicePropertyAddress = 10h 
-  DevicePropertyUINumber = 11h 
-  DevicePropertyInstallState = 12h 
-  DevicePropertyRemovalPolicy = 13h 
-  DevicePropertyResourceRequirements = 14h 
-  DevicePropertyAllocatedResources = 15h 
-  DevicePropertyContainerID = 16h or __string_type 
+  DevicePropertyDeviceDescription EQU 0h or __string_type 
+  DevicePropertyHardwareID EQU 1h or __multiString_type 
+  DevicePropertyCompatibleIDs EQU 2h or __multiString_type 
+  DevicePropertyBootConfiguration EQU 3h 
+  DevicePropertyBootConfigurationTranslated EQU 4h 
+  DevicePropertyClassName EQU 5h or __string_type 
+  DevicePropertyClassGuid EQU 6h or __string_type 
+  DevicePropertyDriverKeyName EQU 7h or __string_type 
+  DevicePropertyManufacturer EQU 8h or __string_type 
+  DevicePropertyFriendlyName EQU 9h or __string_type 
+  DevicePropertyLocationInformation EQU 0ah or __string_type 
+  DevicePropertyPhysicalDeviceObjectName EQU 0bh or __string_type 
+  DevicePropertyBusTypeGuid EQU 0ch or __guid_type 
+  DevicePropertyLegacyBusType EQU 0dh 
+  DevicePropertyBusNumber EQU 0eh 
+  DevicePropertyEnumeratorName EQU 0fh or __string_type 
+  DevicePropertyAddress EQU 10h 
+  DevicePropertyUINumber EQU 11h 
+  DevicePropertyInstallState EQU 12h 
+  DevicePropertyRemovalPolicy EQU 13h 
+  DevicePropertyResourceRequirements EQU 14h 
+  DevicePropertyAllocatedResources EQU 15h 
+  DevicePropertyContainerID EQU 16h or __string_type 
   
   TRANSLATE_BUS_ADDRESS typedef proto stdcall :PVOID,:PHYSICAL_ADDRESS,:DWORD,:PULONG,:PPHYSICAL_ADDRESS
   PTRANSLATE_BUS_ADDRESS typedef ptr TRANSLATE_BUS_ADDRESS
   Context typedef ptr _DMA_ADAPTER
   DeviceDescriptor typedef ptr _DMA_ADAPTER
-  ) typedef _DMA_ADAPTER
   
   PGET_DMA_ADAPTER typedef ptr GET_DMA_ADAPTER
-  GET_SET_DEVICE_DATA typedef proto stdcall :PVOID,:DWORD,:PVOID,:DWORD,:DWORD
-  PGET_SET_DEVICE_DATA typedef ptr GET_SET_DEVICE_DATA
+
   DEVICE_INSTALL_STATE typedef SDWORD
-  InstallStateInstalled = 0
-  InstallStateNeedsReinstall = 1
-  InstallStateFailedInstall = 2
-  InstallStateFinishInstall = 3
+  InstallStateInstalled EQU 0
+  InstallStateNeedsReinstall EQU 1
+  InstallStateFailedInstall EQU 2
+  InstallStateFinishInstall EQU 3
   
   PDEVICE_INSTALL_STATE typedef ptr DEVICE_INSTALL_STATE
   
@@ -10705,9 +7557,9 @@ ifndef _WDMDDK_
   PLEGACY_BUS_INFORMATION typedef ptr LEGACY_BUS_INFORMATION
   
   DEVICE_REMOVAL_POLICY typedef SDWORD
-  RemovalPolicyExpectNoRemoval = 1 
-  RemovalPolicyExpectOrderlyRemoval = 2 
-  RemovalPolicyExpectSurpriseRemoval = 3 
+  RemovalPolicyExpectNoRemoval EQU 1 
+  RemovalPolicyExpectOrderlyRemoval EQU 2 
+  RemovalPolicyExpectSurpriseRemoval EQU 3 
   
   PDEVICE_REMOVAL_POLICY typedef ptr DEVICE_REMOVAL_POLICY
   
@@ -10755,10 +7607,10 @@ ifndef _WDMDDK_
   
   PCI_SECURITY_INTERFACE_VERSION equ 1
   PCI_ACS_BIT typedef SDWORD
-  PciAcsReserved = 0 
-  PciAcsBitEnable = 1
-  PciAcsBitDisable = 2
-  PciAcsBitDontCare = 3
+  PciAcsReserved EQU 0 
+  PciAcsBitEnable EQU 1
+  PciAcsBitDisable EQU 2
+  PciAcsBitDontCare EQU 3
   
   PPCI_ACS_BIT typedef ptr PCI_ACS_BIT
   
@@ -10806,13 +7658,13 @@ ifndef _WDMDDK_
   SET_D3COLD_SUPPORT typedef proto stdcall :PVOID,:BOOLEAN
   PSET_D3COLD_SUPPORT typedef ptr SET_D3COLD_SUPPORT
   DEVICE_WAKE_DEPTH typedef SDWORD
-  DeviceWakeDepthNotWakeable = 0 
-  DeviceWakeDepthD0 = 1
-  DeviceWakeDepthD1 = 2
-  DeviceWakeDepthD2 = 3
-  DeviceWakeDepthD3hot = 4
-  DeviceWakeDepthD3cold = 5
-  DeviceWakeDepthMaximum = 6
+  DeviceWakeDepthNotWakeable EQU 0 
+  DeviceWakeDepthD0 EQU 1
+  DeviceWakeDepthD1 EQU 2
+  DeviceWakeDepthD2 EQU 3
+  DeviceWakeDepthD3hot EQU 4
+  DeviceWakeDepthD3cold EQU 5
+  DeviceWakeDepthMaximum EQU 6
   
   PDEVICE_WAKE_DEPTH typedef ptr DEVICE_WAKE_DEPTH
   
@@ -10822,9 +7674,9 @@ ifndef _WDMDDK_
   GET_D3COLD_CAPABILITY typedef proto stdcall :PVOID,:PBOOLEAN
   PGET_D3COLD_CAPABILITY typedef ptr GET_D3COLD_CAPABILITY
   D3COLD_LAST_TRANSITION_STATUS typedef SDWORD
-  LastDStateTransitionStatusUnknown = 0 
-  LastDStateTransitionD3hot = 1
-  LastDStateTransitionD3cold = 2
+  LastDStateTransitionStatusUnknown EQU 0 
+  LastDStateTransitionD3hot EQU 1
+  LastDStateTransitionD3cold EQU 2
   
   PD3COLD_LAST_TRANSITION_STATUS typedef ptr D3COLD_LAST_TRANSITION_STATUS
   
@@ -10955,101 +7807,42 @@ ifndef _WDMDDK_
   ACPI_INTERFACE_STANDARD2 ends
 
   PACPI_INTERFACE_STANDARD2 typedef ptr ACPI_INTERFACE_STANDARD2
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoInvalidateDeviceRelations proto fastcall :PDEVICE_OBJECT, :DEVICE_RELATION_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRequestDeviceEject proto fastcall :PDEVICE_OBJECT
-  endif
-  proto_PIO_DEVICE_EJECT_CALLBACK typedef proto fastcall :NTSTATUS, :PVOID
-  PIO_DEVICE_EJECT_CALLBACK typedef ptr proto_PIO_DEVICE_EJECT_CALLBACK
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoRequestDeviceEjectEx proto fastcall :PDEVICE_OBJECT, :PIO_DEVICE_EJECT_CALLBACK, :PVOID, :PDRIVER_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetDeviceProperty proto fastcall :PDEVICE_OBJECT, :DEVICE_REGISTRY_PROPERTY, :DWORD, :PVOID, :PULONG
-  endif
+
   PLUGPLAY_REGKEY_DEVICE equ 1
   PLUGPLAY_REGKEY_DRIVER equ 2
   PLUGPLAY_REGKEY_CURRENT_HWPROFILE equ 4
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoOpenDeviceRegistryKey proto fastcall :PDEVICE_OBJECT, :DWORD, :ACCESS_MASK, :PHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRegisterDeviceInterface proto stdcall :PDEVICE_OBJECT, :ptr GUID, :PUNICODE_STRING, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoOpenDeviceInterfaceRegistryKey proto fastcall :PUNICODE_STRING, :ACCESS_MASK, :PHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoSetDeviceInterfaceState proto fastcall :PUNICODE_STRING, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetDeviceInterfaces proto stdcall :ptr GUID, :PDEVICE_OBJECT, :DWORD, :ptr PZZWSTR
-  endif
+
+
   DEVICE_INTERFACE_INCLUDE_NONACTIVE equ 00000001h
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoGetDeviceInterfaceAlias proto stdcall :PUNICODE_STRING, :ptr GUID, :PUNICODE_STRING
-  endif
+
   IO_NOTIFICATION_EVENT_CATEGORY typedef SDWORD
-  EventCategoryReserved = 0
-  EventCategoryHardwareProfileChange = 1
-  EventCategoryDeviceInterfaceChange = 2
-  EventCategoryTargetDeviceChange = 3
+  EventCategoryReserved EQU 0
+  EventCategoryHardwareProfileChange EQU 1
+  EventCategoryDeviceInterfaceChange EQU 2
+  EventCategoryTargetDeviceChange EQU 3
   
   PNPNOTIFY_DEVICE_INTERFACE_INCLUDE_EXISTING_INTERFACES equ 00000001h
-  DRIVER_NOTIFICATION_CALLBACK_ROUTINE typedef proto stdcall :PVOID,:PVOID
-  PDRIVER_NOTIFICATION_CALLBACK_ROUTINE typedef ptr DRIVER_NOTIFICATION_CALLBACK_ROUTINE
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoRegisterPlugPlayNotification proto fastcall :IO_NOTIFICATION_EVENT_CATEGORY, :DWORD, :PVOID, :PDRIVER_OBJECT, :PDRIVER_NOTIFICATION_CALLBACK_ROUTINE, :PVOID, :ptr PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoUnregisterPlugPlayNotification proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    IoUnregisterPlugPlayNotificationEx proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoReportTargetDeviceChange proto fastcall :PDEVICE_OBJECT, :PVOID
-  endif
-  DEVICE_CHANGE_COMPLETE_CALLBACK typedef proto stdcall :PVOID
-  PDEVICE_CHANGE_COMPLETE_CALLBACK typedef ptr DEVICE_CHANGE_COMPLETE_CALLBACK
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoInvalidateDeviceState proto fastcall :PDEVICE_OBJECT
-  endif
-  IoAdjustPagingPathCount macro _count_,_paging_
-   exitm <{ if ( _paging_ ) { InterlockedIncrement ( _count_ ) ; } else { InterlockedDecrement ( _count_ ) ; } } >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    IoReportTargetDeviceChangeAsynchronous proto fastcall :PDEVICE_OBJECT, :PVOID, :PDEVICE_CHANGE_COMPLETE_CALLBACK, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS4)
+
+
     DRIVER_DIRECTORY_TYPE typedef SDWORD
-    DriverDirectoryImage = 0 
-    DriverDirectoryData = 1 
+    DriverDirectoryImage EQU 0 
+    DriverDirectoryData EQU 1 
     
     PDRIVER_DIRECTORY_TYPE typedef ptr DRIVER_DIRECTORY_TYPE
-    
-    IoGetDriverDirectory proto fastcall :PDRIVER_OBJECT, :DRIVER_DIRECTORY_TYPE, :DWORD, :PHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS4)
+
+
     DEVICE_DIRECTORY_TYPE typedef SDWORD
-    DeviceDirectoryData = 0 
+    DeviceDirectoryData EQU 0 
     
     PDEVICE_DIRECTORY_TYPE typedef ptr DEVICE_DIRECTORY_TYPE
-    
-    IoGetDeviceDirectory proto fastcall :PDEVICE_OBJECT, :DEVICE_DIRECTORY_TYPE, :DWORD, :PVOID, :PHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS4)
+
     DRIVER_REGKEY_TYPE typedef SDWORD
-    DriverRegKeyParameters = 0 
-    DriverRegKeyPersistentState = 1 
+    DriverRegKeyParameters EQU 0 
+    DriverRegKeyPersistentState EQU 1 
     
     PDRIVER_REGKEY_TYPE typedef ptr DRIVER_REGKEY_TYPE
-    
-    IoOpenDriverRegistryKey proto fastcall :PDRIVER_OBJECT, :DRIVER_REGKEY_TYPE, :ACCESS_MASK, :DWORD, :PHANDLE
-  endif
+
+
   PLUGPLAY_NOTIFICATION_HEADER struct
     Version WORD ?
     Size_ WORD ?
@@ -11096,46 +7889,25 @@ ifndef _WDMDDK_
 
   PTARGET_DEVICE_CUSTOM_NOTIFICATION typedef ptr TARGET_DEVICE_CUSTOM_NOTIFICATION
   
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    include devpropdef.inc
+
+
     PLUGPLAY_PROPERTY_PERSISTENT equ 00000001h
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoSetDevicePropertyData proto fastcall :PDEVICE_OBJECT, :ptr DEVPROPKEY, :LCID, :DWORD, :DEVPROPTYPE, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    IoGetDevicePropertyData proto fastcall :PDEVICE_OBJECT, :ptr DEVPROPKEY, :LCID, :DWORD, :DWORD, :PVOID, :PULONG, :PDEVPROPTYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoSetDeviceInterfacePropertyData proto fastcall :PUNICODE_STRING, :ptr DEVPROPKEY, :LCID, :DWORD, :DEVPROPTYPE, :DWORD, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    IoGetDeviceInterfacePropertyData proto fastcall :PUNICODE_STRING, :ptr DEVPROPKEY, :LCID, :DWORD, :DWORD, :PVOID, :PULONG, :PDEVPROPTYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    IoGetDeviceNumaNode proto fastcall :PDEVICE_OBJECT, :PUSHORT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS08)
-    IoReplacePartitionUnit proto stdcall :PDEVICE_OBJECT, :PDEVICE_OBJECT, :DWORD
-  endif
-  PPNP_REPLACE_DRIVER_INTERFACE typedef ptr _PNP_REPLACE_DRIVER_INTERFACE
-  
-  proto_PREPLACE_DRIVER_INIT typedef proto fastcall :PPNP_REPLACE_DRIVER_INTERFACE, :PVOID
-  PREPLACE_DRIVER_INIT typedef ptr proto_PREPLACE_DRIVER_INIT
+
   PNP_REPLACE_NO_MAP equ <MAXLONGLONG>
-  proto_PREPLACE_MAP_MEMORY typedef proto fastcall :PHYSICAL_ADDRESS, :PHYSICAL_ADDRESS, :PLARGE_INTEGER, :ptr PVOID, :ptr PVOID
-  PREPLACE_MAP_MEMORY typedef ptr proto_PREPLACE_MAP_MEMORY
+
   PNP_REPLACE_MEMORY_LIST struct
     AllocatedCount DWORD ?
     Count DWORD ?
     TotalLength QWORD ?
     struct Ranges
-      Address PHYSICAL_ADDRESS ?
+      Address PHYSICAL_ADDRESS <>
       Length_ QWORD ?
     ends
   PNP_REPLACE_MEMORY_LIST ends
 
   PPNP_REPLACE_MEMORY_LIST typedef ptr PNP_REPLACE_MEMORY_LIST
+  
+  PKAFFINITY TYPEDEF PTR KAFFINITY
   
   PNP_REPLACE_PROCESSOR_LIST struct
     Affinity PKAFFINITY ?
@@ -11166,7 +7938,7 @@ ifndef _WDMDDK_
     SpareProcessors PPNP_REPLACE_PROCESSOR_LIST ?
     TargetMemory PPNP_REPLACE_MEMORY_LIST ?
     SpareMemory PPNP_REPLACE_MEMORY_LIST ?
-    MapMemory PREPLACE_MAP_MEMORY ?
+    MapMemory QWORD ? ;PREPLACE_MAP_MEMORY ?
   PNP_REPLACE_PARAMETERS ends
 
   PPNP_REPLACE_PARAMETERS typedef ptr PNP_REPLACE_PARAMETERS
@@ -11216,7 +7988,7 @@ ifndef _WDMDDK_
 
   PPNP_REPLACE_DRIVER_INTERFACE typedef ptr PNP_REPLACE_DRIVER_INTERFACE
   
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
+
     proto_PCRASHDUMP_POWER_ON typedef proto fastcall :PVOID
     PCRASHDUMP_POWER_ON typedef ptr proto_PCRASHDUMP_POWER_ON
     CRASHDUMP_FUNCTIONS_INTERFACE struct
@@ -11229,13 +8001,12 @@ ifndef _WDMDDK_
     CRASHDUMP_FUNCTIONS_INTERFACE ends
 
     PCRASHDUMP_FUNCTIONS_INTERFACE typedef ptr CRASHDUMP_FUNCTIONS_INTERFACE
-    
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
+
+
     DEVICE_RESET_INTERFACE_VERSION equ 1
     DEVICE_RESET_TYPE typedef SDWORD
-    FunctionLevelDeviceReset = 0
-    PlatformLevelDeviceReset = 1
+    FunctionLevelDeviceReset EQU 0
+    PlatformLevelDeviceReset EQU 1
     
     proto_DEVICE_RESET_COMPLETION typedef proto fastcall :NTSTATUS, :PVOID
     DEVICE_RESET_COMPLETION typedef ptr proto_DEVICE_RESET_COMPLETION
@@ -11263,8 +8034,7 @@ ifndef _WDMDDK_
 
     PDEVICE_RESET_INTERFACE_STANDARD typedef ptr DEVICE_RESET_INTERFACE_STANDARD
     
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS2)
+
     SECURE_DRIVER_INTERFACE_VERSION equ 1
     SECURE_DRIVER_PROCESS_REFERENCE typedef proto stdcall :PVOID
     PSECURE_DRIVER_PROCESS_REFERENCE typedef ptr SECURE_DRIVER_PROCESS_REFERENCE
@@ -11278,8 +8048,7 @@ ifndef _WDMDDK_
     SECURE_DRIVER_INTERFACE ends
 
     PSECURE_DRIVER_INTERFACE typedef ptr SECURE_DRIVER_INTERFACE
-    
-  endif
+ 
   SDEV_IDENTIFIER_INTERFACE_VERSION equ 1
   GET_SDEV_IDENTIFIER typedef proto stdcall :PVOID
   PGET_SDEV_IDENTIFIER typedef ptr GET_SDEV_IDENTIFIER
@@ -11307,12 +8076,12 @@ ifndef _WDMDDK_
     DmaSpeed DMA_SPEED ?
     MaximumLength DWORD ?
     DmaPort DWORD ?
-    if (NTDDI_VERSION ge NTDDI_WIN8)
+
       DmaAddressWidth DWORD ?
       DmaControllerInstance DWORD ?
       DmaRequestLine DWORD ?
-      DeviceAddress PHYSICAL_ADDRESS ?
-    endif
+      DeviceAddress PHYSICAL_ADDRESS <>
+
   DEVICE_DESCRIPTION ends
 
   PDEVICE_DESCRIPTION typedef ptr DEVICE_DESCRIPTION
@@ -11362,38 +8131,30 @@ ifndef _WDMDDK_
   PDMA_TRANSFER_INFO typedef ptr DMA_TRANSFER_INFO
   
   DMA_TRANSFER_CONTEXT_VERSION1 equ 1
-  if defined(_WIN64)
     DMA_TRANSFER_CONTEXT_SIZE_V1 equ 128
-  else
-    DMA_TRANSFER_CONTEXT_SIZE_V1 equ 64
-  endif
   DMA_SYNCHRONOUS_CALLBACK equ 01h
   DMA_ZERO_BUFFERS equ 02h
   KeFlushWriteBuffer proto fastcall
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
+
     KeQueryPerformanceCounter proto fastcall :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
+
+
     KeStallExecutionProcessor proto fastcall :DWORD
-  endif
+
   HAL_MASK_UNMASK_FLAGS_NONE equ 0h
   HAL_MASK_UNMASK_FLAGS_SERVICING_DEFERRED equ 1h
   HAL_MASK_UNMASK_FLAGS_SERVICING_COMPLETE equ 2h
   PROCESSOR_HALT_ROUTINE typedef proto stdcall :PVOID
   PPROCESSOR_HALT_ROUTINE typedef ptr PROCESSOR_HALT_ROUTINE
   SCATTER_GATHER_ELEMENT struct
-    Address PHYSICAL_ADDRESS ?
+    Address PHYSICAL_ADDRESS <>
     Length_ DWORD ?
     Reserved ULONG_PTR ?
   SCATTER_GATHER_ELEMENT ends
 
   PSCATTER_GATHER_ELEMENT typedef ptr SCATTER_GATHER_ELEMENT
   
-  if defined(_MSC_EXTENSIONS)
-    if _MSC_VER ge 1200
-      ;#pragma warning ( push )
-    endif
-    ;#pragma warning ( disable : 4200 )
+
     SCATTER_GATHER_LIST struct
       NumberOfElements DWORD ?
       Reserved ULONG_PTR ?
@@ -11402,16 +8163,7 @@ ifndef _WDMDDK_
 
     PSCATTER_GATHER_LIST typedef ptr SCATTER_GATHER_LIST
     
-    if _MSC_VER ge 1200
-      ;#pragma warning ( pop )
-    else
-      ;#pragma warning ( default : 4200 )
-    endif
-  else
-    SCATTER_GATHER_LIST typedef _SCATTER_GATHER_LIST
-    PSCATTER_GATHER_LIST typedef ptr _SCATTER_GATHER_LIST
-    
-  endif
+
   PDMA_OPERATIONS typedef ptr _DMA_OPERATIONS
   
   HAL_DMA_ADAPTER_VERSION_1 equ 1
@@ -11424,10 +8176,10 @@ ifndef _WDMDDK_
   PDMA_ADAPTER typedef ptr DMA_ADAPTER
   
   DMA_COMPLETION_STATUS typedef SDWORD
-  DmaComplete = 0
-  DmaAborted = 1
-  DmaError = 2
-  DmaCancelled = 3
+  DmaComplete EQU 0
+  DmaAborted EQU 1
+  DmaError EQU 2
+  DmaCancelled EQU 3
   
   proto_PPUT_DMA_ADAPTER typedef proto fastcall :PDMA_ADAPTER
   PPUT_DMA_ADAPTER typedef ptr proto_PPUT_DMA_ADAPTER
@@ -11540,33 +8292,31 @@ ifndef _WDMDDK_
     AllocateCommonBufferWithBounds PALLOCATE_COMMON_BUFFER_WITH_BOUNDS ?
   DMA_OPERATIONS ends
 
-  if defined(USE_DMA_MACROS) and  not defined(_NTHAL_) and (defined(_NTDDK_) or defined(_NTDRIVER_)) or defined(_WDM_INCLUDED_)
     HalAllocateCommonBuffer proto fastcall :PDMA_ADAPTER, :DWORD, :PPHYSICAL_ADDRESS, :BOOLEAN
     HalFreeCommonBuffer proto fastcall :PDMA_ADAPTER, :DWORD, :PHYSICAL_ADDRESS, :PVOID, :BOOLEAN
-    IoAllocateAdapterChannel proto fastcall :PDMA_ADAPTER, :PDEVICE_OBJECT, :DWORD, :PDRIVER_CONTROL, :PVOID
+
     IoFlushAdapterBuffers proto fastcall :PDMA_ADAPTER, :PMDL, :PVOID, :PVOID, :DWORD, :BOOLEAN
     IoFreeAdapterChannel proto fastcall :PDMA_ADAPTER
     IoFreeMapRegisters proto fastcall :PDMA_ADAPTER, :PVOID, :DWORD
     IoMapTransfer proto fastcall :PDMA_ADAPTER, :PMDL, :PVOID, :PVOID, :PULONG, :BOOLEAN
     HalGetDmaAlignment proto fastcall :PDMA_ADAPTER
     HalReadDmaCounter proto fastcall :PDMA_ADAPTER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS4)
+
     IOMMU_ACCESS_NONE equ 00h
     IOMMU_ACCESS_READ equ 01h
     IOMMU_ACCESS_WRITE equ 02h
-    IOMMU_DMA_DOMAIN typedef _IOMMU_DMA_DOMAIN
+
     PIOMMU_DMA_DOMAIN typedef ptr _IOMMU_DMA_DOMAIN
     
     DOMAIN_CONFIGURATION_ARCH typedef SDWORD
-    DomainConfigurationArm64 = 0
-    DomainConfigurationInvalid = 1
+    DomainConfigurationArm64 EQU 0
+    DomainConfigurationInvalid EQU 1
     
     PDOMAIN_CONFIGURATION_ARCH typedef ptr DOMAIN_CONFIGURATION_ARCH
     
     DOMAIN_CONFIGURATION_ARM64 struct
-      Ttbr0 PHYSICAL_ADDRESS ?
-      Ttbr1 PHYSICAL_ADDRESS ?
+      Ttbr0 PHYSICAL_ADDRESS <>
+      Ttbr1 PHYSICAL_ADDRESS <>
       Mair0 DWORD ?
       Mair1 DWORD ?
       InputSize0 BYTE ?
@@ -11585,8 +8335,8 @@ ifndef _WDMDDK_
     PDOMAIN_CONFIGURATION typedef ptr DOMAIN_CONFIGURATION
     
     FAULT_INFORMATION_ARCH typedef SDWORD
-    FaultInformationInvalid = 0
-    FaultInformationArm64 = 1
+    FaultInformationInvalid EQU 0
+    FaultInformationArm64 EQU 1
     
     PFAULT_INFORMATION_ARCH typedef ptr FAULT_INFORMATION_ARCH
     
@@ -11608,7 +8358,6 @@ ifndef _WDMDDK_
       TranslationFault DWORD ?
     FAULT_INFORMATION_ARM64 ends
 
-    ;}
     FAULT_INFORMATION struct
       Type_ FAULT_INFORMATION_ARCH ?
       union
@@ -11669,82 +8418,20 @@ ifndef _WDMDDK_
     DMA_IOMMU_INTERFACE ends
 
     PDMA_IOMMU_INTERFACE typedef ptr DMA_IOMMU_INTERFACE
-    
-  endif
-  PoSetHiberRange proto fastcall :PVOID, :DWORD, :PVOID, :ULONG_PTR, :DWORD
+
+
   PO_MEM_PRESERVE equ 00000001h
   PO_MEM_CLONE equ 00000002h
   PO_MEM_CL_OR_NCHK equ 00000004h
   PO_MEM_DISCARD equ 00008000h
   PO_MEM_PAGE_ADDRESS equ 00004000h
   PO_MEM_BOOT_PHASE equ 00010000h
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoSetSystemState proto fastcall :EXECUTION_STATE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoRegisterSystemState proto fastcall :PVOID, :EXECUTION_STATE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoCreatePowerRequest proto fastcall :ptr PVOID, :PDEVICE_OBJECT, :PCOUNTED_REASON_CONTEXT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoSetPowerRequest proto fastcall :PVOID, :POWER_REQUEST_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoClearPowerRequest proto fastcall :PVOID, :POWER_REQUEST_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoDeletePowerRequest proto fastcall :PVOID
-  endif
+
+
   REQUEST_POWER_COMPLETE typedef proto stdcall :PDEVICE_OBJECT,:BYTE,:POWER_STATE,:PVOID,:PIO_STATUS_BLOCK
   PREQUEST_POWER_COMPLETE typedef ptr REQUEST_POWER_COMPLETE
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoRequestPowerIrp proto fastcall :PDEVICE_OBJECT, :BYTE, :POWER_STATE, :PREQUEST_POWER_COMPLETE, :PVOID, :ptr PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    PoSetSystemWake proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    PoGetSystemWake proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoUnregisterSystemState proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoSetPowerState proto fastcall :PDEVICE_OBJECT, :POWER_STATE_TYPE, :POWER_STATE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoCallDriver proto fastcall :PDEVICE_OBJECT, :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoStartNextPowerIrp proto fastcall :PIRP
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    PoRegisterDeviceForIdleDetection proto fastcall :PDEVICE_OBJECT, :DWORD, :DWORD, :DEVICE_POWER_STATE
-  endif
-  PoSetDeviceBusy macro IdlePointer
-   exitm <* IdlePointer = 0 >
-  endm
-  if (NTDDI_VERSION ge NTDDI_WIN6SP1)
-    PoSetDeviceBusyEx proto fastcall :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoStartDeviceBusy proto fastcall :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoEndDeviceBusy proto fastcall :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PoQueryWatchdogTime proto fastcall :PDEVICE_OBJECT, :PULONG
-  endif
-  POWER_SETTING_CALLBACK typedef proto stdcall :LPCGUID,:PVOID,:DWORD,:PVOID
-  PPOWER_SETTING_CALLBACK typedef ptr POWER_SETTING_CALLBACK
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    PoRegisterPowerSettingCallback proto fastcall :PDEVICE_OBJECT, :LPCGUID, :PPOWER_SETTING_CALLBACK, :PVOID, :ptr PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    PoUnregisterPowerSettingCallback proto fastcall :PVOID
-  endif
+
+
   PO_CB_SYSTEM_POWER_POLICY equ 0
   PO_CB_AC_STATUS equ 1
   PO_CB_BUTTON_COLLISION equ 2
@@ -11754,21 +8441,8 @@ ifndef _WDMDDK_
   PO_FX_VERSION_V1 equ 00000001h
   PO_FX_VERSION_V2 equ 00000002h
   PO_FX_VERSION equ <PO_FX_VERSION_V1>
-  DECLARE_HANDLE POHANDLE 
-  PO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK typedef proto stdcall :PVOID,:DWORD
-  PPO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK typedef ptr PO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK
-  PO_FX_COMPONENT_IDLE_CONDITION_CALLBACK typedef proto stdcall :PVOID,:DWORD
-  PPO_FX_COMPONENT_IDLE_CONDITION_CALLBACK typedef ptr PO_FX_COMPONENT_IDLE_CONDITION_CALLBACK
-  PO_FX_COMPONENT_IDLE_STATE_CALLBACK typedef proto stdcall :PVOID,:DWORD,:DWORD
-  PPO_FX_COMPONENT_IDLE_STATE_CALLBACK typedef ptr PO_FX_COMPONENT_IDLE_STATE_CALLBACK
-  PO_FX_DEVICE_POWER_REQUIRED_CALLBACK typedef proto stdcall :PVOID
-  PPO_FX_DEVICE_POWER_REQUIRED_CALLBACK typedef ptr PO_FX_DEVICE_POWER_REQUIRED_CALLBACK
-  PO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK typedef proto stdcall :PVOID
-  PPO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK typedef ptr PO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK
-  PO_FX_POWER_CONTROL_CALLBACK typedef proto stdcall :PVOID,:LPCGUID,:PVOID,:SIZE_T,:PVOID,:SIZE_T,:PSIZE_T
-  PPO_FX_POWER_CONTROL_CALLBACK typedef ptr PO_FX_POWER_CONTROL_CALLBACK
-  PO_FX_COMPONENT_CRITICAL_TRANSITION_CALLBACK typedef proto stdcall :PVOID,:DWORD,:BOOLEAN
-  PPO_FX_COMPONENT_CRITICAL_TRANSITION_CALLBACK typedef ptr PO_FX_COMPONENT_CRITICAL_TRANSITION_CALLBACK
+
+
   PO_FX_COMPONENT_IDLE_STATE struct
     TransitionLatency QWORD ?
     ResidencyRequirement QWORD ?
@@ -11789,12 +8463,12 @@ ifndef _WDMDDK_
   PO_FX_DEVICE_V1 struct
     Version DWORD ?
     ComponentCount DWORD ?
-    ComponentActiveConditionCallback PPO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK ?
-    ComponentIdleConditionCallback PPO_FX_COMPONENT_IDLE_CONDITION_CALLBACK ?
-    ComponentIdleStateCallback PPO_FX_COMPONENT_IDLE_STATE_CALLBACK ?
-    DevicePowerRequiredCallback PPO_FX_DEVICE_POWER_REQUIRED_CALLBACK ?
-    DevicePowerNotRequiredCallback PPO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK ?
-    PowerControlCallback PPO_FX_POWER_CONTROL_CALLBACK ?
+    ComponentActiveConditionCallback QWORD ? ; PPO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK ?
+    ComponentIdleConditionCallback QWORD ? ; PPO_FX_COMPONENT_IDLE_CONDITION_CALLBACK ?
+    ComponentIdleStateCallback QWORD ? ; PPO_FX_COMPONENT_IDLE_STATE_CALLBACK ?
+    DevicePowerRequiredCallback QWORD ? ; PPO_FX_DEVICE_POWER_REQUIRED_CALLBACK ?
+    DevicePowerNotRequiredCallback QWORD ? ; PPO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK ?
+    PowerControlCallback QWORD ? ; PPO_FX_POWER_CONTROL_CALLBACK ?
     DeviceContext PVOID ?
     Components PO_FX_COMPONENT_V1 ANYSIZE_ARRAY dup (<>)
   PO_FX_DEVICE_V1 ends
@@ -11818,12 +8492,12 @@ ifndef _WDMDDK_
   PO_FX_DEVICE_V2 struct
     Version DWORD ?
     Flags QWORD ?
-    ComponentActiveConditionCallback PPO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK ?
-    ComponentIdleConditionCallback PPO_FX_COMPONENT_IDLE_CONDITION_CALLBACK ?
-    ComponentIdleStateCallback PPO_FX_COMPONENT_IDLE_STATE_CALLBACK ?
-    DevicePowerRequiredCallback PPO_FX_DEVICE_POWER_REQUIRED_CALLBACK ?
-    DevicePowerNotRequiredCallback PPO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK ?
-    PowerControlCallback PPO_FX_POWER_CONTROL_CALLBACK ?
+    ComponentActiveConditionCallback QWORD ? ; PPO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK ?
+    ComponentIdleConditionCallback QWORD ? ; PPO_FX_COMPONENT_IDLE_CONDITION_CALLBACK ?
+    ComponentIdleStateCallback QWORD ? ; PPO_FX_COMPONENT_IDLE_STATE_CALLBACK ?
+    DevicePowerRequiredCallback QWORD ? ; PPO_FX_DEVICE_POWER_REQUIRED_CALLBACK ?
+    DevicePowerNotRequiredCallback QWORD ? ; PPO_FX_DEVICE_POWER_NOT_REQUIRED_CALLBACK ?
+    PowerControlCallback QWORD ? ; PPO_FX_POWER_CONTROL_CALLBACK ?
     DeviceContext PVOID ?
     ComponentCount DWORD ?
     Components PO_FX_COMPONENT_V2 ANYSIZE_ARRAY dup (<>)
@@ -11845,17 +8519,17 @@ ifndef _WDMDDK_
     .err <PO_FX_VERSION undefined !>
   endif
   PO_FX_PERF_STATE_UNIT typedef SDWORD
-  PoFxPerfStateUnitOther = 0
-  PoFxPerfStateUnitFrequency = 1
-  PoFxPerfStateUnitBandwidth = 2
-  PoFxPerfStateUnitMaximum = 3
+  PoFxPerfStateUnitOther EQU 0
+  PoFxPerfStateUnitFrequency EQU 1
+  PoFxPerfStateUnitBandwidth EQU 2
+  PoFxPerfStateUnitMaximum EQU 3
   
   PPO_FX_PERF_STATE_UNIT typedef ptr PO_FX_PERF_STATE_UNIT
   
   PO_FX_PERF_STATE_TYPE typedef SDWORD
-  PoFxPerfStateTypeDiscrete = 0
-  PoFxPerfStateTypeRange = 1
-  PoFxPerfStateTypeMaximum = 2
+  PoFxPerfStateTypeDiscrete EQU 0
+  PoFxPerfStateTypeRange EQU 1
+  PoFxPerfStateTypeMaximum EQU 2
   
   PPO_FX_PERF_STATE_TYPE typedef ptr PO_FX_PERF_STATE_TYPE
   
@@ -11909,163 +8583,23 @@ ifndef _WDMDDK_
   PO_FX_FLAG_PERF_PEP_OPTIONAL equ 01h
   PO_FX_FLAG_PERF_QUERY_ON_F0 equ 02h
   PO_FX_FLAG_PERF_QUERY_ON_ALL_IDLE_STATES equ 04h
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxRegisterDevice proto fastcall :PDEVICE_OBJECT, :PPO_FX_DEVICE, :ptr POHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxStartDevicePowerManagement proto fastcall :POHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxUnregisterDevice proto fastcall :POHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    PoFxRegisterCrashdumpDevice proto fastcall :POHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINBLUE)
-    PoFxPowerOnCrashdumpDevice proto fastcall :POHANDLE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxActivateComponent proto fastcall :POHANDLE, :DWORD, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxCompleteDevicePowerNotRequired proto fastcall :POHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxCompleteIdleCondition proto fastcall :POHANDLE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxCompleteIdleState proto fastcall :POHANDLE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxIdleComponent proto fastcall :POHANDLE, :DWORD, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxSetComponentLatency proto fastcall :POHANDLE, :DWORD, :QWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxSetComponentResidency proto fastcall :POHANDLE, :DWORD, :QWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxSetComponentWake proto fastcall :POHANDLE, :DWORD, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxSetDeviceIdleTimeout proto fastcall :POHANDLE, :QWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxReportDevicePoweredOn proto fastcall :POHANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxPowerControl proto fastcall :POHANDLE, :LPCGUID, :PVOID, :SIZE_T, :PVOID, :SIZE_T, :PSIZE_T
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    PoFxNotifySurprisePowerOn proto fastcall :PDEVICE_OBJECT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    PO_FX_COMPONENT_PERF_STATE_CALLBACK typedef proto stdcall :PVOID,:DWORD,:BOOLEAN,:PVOID
-    PPO_FX_COMPONENT_PERF_STATE_CALLBACK typedef ptr PO_FX_COMPONENT_PERF_STATE_CALLBACK
-    PoFxRegisterComponentPerfStates proto fastcall :POHANDLE, :DWORD, :QWORD, :PPO_FX_COMPONENT_PERF_STATE_CALLBACK, :PPO_FX_COMPONENT_PERF_INFO, :ptr PPO_FX_COMPONENT_PERF_INFO
-    PoFxIssueComponentPerfStateChange proto fastcall :POHANDLE, :DWORD, :DWORD, :PPO_FX_PERF_STATE_CHANGE, :PVOID
-    PoFxIssueComponentPerfStateChangeMultiple proto fastcall :POHANDLE, :DWORD, :DWORD, :DWORD, :ptr PO_FX_PERF_STATE_CHANGE, :PVOID
-    PoFxQueryCurrentComponentPerfState proto fastcall :POHANDLE, :DWORD, :DWORD, :DWORD, :PULONGLONG
-    PoFxSetTargetDripsDevicePowerState proto fastcall :POHANDLE, :DEVICE_POWER_STATE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    PoCreateThermalRequest proto fastcall :ptr PVOID, :PDEVICE_OBJECT, :PDEVICE_OBJECT, :PCOUNTED_REASON_CONTEXT, :DWORD
-  endif
+
+
+
   PO_THERMAL_REQUEST_TYPE typedef SDWORD
-  PoThermalRequestPassive = 0
-  PoThermalRequestActive = 1
+  PoThermalRequestPassive EQU 0
+  PoThermalRequestActive EQU 1
   
   PPO_THERMAL_REQUEST_TYPE typedef ptr PO_THERMAL_REQUEST_TYPE
-  
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    PoGetThermalRequestSupport proto fastcall :PVOID, :PO_THERMAL_REQUEST_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    PoSetThermalPassiveCooling proto fastcall :PVOID, :BYTE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    PoSetThermalActiveCooling proto fastcall :PVOID, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WINTHRESHOLD)
-    PoDeleteThermalRequest proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS2)
-    PO_FX_DRIPS_WATCHDOG_CALLBACK typedef proto stdcall :PVOID,:PDEVICE_OBJECT,:DWORD
-    PPO_FX_DRIPS_WATCHDOG_CALLBACK typedef ptr PO_FX_DRIPS_WATCHDOG_CALLBACK
-    PoFxRegisterDripsWatchdogCallback proto fastcall :POHANDLE, :PPO_FX_DRIPS_WATCHDOG_CALLBACK, :BOOLEAN, :PDRIVER_OBJECT
-  endif
+
   OBJECT_HANDLE_INFORMATION struct
     HandleAttributes DWORD ?
     GrantedAccess ACCESS_MASK ?
   OBJECT_HANDLE_INFORMATION ends
 
   POBJECT_HANDLE_INFORMATION typedef ptr OBJECT_HANDLE_INFORMATION
-  
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ObReferenceObjectByHandle proto fastcall :HANDLE, :ACCESS_MASK, :POBJECT_TYPE, :KPROCESSOR_MODE, :ptr PVOID, :POBJECT_HANDLE_INFORMATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObReferenceObjectByHandleWithTag proto fastcall :HANDLE, :ACCESS_MASK, :POBJECT_TYPE, :KPROCESSOR_MODE, :DWORD, :ptr PVOID, :POBJECT_HANDLE_INFORMATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN8)
-    ObReferenceObjectSafe proto fastcall :PVOID
-    ObReferenceObjectSafeWithTag proto fastcall :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObCloseHandle proto fastcall :HANDLE, :KPROCESSOR_MODE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObDereferenceObject macro a
-     exitm <ObfDereferenceObject ( a ) >
-    endm
-    ObReferenceObject macro Object
-     exitm <ObfReferenceObject ( Object ) >
-    endm
-    ObDereferenceObjectWithTag macro a,t
-     exitm <ObfDereferenceObjectWithTag ( a , t ) >
-    endm
-    ObReferenceObjectWithTag macro Object,Tag
-     exitm <ObfReferenceObjectWithTag ( Object , Tag ) >
-    endm
-  else
-    ObDereferenceObject macro a
-     exitm <ObfDereferenceObject ( a ) >
-    endm
-    ObReferenceObject macro Object
-     exitm <ObfReferenceObject ( Object ) >
-    endm
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ObfReferenceObject proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObfReferenceObjectWithTag proto fastcall :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ObReferenceObjectByPointer proto fastcall :PVOID, :ACCESS_MASK, :POBJECT_TYPE, :KPROCESSOR_MODE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObReferenceObjectByPointerWithTag proto fastcall :PVOID, :ACCESS_MASK, :POBJECT_TYPE, :KPROCESSOR_MODE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ObfDereferenceObject proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObfDereferenceObjectWithTag proto fastcall :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ObDereferenceObjectDeferDelete proto fastcall :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    ObDereferenceObjectDeferDeleteWithTag proto fastcall :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ObGetObjectSecurity proto fastcall :PVOID, :ptr PSECURITY_DESCRIPTOR, :PBOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    ObReleaseObjectSecurity proto fastcall :PSECURITY_DESCRIPTOR, :BOOLEAN
-  endif
+
+
   OB_FLT_REGISTRATION_VERSION_0100 equ 0100h
   OB_FLT_REGISTRATION_VERSION equ <OB_FLT_REGISTRATION_VERSION_0100>
   OB_OPERATION typedef DWORD
@@ -12149,7 +8683,7 @@ ifndef _WDMDDK_
   POB_POST_OPERATION_INFORMATION typedef ptr OB_POST_OPERATION_INFORMATION
   
   OB_PREOP_CALLBACK_STATUS typedef SDWORD
-  OB_PREOP_SUCCESS = 0
+  OB_PREOP_SUCCESS EQU 0
   
   POB_PREOP_CALLBACK_STATUS typedef ptr OB_PREOP_CALLBACK_STATUS
   
@@ -12176,11 +8710,11 @@ ifndef _WDMDDK_
 
   POB_CALLBACK_REGISTRATION typedef ptr OB_CALLBACK_REGISTRATION
   
-  if (NTDDI_VERSION ge NTDDI_VISTASP1)
+
     ObRegisterCallbacks proto fastcall :POB_CALLBACK_REGISTRATION, :ptr PVOID
     ObUnRegisterCallbacks proto fastcall :PVOID
     ObGetFilterVersion proto fastcall
-  endif
+
   ifndef _PCI_X_
     _PCI_X_ equ <>
     PCI_SLOT_NUMBER struct
@@ -12272,23 +8806,14 @@ ifndef _WDMDDK_
 
     PPCI_COMMON_HEADER typedef ptr PCI_COMMON_HEADER
     
-    ifdef __cplusplus
-      PCI_COMMON_CONFIG struct
-         PCI_COMMON_HEADER <>
-        DeviceSpecific BYTE 192 dup (?)
-      PCI_COMMON_CONFIG ends
+    IFNDEF PCI_COMMON_CONFIG
+    PCI_COMMON_CONFIG STRUCT
+      DeviceSpecific    UCHAR 192 DUP (?)
+      base_class PCI_COMMON_HEADER <>
+    PCI_COMMON_CONFIG ENDS
+    ENDIF
+    PPCI_COMMON_CONFIG typedef ptr PCI_COMMON_CONFIG
 
-      PPCI_COMMON_CONFIG typedef ptr PCI_COMMON_CONFIG
-      
-    else
-      PCI_COMMON_CONFIG struct
-        DUMMYSTRUCTNAME PCI_COMMON_HEADER <>
-        DeviceSpecific BYTE 192 dup (?)
-      PCI_COMMON_CONFIG ends
-
-      PPCI_COMMON_CONFIG typedef ptr PCI_COMMON_CONFIG
-      
-    endif
     PCI_COMMON_HDR_LENGTH equ <( UFIELD_OFFSET ( PCI_COMMON_CONFIG , DeviceSpecific ) )>
     PCI_EXTENDED_CONFIG_LENGTH equ 1000h
     PCI_MAX_DEVICES equ 32
@@ -12356,12 +8881,12 @@ ifndef _WDMDDK_
 
     PPCI_CAPABILITIES_HEADER typedef ptr PCI_CAPABILITIES_HEADER
     
-    PCI_PMC struct
-      PCI_PMC_??35 record Version_??35:3, PMEClock_??35:1, Rsvd1_??35:1, DeviceSpecificInitialization_??35:1, Rsvd2_??35:2, struct Support
-        Support_??35 record Rsvd2_??35:1, D1_??35:1, D2_??35:1, PMED0_??35:1, PMED1_??35:1, PMED2_??35:1, PMED3Hot_??35:1, PMED3Cold_??35:1
-        Support_??35 <>
-      ends
-    PCI_PMC ends
+    PCI_PMC STRUCT
+        Rsvd1 UCHAR ?
+        struct PM_SUPPORT
+            Rsvd2   UCHAR  ?
+        ends
+    PCI_PMC ENDS
 
     PPCI_PMC typedef ptr PCI_PMC
     
@@ -12402,7 +8927,7 @@ ifndef _WDMDDK_
       Header PCI_CAPABILITIES_HEADER <>
       union Command
         struct bits
-          bits_??38 record DataParityErrorRecoveryEnable_??38:1, EnableRelaxedOrdering_??38:1, MaxMemoryReadByteCount_??38:2, MaxOutstandingSplitTransactions_??38:3, Reserved_??38:9
+          bits_??38 record DataParityErrorRecoveryEnable_??38:1, EnableRelaxedOrdering_??38:1, MaxMemoryReadByteCount_??38:2, MaxOutstandingSplitTransactions_??38:3, Reserved_??138:9
           bits_??38 <>
         ends
         AsUSHORT WORD ?
@@ -12545,7 +9070,7 @@ ifndef _WDMDDK_
     
     VIRTUAL_RESOURCE_CAPABILITY union
       struct
-        VIRTUAL_RESOURCE_CAPABILITY_??48 record PortArbitrationCapability_??48:8, RsvdP1_??48:6, Undefined_??48:1, RejectSnoopTransactions_??48:1, MaximumTimeSlots_??48:7, RsvdP2_??48:1, PortArbitrationTableOffset_??48:8
+        VIRTUAL_RESOURCE_CAPABILITY_??48 record PortArbitrationCapability_??48:8, RsvdP1_??48:6, Undefined_??148:1, RejectSnoopTransactions_??48:1, MaximumTimeSlots_??48:7, RsvdP2_??48:1, PortArbitrationTableOffset_??48:8
         VIRTUAL_RESOURCE_CAPABILITY_??48 <>
       ends
       AsULONG DWORD ?
@@ -12617,7 +9142,7 @@ ifndef _WDMDDK_
     
     PCI_EXPRESS_PASID_CAPABILITY_REGISTER union
       struct DUMMYSTRUCTNAME_28
-        DUMMYSTRUCTNAME_28_??53 record Rsvd_??53:1, ExecutePermissionSupported_??53:1, PrivilegedModeSupported_??53:1, Rsvd2_??53:5, MaxPASIDWidth_??53:5, Rsvd3_??53:3
+        DUMMYSTRUCTNAME_28_??53 record Rsvd_??153:1, ExecutePermissionSupported_??53:1, PrivilegedModeSupported_??53:1, Rsvd2_??53:5, MaxPASIDWidth_??53:5, Rsvd3_??53:3
         DUMMYSTRUCTNAME_28_??53 <>
       ends
       AsUSHORT WORD ?
@@ -12627,7 +9152,7 @@ ifndef _WDMDDK_
     
     PCI_EXPRESS_PASID_CONTROL_REGISTER union
       struct DUMMYSTRUCTNAME_29
-        DUMMYSTRUCTNAME_29_??54 record PASIDEnable_??54:1, ExecutePermissionEnable_??54:1, PrivilegedModeEnable_??54:1, Rsvd_??54:13
+        DUMMYSTRUCTNAME_29_??54 record PASIDEnable_??54:1, ExecutePermissionEnable_??54:1, PrivilegedModeEnable_??54:1, Rsvd_??154:13
         DUMMYSTRUCTNAME_29_??54 <>
       ends
       AsUSHORT WORD ?
@@ -12645,7 +9170,7 @@ ifndef _WDMDDK_
     
     PCI_EXPRESS_PRI_STATUS_REGISTER union
       struct DUMMYSTRUCTNAME_30
-        DUMMYSTRUCTNAME_30_??55 record ResponseFailure_??55:1, UnexpectedPageRequestGroupIndex_??55:1, Rsvd_??55:6, Stopped_??55:1, Rsvd2_??55:6, PrgResponsePasidRequired_??55:1
+        DUMMYSTRUCTNAME_30_??55 record ResponseFailure_??55:1, UnexpectedPageRequestGroupIndex_??55:1, Rsvd_??155:6, Stopped_??55:1, Rsvd2_??255:6, PrgResponsePasidRequired_??55:1
         DUMMYSTRUCTNAME_30_??55 <>
       ends
       AsUSHORT WORD ?
@@ -12655,7 +9180,7 @@ ifndef _WDMDDK_
     
     PCI_EXPRESS_PRI_CONTROL_REGISTER union
       struct DUMMYSTRUCTNAME_31
-        DUMMYSTRUCTNAME_31_??56 record Enable_??56:1, Reset_??56:1, Rsvd_??56:14
+        DUMMYSTRUCTNAME_31_??56 record Enable_??56:1, Reset_??56:1, Rsvd_??156:14
         DUMMYSTRUCTNAME_31_??56 <>
       ends
       AsUSHORT WORD ?
@@ -12861,7 +9386,7 @@ ifndef _WDMDDK_
     
     PCI_EXPRESS_ACS_CAPABILITY_REGISTER union
       struct DUMMYSTRUCTNAME_45
-        DUMMYSTRUCTNAME_45_??70 record SourceValidation_??70:1, TranslationBlocking_??70:1, RequestRedirect_??70:1, CompletionRedirect_??70:1, UpstreamForwarding_??70:1, EgressControl_??70:1, DirectTranslation_??70:1, Reserved_??70:1, EgressControlVectorSize_??70:8
+        DUMMYSTRUCTNAME_45_??70 record SourceValidation_??70:1, TranslationBlocking_??70:1, RequestRedirect_??70:1, CompletionRedirect_??70:1, UpstreamForwarding_??70:1, EgressControl_??70:1, DirectTranslation_??70:1, Reserved_??170:1, EgressControlVectorSize_??70:8
         DUMMYSTRUCTNAME_45_??70 <>
       ends
       AsUSHORT WORD ?
@@ -12871,7 +9396,7 @@ ifndef _WDMDDK_
     
     PCI_EXPRESS_ACS_CONTROL union
       struct DUMMYSTRUCTNAME_46
-        DUMMYSTRUCTNAME_46_??71 record SourceValidation_??71:1, TranslationBlocking_??71:1, RequestRedirect_??71:1, CompletionRedirect_??71:1, UpstreamForwarding_??71:1, EgressControl_??71:1, DirectTranslation_??71:1, Reserved_??71:9
+        DUMMYSTRUCTNAME_46_??71 record SourceValidation_??71:1, TranslationBlocking_??71:1, RequestRedirect_??71:1, CompletionRedirect_??71:1, UpstreamForwarding_??71:1, EgressControl_??71:1, DirectTranslation_??71:1, Reserved_??171:9
         DUMMYSTRUCTNAME_46_??71 <>
       ends
       AsUSHORT WORD ?
@@ -13087,10 +9612,7 @@ ifndef _WDMDDK_
   PCI_DEVICE_PRESENCE_PARAMETERS ends
 
   PPCI_DEVICE_PRESENCE_PARAMETERS typedef ptr PCI_DEVICE_PRESENCE_PARAMETERS
-  
-  PCI_IS_DEVICE_PRESENT proto fastcall :WORD, :WORD, :BYTE, :WORD, :WORD, :DWORD
-  PPCI_IS_DEVICE_PRESENT typedef ptr PCI_IS_DEVICE_PRESENT
-  PCI_IS_DEVICE_PRESENT_EX proto fastcall :PVOID, :PPCI_DEVICE_PRESENCE_PARAMETERS
+
   PPCI_IS_DEVICE_PRESENT_EX typedef ptr PCI_IS_DEVICE_PRESENT_EX
   PCI_DEVICE_PRESENT_INTERFACE struct
     Size_ WORD ?
@@ -13098,25 +9620,22 @@ ifndef _WDMDDK_
     Context PVOID ?
     InterfaceReference PINTERFACE_REFERENCE ?
     InterfaceDereference PINTERFACE_DEREFERENCE ?
-    IsDevicePresent PPCI_IS_DEVICE_PRESENT ?
-    IsDevicePresentEx PPCI_IS_DEVICE_PRESENT_EX ?
+    IsDevicePresent QWORD ?;PPCI_IS_DEVICE_PRESENT ?
+    IsDevicePresentEx QWORD ?;PPCI_IS_DEVICE_PRESENT_EX ?
   PCI_DEVICE_PRESENT_INTERFACE ends
 
   PPCI_DEVICE_PRESENT_INTERFACE typedef ptr PCI_DEVICE_PRESENT_INTERFACE
   
   PCI_EXPRESS_LINK_QUIESCENT_INTERFACE_VERSION equ 1
-  PCI_EXPRESS_ENTER_LINK_QUIESCENT_MODE proto fastcall :PVOID
-  PPCI_EXPRESS_ENTER_LINK_QUIESCENT_MODE typedef ptr PCI_EXPRESS_ENTER_LINK_QUIESCENT_MODE
-  PCI_EXPRESS_EXIT_LINK_QUIESCENT_MODE proto fastcall :PVOID
-  PPCI_EXPRESS_EXIT_LINK_QUIESCENT_MODE typedef ptr PCI_EXPRESS_EXIT_LINK_QUIESCENT_MODE
+
   PCI_EXPRESS_LINK_QUIESCENT_INTERFACE struct
     Size_ WORD ?
     Version WORD ?
     Context PVOID ?
     InterfaceReference PINTERFACE_REFERENCE ?
     InterfaceDereference PINTERFACE_DEREFERENCE ?
-    PciExpressEnterLinkQuiescentMode PPCI_EXPRESS_ENTER_LINK_QUIESCENT_MODE ?
-    PciExpressExitLinkQuiescentMode PPCI_EXPRESS_EXIT_LINK_QUIESCENT_MODE ?
+    PciExpressEnterLinkQuiescentMode QWORD ?;PPCI_EXPRESS_ENTER_LINK_QUIESCENT_MODE ?
+    PciExpressExitLinkQuiescentMode QWORD ?;PPCI_EXPRESS_EXIT_LINK_QUIESCENT_MODE ?
   PCI_EXPRESS_LINK_QUIESCENT_INTERFACE ends
 
   PPCI_EXPRESS_LINK_QUIESCENT_INTERFACE typedef ptr PCI_EXPRESS_LINK_QUIESCENT_INTERFACE
@@ -13139,339 +9658,26 @@ ifndef _WDMDDK_
   PPCI_EXPRESS_ROOT_PORT_INTERFACE typedef ptr PCI_EXPRESS_ROOT_PORT_INTERFACE
   
   PCI_MSIX_TABLE_CONFIG_INTERFACE_VERSION equ 1
-  PCI_MSIX_SET_ENTRY proto fastcall :PVOID, :DWORD, :DWORD
-  PPCI_MSIX_SET_ENTRY typedef ptr PCI_MSIX_SET_ENTRY
-  PCI_MSIX_MASKUNMASK_ENTRY proto fastcall :PVOID, :DWORD
-  PPCI_MSIX_MASKUNMASK_ENTRY typedef ptr PCI_MSIX_MASKUNMASK_ENTRY
-  PCI_MSIX_GET_ENTRY proto fastcall :PVOID, :DWORD, :PULONG, :PBOOLEAN
-  PPCI_MSIX_GET_ENTRY typedef ptr PCI_MSIX_GET_ENTRY
-  PCI_MSIX_GET_TABLE_SIZE proto fastcall :PVOID, :PULONG
-  PPCI_MSIX_GET_TABLE_SIZE typedef ptr PCI_MSIX_GET_TABLE_SIZE
+
   PCI_MSIX_TABLE_CONFIG_INTERFACE struct
     Size_ WORD ?
     Version WORD ?
     Context PVOID ?
     InterfaceReference PINTERFACE_REFERENCE ?
     InterfaceDereference PINTERFACE_DEREFERENCE ?
-    SetTableEntry PPCI_MSIX_SET_ENTRY ?
-    MaskTableEntry PPCI_MSIX_MASKUNMASK_ENTRY ?
-    UnmaskTableEntry PPCI_MSIX_MASKUNMASK_ENTRY ?
-    GetTableEntry PPCI_MSIX_GET_ENTRY ?
-    GetTableSize PPCI_MSIX_GET_TABLE_SIZE ?
+    SetTableEntry QWORD ?;PPCI_MSIX_SET_ENTRY ?
+    MaskTableEntry QWORD ?;PPCI_MSIX_MASKUNMASK_ENTRY ?
+    UnmaskTableEntry QWORD ?;PPCI_MSIX_MASKUNMASK_ENTRY ?
+    GetTableEntry QWORD ?;PPCI_MSIX_GET_ENTRY ?
+    GetTableSize QWORD ?;PPCI_MSIX_GET_TABLE_SIZE ?
   PCI_MSIX_TABLE_CONFIG_INTERFACE ends
 
   PPCI_MSIX_TABLE_CONFIG_INTERFACE typedef ptr PCI_MSIX_TABLE_CONFIG_INTERFACE
   
   PCI_MSIX_TABLE_CONFIG_MINIMUM_SIZE equ <RTL_SIZEOF_THROUGH_FIELD ( PCI_MSIX_TABLE_CONFIG_INTERFACE , UnmaskTableEntry )>
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwCreateFile typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PIO_STATUS_BLOCK, :PLARGE_INTEGER, :DWORD, :DWORD, :DWORD, :DWORD, :PVOID, :DWORD
-    externdef stdcall _imp__ZwCreateFile@44: ptr proto_ZwCreateFile
-    ZwCreateFile equ <_imp__ZwCreateFile@44>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwOpenFile typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PIO_STATUS_BLOCK, :DWORD, :DWORD
-    externdef stdcall _imp__ZwOpenFile@24: ptr proto_ZwOpenFile
-    ZwOpenFile equ <_imp__ZwOpenFile@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwLoadDriver typedef proto stdcall :PUNICODE_STRING
-    externdef stdcall _imp__ZwLoadDriver@4: ptr proto_ZwLoadDriver
-    ZwLoadDriver equ <_imp__ZwLoadDriver@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwUnloadDriver typedef proto stdcall :PUNICODE_STRING
-    externdef stdcall _imp__ZwUnloadDriver@4: ptr proto_ZwUnloadDriver
-    ZwUnloadDriver equ <_imp__ZwUnloadDriver@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwQueryInformationFile typedef proto stdcall :HANDLE, :PIO_STATUS_BLOCK, :PVOID, :DWORD, :FILE_INFORMATION_CLASS
-    externdef stdcall _imp__ZwQueryInformationFile@20: ptr proto_ZwQueryInformationFile
-    ZwQueryInformationFile equ <_imp__ZwQueryInformationFile@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwSetInformationFile typedef proto stdcall :HANDLE, :PIO_STATUS_BLOCK, :PVOID, :DWORD, :FILE_INFORMATION_CLASS
-    externdef stdcall _imp__ZwSetInformationFile@20: ptr proto_ZwSetInformationFile
-    ZwSetInformationFile equ <_imp__ZwSetInformationFile@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwReadFile typedef proto stdcall :HANDLE, :HANDLE, :PIO_APC_ROUTINE, :PVOID, :PIO_STATUS_BLOCK, :PVOID, :DWORD, :PLARGE_INTEGER, :PULONG
-    externdef stdcall _imp__ZwReadFile@36: ptr proto_ZwReadFile
-    ZwReadFile equ <_imp__ZwReadFile@36>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwWriteFile typedef proto stdcall :HANDLE, :HANDLE, :PIO_APC_ROUTINE, :PVOID, :PIO_STATUS_BLOCK, :PVOID, :DWORD, :PLARGE_INTEGER, :PULONG
-    externdef stdcall _imp__ZwWriteFile@36: ptr proto_ZwWriteFile
-    ZwWriteFile equ <_imp__ZwWriteFile@36>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwClose typedef proto stdcall :HANDLE
-    externdef stdcall _imp__ZwClose@4: ptr proto_ZwClose
-    ZwClose equ <_imp__ZwClose@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwCreateDirectoryObject typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES
-    externdef stdcall _imp__ZwCreateDirectoryObject@12: ptr proto_ZwCreateDirectoryObject
-    ZwCreateDirectoryObject equ <_imp__ZwCreateDirectoryObject@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwMakeTemporaryObject typedef proto stdcall :HANDLE
-    externdef stdcall _imp__ZwMakeTemporaryObject@4: ptr proto_ZwMakeTemporaryObject
-    ZwMakeTemporaryObject equ <_imp__ZwMakeTemporaryObject@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwCreateSection typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PLARGE_INTEGER, :DWORD, :DWORD, :HANDLE
-    externdef stdcall _imp__ZwCreateSection@28: ptr proto_ZwCreateSection
-    ZwCreateSection equ <_imp__ZwCreateSection@28>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwOpenSection typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES
-    externdef stdcall _imp__ZwOpenSection@12: ptr proto_ZwOpenSection
-    ZwOpenSection equ <_imp__ZwOpenSection@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwMapViewOfSection typedef proto stdcall :HANDLE, :HANDLE, :ptr PVOID, :ULONG_PTR, :SIZE_T, :PLARGE_INTEGER, :PSIZE_T, :SECTION_INHERIT, :DWORD, :DWORD
-    externdef stdcall _imp__ZwMapViewOfSection@44: ptr proto_ZwMapViewOfSection
-    ZwMapViewOfSection equ <_imp__ZwMapViewOfSection@44>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwUnmapViewOfSection typedef proto stdcall :HANDLE, :PVOID
-    externdef stdcall _imp__ZwUnmapViewOfSection@8: ptr proto_ZwUnmapViewOfSection
-    ZwUnmapViewOfSection equ <_imp__ZwUnmapViewOfSection@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwCreateKey typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :DWORD, :PUNICODE_STRING, :DWORD, :PULONG
-    externdef stdcall _imp__ZwCreateKey@28: ptr proto_ZwCreateKey
-    ZwCreateKey equ <_imp__ZwCreateKey@28>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_ZwCreateKeyTransacted typedef proto fastcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :DWORD, :PUNICODE_STRING, :DWORD, :HANDLE, :PULONG
-    externdef stdcall _imp_ZwCreateKeyTransacted: ptr proto_ZwCreateKeyTransacted
-    ZwCreateKeyTransacted equ <_imp_ZwCreateKeyTransacted>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_TH2)
-    ZwCreateRegistryTransaction proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_TH2)
-    NtOpenRegistryTransaction proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_TH2)
-    ZwCommitRegistryTransaction proto stdcall :HANDLE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_TH2)
-    NtRollbackRegistryTransaction proto stdcall :HANDLE, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwOpenKey typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES
-    externdef stdcall _imp__ZwOpenKey@12: ptr proto_ZwOpenKey
-    ZwOpenKey equ <_imp__ZwOpenKey@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    proto_ZwOpenKeyEx typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :DWORD
-    externdef stdcall _imp__ZwOpenKeyEx@16: ptr proto_ZwOpenKeyEx
-    ZwOpenKeyEx equ <_imp__ZwOpenKeyEx@16>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    proto_ZwOpenKeyTransacted typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :HANDLE
-    externdef stdcall _imp__ZwOpenKeyTransacted@16: ptr proto_ZwOpenKeyTransacted
-    ZwOpenKeyTransacted equ <_imp__ZwOpenKeyTransacted@16>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    proto_ZwOpenKeyTransactedEx typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :DWORD, :HANDLE
-    externdef stdcall _imp__ZwOpenKeyTransactedEx@20: ptr proto_ZwOpenKeyTransactedEx
-    ZwOpenKeyTransactedEx equ <_imp__ZwOpenKeyTransactedEx@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwDeleteKey typedef proto stdcall :HANDLE
-    externdef stdcall _imp__ZwDeleteKey@4: ptr proto_ZwDeleteKey
-    ZwDeleteKey equ <_imp__ZwDeleteKey@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwDeleteValueKey typedef proto stdcall :HANDLE, :PUNICODE_STRING
-    externdef stdcall _imp__ZwDeleteValueKey@8: ptr proto_ZwDeleteValueKey
-    ZwDeleteValueKey equ <_imp__ZwDeleteValueKey@8>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwEnumerateKey typedef proto stdcall :HANDLE, :DWORD, :KEY_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    externdef stdcall _imp__ZwEnumerateKey@24: ptr proto_ZwEnumerateKey
-    ZwEnumerateKey equ <_imp__ZwEnumerateKey@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwEnumerateValueKey typedef proto stdcall :HANDLE, :DWORD, :KEY_VALUE_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    externdef stdcall _imp__ZwEnumerateValueKey@24: ptr proto_ZwEnumerateValueKey
-    ZwEnumerateValueKey equ <_imp__ZwEnumerateValueKey@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwFlushKey typedef proto stdcall :HANDLE
-    externdef stdcall _imp__ZwFlushKey@4: ptr proto_ZwFlushKey
-    ZwFlushKey equ <_imp__ZwFlushKey@4>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwQueryKey typedef proto stdcall :HANDLE, :KEY_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    externdef stdcall _imp__ZwQueryKey@20: ptr proto_ZwQueryKey
-    ZwQueryKey equ <_imp__ZwQueryKey@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwQueryValueKey typedef proto stdcall :HANDLE, :PUNICODE_STRING, :KEY_VALUE_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-    externdef stdcall _imp__ZwQueryValueKey@24: ptr proto_ZwQueryValueKey
-    ZwQueryValueKey equ <_imp__ZwQueryValueKey@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    proto_ZwRenameKey typedef proto stdcall :HANDLE, :PUNICODE_STRING
-    externdef stdcall _imp__ZwRenameKey@8: ptr proto_ZwRenameKey
-    ZwRenameKey equ <_imp__ZwRenameKey@8>
-    proto_ZwSaveKey typedef proto stdcall :HANDLE, :HANDLE
-    externdef stdcall _imp__ZwSaveKey@8: ptr proto_ZwSaveKey
-    ZwSaveKey equ <_imp__ZwSaveKey@8>
-    proto_ZwSaveKeyEx typedef proto stdcall :HANDLE, :HANDLE, :DWORD
-    externdef stdcall _imp__ZwSaveKeyEx@12: ptr proto_ZwSaveKeyEx
-    ZwSaveKeyEx equ <_imp__ZwSaveKeyEx@12>
-    proto_ZwRestoreKey typedef proto stdcall :HANDLE, :HANDLE, :DWORD
-    externdef stdcall _imp__ZwRestoreKey@12: ptr proto_ZwRestoreKey
-    ZwRestoreKey equ <_imp__ZwRestoreKey@12>
-    proto_ZwSetInformationKey typedef proto stdcall :HANDLE, :__drv_strictTypeMatch :KEY_SET_INFORMATION_CLASS, :PVOID, :DWORD
-    externdef stdcall _imp__ZwSetInformationKey@20: ptr proto_ZwSetInformationKey
-    ZwSetInformationKey equ <_imp__ZwSetInformationKey@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwSetValueKey typedef proto stdcall :HANDLE, :PUNICODE_STRING, :DWORD, :DWORD, :PVOID, :DWORD
-    externdef stdcall _imp__ZwSetValueKey@24: ptr proto_ZwSetValueKey
-    ZwSetValueKey equ <_imp__ZwSetValueKey@24>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwOpenSymbolicLinkObject typedef proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES
-    externdef stdcall _imp__ZwOpenSymbolicLinkObject@12: ptr proto_ZwOpenSymbolicLinkObject
-    ZwOpenSymbolicLinkObject equ <_imp__ZwOpenSymbolicLinkObject@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwQuerySymbolicLinkObject typedef proto stdcall :HANDLE, :PUNICODE_STRING, :PULONG
-    externdef stdcall _imp__ZwQuerySymbolicLinkObject@12: ptr proto_ZwQuerySymbolicLinkObject
-    ZwQuerySymbolicLinkObject equ <_imp__ZwQuerySymbolicLinkObject@12>
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCreateTransactionManager proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PUNICODE_STRING, :DWORD, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwOpenTransactionManager proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PUNICODE_STRING, :LPGUID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRollforwardTransactionManager proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRecoverTransactionManager proto stdcall :HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwQueryInformationTransactionManager proto stdcall :HANDLE, :TRANSACTIONMANAGER_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwSetInformationTransactionManager proto stdcall :HANDLE, :TRANSACTIONMANAGER_INFORMATION_CLASS, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwEnumerateTransactionObject proto stdcall :HANDLE, :KTMOBJECT_TYPE, :PKTMOBJECT_CURSOR, :DWORD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCreateTransaction proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :LPGUID, :HANDLE, :DWORD, :DWORD, :DWORD, :PLARGE_INTEGER, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwOpenTransaction proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :LPGUID, :HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwQueryInformationTransaction proto stdcall :HANDLE, :TRANSACTION_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwSetInformationTransaction proto stdcall :HANDLE, :TRANSACTION_INFORMATION_CLASS, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCommitTransaction proto stdcall :HANDLE, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRollbackTransaction proto stdcall :HANDLE, :BOOLEAN
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCreateResourceManager proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :LPGUID, :POBJECT_ATTRIBUTES, :DWORD, :PUNICODE_STRING
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwOpenResourceManager proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :LPGUID, :POBJECT_ATTRIBUTES
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRecoverResourceManager proto stdcall :HANDLE
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwGetNotificationResourceManager proto stdcall :HANDLE, :PTRANSACTION_NOTIFICATION, :DWORD, :PLARGE_INTEGER, :PULONG, :DWORD, :ULONG_PTR
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwQueryInformationResourceManager proto stdcall :HANDLE, :RESOURCEMANAGER_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwSetInformationResourceManager proto stdcall :HANDLE, :RESOURCEMANAGER_INFORMATION_CLASS, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCreateEnlistment proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :HANDLE, :POBJECT_ATTRIBUTES, :DWORD, :NOTIFICATION_MASK, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwOpenEnlistment proto stdcall :PHANDLE, :ACCESS_MASK, :HANDLE, :LPGUID, :POBJECT_ATTRIBUTES
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwQueryInformationEnlistment proto stdcall :HANDLE, :ENLISTMENT_INFORMATION_CLASS, :PVOID, :DWORD, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwSetInformationEnlistment proto stdcall :HANDLE, :ENLISTMENT_INFORMATION_CLASS, :PVOID, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRecoverEnlistment proto stdcall :HANDLE, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwPrePrepareEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwPrepareEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCommitEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRollbackEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwPrePrepareComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwPrepareComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwCommitComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwReadOnlyEnlistment proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwRollbackComplete proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA)
-    ZwSinglePhaseReject proto stdcall :HANDLE, :PLARGE_INTEGER
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03)
-    ZwOpenEvent proto stdcall :PHANDLE, :ACCESS_MASK, :POBJECT_ATTRIBUTES
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS2)
-    proto_ZwQueryInformationByName typedef proto stdcall :POBJECT_ATTRIBUTES, :PIO_STATUS_BLOCK, :PVOID, :DWORD, :FILE_INFORMATION_CLASS
-    externdef stdcall _imp__ZwQueryInformationByName@20: ptr proto_ZwQueryInformationByName
-    ZwQueryInformationByName equ <_imp__ZwQueryInformationByName@20>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN2K)
-    proto_ZwQueryFullAttributesFile typedef proto stdcall :POBJECT_ATTRIBUTES, :PFILE_NETWORK_OPEN_INFORMATION
-    externdef stdcall _imp__ZwQueryFullAttributesFile@8: ptr proto_ZwQueryFullAttributesFile
-    ZwQueryFullAttributesFile equ <_imp__ZwQueryFullAttributesFile@8>
-  endif
-  ifndef _CLFS_PUBLIC_H_
-    _CLFS_PUBLIC_H_ equ <>
-    if  not defined(CLFSUSER_API)
-      if defined(__CLFSUSER_EXPORTS__)
-        CLFSUSER_API equ <>
-      else
-        CLFSUSER_API equ <__declspec ( dllimport )>
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
+
       FILE_ATTRIBUTE_DEDICATED equ <FILE_ATTRIBUTE_TEMPORARY>
       EA_CONTAINER_NAME equ <"ContainerName",0>
       EA_CONTAINER_SIZE equ <"ContainerSize",0>
@@ -13494,86 +9700,50 @@ ifndef _WDMDDK_
       CLFS_CONTAINER_ID typedef DWORD
       PCLFS_CONTAINER_ID typedef ptr CLFS_CONTAINER_ID
       PPCLFS_CONTAINER_ID typedef ptr ptr CLFS_CONTAINER_ID
-    endif
-    ifdef __CLFS_PRIVATE_LSN__
-      include clfslsn.inc
-    else
-      if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
         CLS_LSN struct
           Internal QWORD ?
         CLS_LSN ends
 
         PCLS_LSN typedef ptr CLS_LSN
         PPCLS_LSN typedef ptr ptr CLS_LSN
-        
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLFS_LSN typedef CLS_LSN
       PCLFS_LSN typedef ptr CLFS_LSN
       PPCLFS_LSN typedef ptr ptr CLFS_LSN
-    endif
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    endif
-    ifdef __cplusplus
-      ;}
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      ifdef __cplusplus
-      else
+
+
         ClfsNullRecord equ 00h
         ClfsDataRecord equ 01h
         ClfsRestartRecord equ 02h
         ClfsClientRecord equ <( ClfsDataRecord or ClfsRestartRecord )>
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      ifdef _cplusplus
-      else
+
         CLFS_CONTAINER_STREAM_PREFIX equ <L("%BLF%:",0)>
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      ifdef _cplusplus
-      else
+
+
         CLFS_CONTAINER_RELATIVE_PREFIX equ <L("%BLF%\",0)>
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_RECORD_TYPE typedef BYTE
       PCLS_RECORD_TYPE typedef ptr BYTE
       PPCLS_RECORD_TYPE typedef ptr ptr BYTE
       CLFS_RECORD_TYPE typedef CLS_RECORD_TYPE
       PCLFS_RECORD_TYPE typedef ptr CLS_RECORD_TYPE
       PPCLFS_RECORD_TYPE typedef ptr ptr CLS_RECORD_TYPE
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLS_CONTEXT_MODE typedef SDWORD
-      ClsContextNone = 00h 
-      ClsContextUndoNext = 1
-      ClsContextPrevious = 2
-      ClsContextForward = 3
+      ClsContextNone EQU 00h 
+      ClsContextUndoNext EQU 1
+      ClsContextPrevious EQU 2
+      ClsContextForward EQU 3
       
       PCLS_CONTEXT_MODE typedef ptr CLS_CONTEXT_MODE
       PPCLS_CONTEXT_MODE typedef ptr ptr CLS_CONTEXT_MODE
       
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      CLFS_CONTEXT_MODE typedef SDWORD
-      ClfsContextNone = 00h 
-      ClfsContextUndoNext = 1
-      ClfsContextPrevious = 2
-      ClfsContextForward = 3
-      
-      PCLFS_CONTEXT_MODE typedef ptr CLFS_CONTEXT_MODE
-      PPCLFS_CONTEXT_MODE typedef ptr ptr CLFS_CONTEXT_MODE
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLFS_NODE_ID struct
         cType DWORD ?
         cbNode DWORD ?
@@ -13581,8 +9751,7 @@ ifndef _WDMDDK_
 
       PCLFS_NODE_ID typedef ptr CLFS_NODE_ID
       
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_WRITE_ENTRY struct
         Buffer PVOID ?
         ByteLength DWORD ?
@@ -13590,17 +9759,13 @@ ifndef _WDMDDK_
 
       PCLS_WRITE_ENTRY typedef ptr CLS_WRITE_ENTRY
       PPCLS_WRITE_ENTRY typedef ptr ptr CLS_WRITE_ENTRY
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLFS_WRITE_ENTRY typedef CLS_WRITE_ENTRY
       PCLFS_WRITE_ENTRY typedef ptr CLFS_WRITE_ENTRY
       PPCLFS_WRITE_ENTRY typedef ptr ptr CLFS_WRITE_ENTRY
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLFS_LOG_ID typedef GUID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_INFORMATION struct
         TotalAvailable QWORD ?
         CurrentAvailable QWORD ?
@@ -13623,14 +9788,12 @@ ifndef _WDMDDK_
 
       PCLS_INFORMATION typedef ptr CLS_INFORMATION
       PPCLS_INFORMATION typedef ptr CLS_INFORMATION
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLFS_INFORMATION typedef CLS_INFORMATION
       PCLFS_INFORMATION typedef ptr CLFS_INFORMATION
       PPCLFS_INFORMATION typedef ptr CLFS_INFORMATION
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLFS_LOG_NAME_INFORMATION struct
         NameLengthInBytes WORD ?
         Name_ WCHAR 1 dup (?)
@@ -13638,19 +9801,15 @@ ifndef _WDMDDK_
 
       PCLFS_LOG_NAME_INFORMATION typedef ptr CLFS_LOG_NAME_INFORMATION
       PPCLFS_LOG_NAME_INFORMATION typedef ptr ptr CLFS_LOG_NAME_INFORMATION
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLFS_STREAM_ID_INFORMATION struct
         StreamIdentifier BYTE ?
       CLFS_STREAM_ID_INFORMATION ends
 
       PCLFS_STREAM_ID_INFORMATION typedef ptr CLFS_STREAM_ID_INFORMATION
       PPCLFS_STREAM_ID_INFORMATION typedef ptr ptr CLFS_STREAM_ID_INFORMATION
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA) or (_WIN32_WINNT ge _WIN32_WINNT_LONGHORN)
-      ;#pragma pack ( push , 8 )
+
+
       CLFS_PHYSICAL_LSN_INFORMATION struct
         StreamIdentifier BYTE ?
         VirtualLsn CLFS_LSN <>
@@ -13658,22 +9817,16 @@ ifndef _WDMDDK_
       CLFS_PHYSICAL_LSN_INFORMATION ends
 
       PCLFS_PHYSICAL_LSN_INFORMATION typedef ptr CLFS_PHYSICAL_LSN_INFORMATION
-      
-      ;#pragma pack ( pop )
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLS_CONTAINER_STATE typedef UINT32
       PCLS_CONTAINER_STATE typedef ptr UINT32
       PPCLS_CONTAINER_STATE typedef ptr UINT32
       CLFS_CONTAINER_STATE typedef CLS_CONTAINER_STATE
       PCLFS_CONTAINER_STATE typedef ptr CLS_CONTAINER_STATE
       PPCLFS_CONTAINER_STATE typedef ptr CLS_CONTAINER_STATE
-    endif
-    ifdef __cplusplus
-      if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      endif
-    else
-      if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
         ClsContainerInitializing equ 01h
         ClsContainerInactive equ 02h
         ClsContainerActive equ 04h
@@ -13686,15 +9839,11 @@ ifndef _WDMDDK_
         ClfsContainerActivePendingDelete equ 08h
         ClfsContainerPendingArchive equ 10h
         ClfsContainerPendingArchiveAndDelete equ 20h
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      ifdef __cplusplus
-      else
+
+
         CLFS_MAX_CONTAINER_INFO equ 256
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLS_CONTAINER_INFORMATION struct
         FileAttributes DWORD ?
         CreationTime QWORD ?
@@ -13715,18 +9864,15 @@ ifndef _WDMDDK_
       CLFS_CONTAINER_INFORMATION typedef CLS_CONTAINER_INFORMATION
       PCLFS_CONTAINER_INFORMATION typedef ptr CLFS_CONTAINER_INFORMATION
       PPCLFS_CONTAINER_INFORMATION typedef ptr ptr CLFS_CONTAINER_INFORMATION
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_LOG_INFORMATION_CLASS typedef SDWORD
-      ClfsLogBasicInformation = 00h 
-      ClfsLogBasicInformationPhysical = 1
-      ClfsLogPhysicalNameInformation = 2
-      ClfsLogStreamIdentifierInformation = 3
-      if (NTDDI_VERSION ge NTDDI_VISTA) or (_WIN32_WINNT ge _WIN32_WINNT_LONGHORN)
-        ClfsLogSystemMarkingInformation = 4
-        ClfsLogPhysicalLsnInformation = 
-      endif
-      5
+      ClfsLogBasicInformation EQU 00h 
+      ClfsLogBasicInformationPhysical EQU 1
+      ClfsLogPhysicalNameInformation EQU 2
+      ClfsLogStreamIdentifierInformation EQU 3
+
+        ClfsLogSystemMarkingInformation EQU 4
+        ClfsLogPhysicalLsnInformation EQU 5
       
       PCLS_LOG_INFORMATION_CLASS typedef ptr CLS_LOG_INFORMATION_CLASS
       PPCLS_LOG_INFORMATION_CLASS typedef ptr ptr CLS_LOG_INFORMATION_CLASS
@@ -13734,26 +9880,22 @@ ifndef _WDMDDK_
       CLFS_LOG_INFORMATION_CLASS typedef CLS_LOG_INFORMATION_CLASS
       PCLFS_LOG_INFORMATION_CLASS typedef ptr CLFS_LOG_INFORMATION_CLASS
       PPCLFS_LOG_INFORMATION_CLASS typedef ptr ptr CLFS_LOG_INFORMATION_CLASS
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_IOSTATS_CLASS typedef SDWORD
-      ClsIoStatsDefault = 0000h 
-      ClsIoStatsMax = 0FFFFh 
+      ClsIoStatsDefault EQU 0000h 
+      ClsIoStatsMax EQU 0FFFFh 
       
       PCLS_IOSTATS_CLASS typedef ptr CLS_IOSTATS_CLASS
       PPCLS_IOSTATS_CLASS typedef ptr ptr CLS_IOSTATS_CLASS
       
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLFS_IOSTATS_CLASS typedef SDWORD
-      ClfsIoStatsDefault = 0000h 
-      ClfsIoStatsMax = 0FFFFh 
+      ClfsIoStatsDefault EQU 0000h 
+      ClfsIoStatsMax EQU 0FFFFh 
       
       PCLFS_IOSTATS_CLASS typedef ptr CLFS_IOSTATS_CLASS
       PPCLFS_IOSTATS_CLASS typedef ptr ptr CLFS_IOSTATS_CLASS
-      
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_IO_STATISTICS_HEADER struct
         ubMajorVersion BYTE ?
         ubMinorVersion BYTE ?
@@ -13768,8 +9910,7 @@ ifndef _WDMDDK_
       CLFS_IO_STATISTICS_HEADER typedef CLS_IO_STATISTICS_HEADER
       PCLFS_IO_STATISTICS_HEADER typedef ptr CLFS_IO_STATISTICS_HEADER
       PPCLFS_IO_STATISTICS_HEADER typedef ptr ptr CLFS_IO_STATISTICS_HEADER
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_IO_STATISTICS struct
         hdrIoStats CLS_IO_STATISTICS_HEADER <>
         cFlush QWORD ?
@@ -13784,60 +9925,45 @@ ifndef _WDMDDK_
       CLFS_IO_STATISTICS typedef CLS_IO_STATISTICS
       PCLFS_IO_STATISTICS typedef ptr CLFS_IO_STATISTICS
       PPCLFS_IO_STATISTICS typedef ptr ptr CLFS_IO_STATISTICS
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-      ifdef __cplusplus
-      else
+
         CLFS_SCAN_INIT equ 01h
         CLFS_SCAN_FORWARD equ 02h
         CLFS_SCAN_BACKWARD equ 04h
         CLFS_SCAN_CLOSE equ 08h
         CLFS_SCAN_INITIALIZED equ 10h
         CLFS_SCAN_BUFFERED equ 20h
-      endif
+
       CLFS_SCAN_MODE typedef BYTE
       PCLFS_SCAN_MODE typedef ptr BYTE
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       LOG_FILE_OBJECT typedef FILE_OBJECT
       PLOG_FILE_OBJECT typedef ptr FILE_OBJECT
       PPLOG_FILE_OBJECT typedef ptr ptr FILE_OBJECT
-      if defined(_MSC_VER)
-        if (_MSC_VER ge 1200)
-          ;#pragma warning ( push )
-          ;#pragma warning ( disable : 4324 )
-        endif
-      endif
+
       CLS_SCAN_CONTEXT struct
         cidNode CLFS_NODE_ID <>
         plfoLog PLOG_FILE_OBJECT ?
-        __declspec typedef proto stdcall :align_
+
         cIndex DWORD ?
-        __declspec typedef proto stdcall :align_
+
         cContainers DWORD ?
-        __declspec typedef proto stdcall :align_
+
         cContainersReturned DWORD ?
-        __declspec typedef proto stdcall :align_
+
         eScanMode CLFS_SCAN_MODE ?
-        __declspec typedef proto stdcall :align_
+
         pinfoContainer PCLS_CONTAINER_INFORMATION ?
       CLS_SCAN_CONTEXT ends
 
       PCLS_SCAN_CONTEXT typedef ptr CLS_SCAN_CONTEXT
       PPCLS_SCAN_CONTEXT typedef ptr ptr CLS_SCAN_CONTEXT
       
-      if defined(_MSC_VER)
-        if (_MSC_VER ge 1200)
-          ;#pragma warning ( pop )
-        endif
-      endif
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       CLFS_SCAN_CONTEXT typedef CLS_SCAN_CONTEXT
       PCLFS_SCAN_CONTEXT typedef ptr CLFS_SCAN_CONTEXT
       PPCLFS_SCAN_CONTEXT typedef ptr ptr CLFS_SCAN_CONTEXT
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLS_ARCHIVE_DESCRIPTOR struct
         coffLow QWORD ?
         coffHigh QWORD ?
@@ -13850,134 +9976,69 @@ ifndef _WDMDDK_
       CLFS_ARCHIVE_DESCRIPTOR typedef CLS_ARCHIVE_DESCRIPTOR
       PCLFS_ARCHIVE_DESCRIPTOR typedef ptr CLFS_ARCHIVE_DESCRIPTOR
       PPCLFS_ARCHIVE_DESCRIPTOR typedef ptr ptr CLFS_ARCHIVE_DESCRIPTOR
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       proto_CLFS_BLOCK_ALLOCATION typedef proto fastcall :DWORD, :PVOID
       CLFS_BLOCK_ALLOCATION typedef ptr proto_CLFS_BLOCK_ALLOCATION
       proto_CLFS_BLOCK_DEALLOCATION typedef proto fastcall :PVOID, :PVOID
       CLFS_BLOCK_DEALLOCATION typedef ptr proto_CLFS_BLOCK_DEALLOCATION
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       CLFS_LOG_ARCHIVE_MODE typedef SDWORD
-      ClfsLogArchiveEnabled = 01h 
-      ClfsLogArchiveDisabled = 02h 
+      ClfsLogArchiveEnabled EQU 01h 
+      ClfsLogArchiveDisabled EQU 02h 
       
       PCLFS_LOG_ARCHIVE_MODE typedef ptr CLFS_LOG_ARCHIVE_MODE
       
-    endif
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
       ClfsLsnEqual proto stdcall :ptr CLFS_LSN, :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnLess proto stdcall :ptr CLFS_LSN, :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnGreater proto stdcall :ptr CLFS_LSN, :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnNull proto stdcall :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnContainer proto stdcall :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnCreate proto stdcall :CLFS_CONTAINER_ID, :DWORD, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnBlockOffset proto stdcall :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnRecordSequence proto stdcall :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnInvalid proto stdcall :ptr CLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
       ClfsLsnIncrement proto stdcall :PCLFS_LSN
-    endif
-    ifdef __cplusplus
-      ;}
-    endif
-    ifdef __cplusplus
-      ifdef CLFS_OPERATORS
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          ClfsLsnIncrement proto fastcall :ptr refLsn
-          ;}
-        endif
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          return proto fastcall :ClfsLsnLess :ptr refLsn1, :PCLFS_LSN :ptr refLsn2
-          ;}
-        endif
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          return proto fastcall :ClfsLsnGreater :ptr refLsn1, :PCLFS_LSN :ptr refLsn2
-          ;}
-        endif
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          return proto fastcall :ClfsLsnEqual :ptr refLsn1, :PCLFS_LSN :ptr refLsn2
-          ;}
-        endif
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          return proto fastcall :ClfsLsnEqual :ptr refLsn1, :PCLFS_LSN :ptr refLsn2
-          ;}
-        endif
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          return proto fastcall :ClfsLsnGreater :ptr refLsn1, :PCLFS_LSN :ptr refLsn2
-          ;}
-        endif
-        if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-          ;{
-          return proto fastcall :ClfsLsnLess :ptr refLsn1, :PCLFS_LSN :ptr refLsn2
-          ;}
-        endif
-      endif
-    endif
-  endif
-  ifdef __cplusplus
-    ;extern "C"
-    ;{
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
+ 
+
     CLFS_MGMT_POLICY_TYPE typedef SDWORD
-    ClfsMgmtPolicyMaximumSize = 0h 
-    ClfsMgmtPolicyMinimumSize = 1
-    ClfsMgmtPolicyNewContainerSize = 2
-    ClfsMgmtPolicyGrowthRate = 3
-    ClfsMgmtPolicyLogTail = 4
-    ClfsMgmtPolicyAutoShrink = 5
-    ClfsMgmtPolicyAutoGrow = 6
-    ClfsMgmtPolicyNewContainerPrefix = 7
-    ClfsMgmtPolicyNewContainerSuffix = 8
-    ClfsMgmtPolicyNewContainerExtension = 9
-    ClfsMgmtPolicyInvalid = 10
+    ClfsMgmtPolicyMaximumSize EQU 0h 
+    ClfsMgmtPolicyMinimumSize EQU 1
+    ClfsMgmtPolicyNewContainerSize EQU 2
+    ClfsMgmtPolicyGrowthRate EQU 3
+    ClfsMgmtPolicyLogTail EQU 4
+    ClfsMgmtPolicyAutoShrink EQU 5
+    ClfsMgmtPolicyAutoGrow EQU 6
+    ClfsMgmtPolicyNewContainerPrefix EQU 7
+    ClfsMgmtPolicyNewContainerSuffix EQU 8
+    ClfsMgmtPolicyNewContainerExtension EQU 9
+    ClfsMgmtPolicyInvalid EQU 10
     
     PCLFS_MGMT_POLICY_TYPE typedef ptr CLFS_MGMT_POLICY_TYPE
-    
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
+
     CLFS_MGMT_NUM_POLICIES equ <( ClfsMgmtPolicyInvalid )>
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_LOG_SIZE_MINIMUM equ ( 0 )
     CLFS_LOG_SIZE_MAXIMUM equ ( - 1 )
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_MGMT_POLICY_VERSION equ 01h
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     LOG_POLICY_OVERWRITE equ 01h
     LOG_POLICY_PERSIST equ 02h
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_MGMT_POLICY struct
       Version DWORD ?
       LengthInBytes DWORD ?
@@ -14023,18 +10084,16 @@ ifndef _WDMDDK_
 
     PCLFS_MGMT_POLICY typedef ptr CLFS_MGMT_POLICY
     
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_MGMT_NOTIFICATION_TYPE typedef SDWORD
-    ClfsMgmtAdvanceTailNotification = 0 
-    ClfsMgmtLogFullHandlerNotification = 1
-    ClfsMgmtLogUnpinnedNotification = 2
-    ClfsMgmtLogWriteNotification = 3
+    ClfsMgmtAdvanceTailNotification EQU 0 
+    ClfsMgmtLogFullHandlerNotification EQU 1
+    ClfsMgmtLogUnpinnedNotification EQU 2
+    ClfsMgmtLogWriteNotification EQU 3
     
     PCLFS_MGMT_NOTIFICATION_TYPE typedef ptr CLFS_MGMT_NOTIFICATION_TYPE
     
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_MGMT_NOTIFICATION struct
       Notification CLFS_MGMT_NOTIFICATION_TYPE ?
       Lsn CLFS_LSN <>
@@ -14043,24 +10102,19 @@ ifndef _WDMDDK_
 
     PCLFS_MGMT_NOTIFICATION typedef ptr CLFS_MGMT_NOTIFICATION
     
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     proto_PCLFS_CLIENT_ADVANCE_TAIL_CALLBACK typedef proto fastcall :PLOG_FILE_OBJECT, :PCLFS_LSN, :PVOID
     PCLFS_CLIENT_ADVANCE_TAIL_CALLBACK typedef ptr proto_PCLFS_CLIENT_ADVANCE_TAIL_CALLBACK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     proto_PCLFS_CLIENT_LFF_HANDLER_COMPLETE_CALLBACK typedef proto fastcall :PLOG_FILE_OBJECT, :NTSTATUS, :BOOLEAN, :PVOID
     PCLFS_CLIENT_LFF_HANDLER_COMPLETE_CALLBACK typedef ptr proto_PCLFS_CLIENT_LFF_HANDLER_COMPLETE_CALLBACK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     proto_PCLFS_CLIENT_LOG_UNPINNED_CALLBACK typedef proto fastcall :PLOG_FILE_OBJECT, :PVOID
     PCLFS_CLIENT_LOG_UNPINNED_CALLBACK typedef ptr proto_PCLFS_CLIENT_LOG_UNPINNED_CALLBACK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     proto_PCLFS_SET_LOG_SIZE_COMPLETE_CALLBACK typedef proto fastcall :PLOG_FILE_OBJECT, :NTSTATUS, :PVOID
     PCLFS_SET_LOG_SIZE_COMPLETE_CALLBACK typedef ptr proto_PCLFS_SET_LOG_SIZE_COMPLETE_CALLBACK
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_MGMT_CLIENT_REGISTRATION_VERSION equ 1h
     CLFS_MGMT_CLIENT_REGISTRATION struct
       Version DWORD ?
@@ -14074,228 +10128,34 @@ ifndef _WDMDDK_
 
     PCLFS_MGMT_CLIENT_REGISTRATION typedef ptr CLFS_MGMT_CLIENT_REGISTRATION
     
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
+
     CLFS_MGMT_CLIENT typedef PVOID
     PCLFS_MGMT_CLIENT typedef ptr PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtRegisterManagedClient proto fastcall :PLOG_FILE_OBJECT, :PCLFS_MGMT_CLIENT_REGISTRATION, :PCLFS_MGMT_CLIENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtDeregisterManagedClient proto fastcall :CLFS_MGMT_CLIENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtTailAdvanceFailure proto fastcall :CLFS_MGMT_CLIENT, :NTSTATUS
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtHandleLogFileFull proto fastcall :CLFS_MGMT_CLIENT
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtInstallPolicy proto fastcall :PLOG_FILE_OBJECT, :PCLFS_MGMT_POLICY, :DWORD
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtQueryPolicy proto fastcall :PLOG_FILE_OBJECT, :CLFS_MGMT_POLICY_TYPE, :PCLFS_MGMT_POLICY, :PULONG
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtRemovePolicy proto fastcall :PLOG_FILE_OBJECT, :CLFS_MGMT_POLICY_TYPE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WS03SP1) or (_WIN32_WINNT ge _WIN32_WINNT_WS03)
-    ClfsMgmtSetLogFileSize proto fastcall :PLOG_FILE_OBJECT, :PULONGLONG, :PULONGLONG, :PCLFS_SET_LOG_SIZE_COMPLETE_CALLBACK, :PVOID
-  endif
-  if (NTDDI_VERSION ge NTDDI_VISTA) or (_WIN32_WINNT ge _WIN32_WINNT_LONGHORN)
-    ClfsMgmtSetLogFileSizeAsClient proto fastcall :PLOG_FILE_OBJECT, :PCLFS_MGMT_CLIENT, :PULONGLONG, :PULONGLONG, :PCLFS_SET_LOG_SIZE_COMPLETE_CALLBACK, :PVOID
-  endif
-  ifdef __cplusplus
-    ;}
-  endif
-  ifndef __CLFSPROC_H__
-    __CLFSPROC_H__ equ <>
-    ifdef __cplusplus
-      ;extern "C"
-      ;{
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsInitialize proto fastcall
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsFinalize proto fastcall
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsCreateLogFile proto fastcall :PPLOG_FILE_OBJECT, :PUNICODE_STRING, :ACCESS_MASK, :DWORD, :PSECURITY_DESCRIPTOR, :DWORD, :DWORD, :DWORD, :DWORD, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsDeleteLogByPointer proto fastcall :PLOG_FILE_OBJECT
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsDeleteLogFile proto fastcall :PUNICODE_STRING, :PVOID, :DWORD, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsAddLogContainer proto fastcall :PLOG_FILE_OBJECT, :PULONGLONG, :PUNICODE_STRING
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsAddLogContainerSet proto fastcall :PLOG_FILE_OBJECT, :WORD, :PULONGLONG, :PUNICODE_STRING
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsRemoveLogContainer proto fastcall :PLOG_FILE_OBJECT, :PUNICODE_STRING, :BOOLEAN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsRemoveLogContainerSet proto fastcall :PLOG_FILE_OBJECT, :WORD, :PUNICODE_STRING, :BOOLEAN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsSetArchiveTail proto fastcall :PLOG_FILE_OBJECT, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsSetEndOfLog proto fastcall :PLOG_FILE_OBJECT, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsCreateScanContext proto fastcall :PLOG_FILE_OBJECT, :DWORD, :DWORD, :CLFS_SCAN_MODE, :PCLFS_SCAN_CONTEXT
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsScanLogContainers proto fastcall :PCLFS_SCAN_CONTEXT, :CLFS_SCAN_MODE
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsGetContainerName proto fastcall :PLOG_FILE_OBJECT, :CLFS_CONTAINER_ID, :PUNICODE_STRING, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsGetLogFileInformation proto fastcall :PLOG_FILE_OBJECT, :PCLFS_INFORMATION, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      ClfsQueryLogFileInformation proto fastcall :PLOG_FILE_OBJECT, :CLFS_LOG_INFORMATION_CLASS, :PVOID, :DWORD, :PVOID, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsSetLogFileInformation proto fastcall :PLOG_FILE_OBJECT, :CLFS_LOG_INFORMATION_CLASS, :PVOID, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsReadRestartArea proto fastcall :PVOID, :ptr PVOID, :PULONG, :PCLFS_LSN, :ptr PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsReadPreviousRestartArea proto fastcall :PVOID, :ptr PVOID, :PULONG, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsWriteRestartArea proto fastcall :PVOID, :PVOID, :DWORD, :PCLFS_LSN, :DWORD, :PULONG, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsAdvanceLogBase proto fastcall :PVOID, :PCLFS_LSN, :DWORD
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsCloseAndResetLogFile proto fastcall :PLOG_FILE_OBJECT
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsCloseLogFileObject proto fastcall :PLOG_FILE_OBJECT
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsCreateMarshallingArea proto fastcall :PLOG_FILE_OBJECT, :POOL_TYPE, :PALLOCATE_FUNCTION, :PFREE_FUNCTION, :DWORD, :DWORD, :DWORD, :ptr PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WIN8)
-      ClfsCreateMarshallingAreaEx proto fastcall :PLOG_FILE_OBJECT, :POOL_TYPE, :PALLOCATE_FUNCTION, :PFREE_FUNCTION, :DWORD, :DWORD, :DWORD, :DWORD, :QWORD, :ptr PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsDeleteMarshallingArea proto fastcall :PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsReserveAndAppendLog proto fastcall :PVOID, :PCLFS_WRITE_ENTRY, :DWORD, :PCLFS_LSN, :PCLFS_LSN, :DWORD, :PLONGLONG, :DWORD, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsReserveAndAppendLogAligned proto fastcall :PVOID, :PCLFS_WRITE_ENTRY, :DWORD, :DWORD, :PCLFS_LSN, :PCLFS_LSN, :DWORD, :PLONGLONG, :DWORD, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsAlignReservedLog proto fastcall :PVOID, :DWORD, :ptr QWORD, :PLONGLONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsAllocReservedLog proto fastcall :PVOID, :DWORD, :PLONGLONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsFreeReservedLog proto fastcall :PVOID, :DWORD, :PLONGLONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsFlushBuffers proto fastcall :PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsFlushToLsn proto fastcall :PVOID, :PCLFS_LSN, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsReadLogRecord proto fastcall :PVOID, :PCLFS_LSN, :CLFS_CONTEXT_MODE, :ptr PVOID, :PULONG, :PCLFS_RECORD_TYPE, :PCLFS_LSN, :PCLFS_LSN, :ptr PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsReadNextLogRecord proto fastcall :PVOID, :ptr PVOID, :PULONG, :PCLFS_RECORD_TYPE, :PCLFS_LSN, :PCLFS_LSN, :PCLFS_LSN, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsTerminateReadLog proto fastcall :PVOID
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsGetLastLsn proto fastcall :PLOG_FILE_OBJECT, :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsGetIoStatistics proto fastcall :PLOG_FILE_OBJECT, :PVOID, :DWORD, :CLFS_IOSTATS_CLASS, :PULONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsLaterLsn proto fastcall :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsEarlierLsn proto fastcall :PCLFS_LSN
-    endif
-    if (NTDDI_VERSION ge NTDDI_WS03SP1)
-      ClfsLsnDifference proto fastcall :PCLFS_LSN, :PCLFS_LSN, :DWORD, :DWORD, :PLONGLONG
-    endif
-    if (NTDDI_VERSION ge NTDDI_VISTA)
-      ClfsValidTopLevelContext proto fastcall :PIRP
-    endif
-    ifdef __cplusplus
-      ;}
-    endif
-  endif
-  KTRANSACTION typedef _KTRANSACTION
-  PKTRANSACTION typedef ptr _KTRANSACTION
-  PRKTRANSACTION typedef ptr _KTRANSACTION
+
+
+
+  ;KTRANSACTION typedef _KTRANSACTION
+  ;PKTRANSACTION typedef ptr _KTRANSACTION
+  ;PRKTRANSACTION typedef ptr _KTRANSACTION
   
-  KENLISTMENT typedef _KENLISTMENT
-  PKENLISTMENT typedef ptr _KENLISTMENT
-  PRKENLISTMENT typedef ptr _KENLISTMENT
+  ;KENLISTMENT typedef _KENLISTMENT
+  ;PKENLISTMENT typedef ptr _KENLISTMENT
+  ;PRKENLISTMENT typedef ptr _KENLISTMENT
   
-  KRESOURCEMANAGER typedef _KRESOURCEMANAGER
-  PKRESOURCEMANAGER typedef ptr _KRESOURCEMANAGER
-  PRKRESOURCEMANAGER typedef ptr _KRESOURCEMANAGER
+  ;KRESOURCEMANAGER typedef _KRESOURCEMANAGER
+  ;PKRESOURCEMANAGER typedef ptr _KRESOURCEMANAGER
+  ;PRKRESOURCEMANAGER typedef ptr _KRESOURCEMANAGER
   
-  KTM typedef _KTM
-  PKTM typedef ptr _KTM
-  PRKTM typedef ptr _KTM
+  ;KTM typedef _KTM
+  ;PKTM typedef ptr _KTM
+  ;PRKTM typedef ptr _KTM
   
   UOW typedef GUID
   PUOW typedef ptr GUID
   PGUID typedef ptr GUID
-  proto_PTM_RM_NOTIFICATION typedef proto stdcall :PKENLISTMENT, :PVOID, :PVOID, :DWORD, :PLARGE_INTEGER, :DWORD, :PVOID
-  PTM_RM_NOTIFICATION typedef ptr proto_PTM_RM_NOTIFICATION
+
   KCRM_PROTOCOL_ID typedef GUID
   PKCRM_PROTOCOL_ID typedef ptr GUID
-  proto_PTM_PROPAGATE_ROUTINE typedef proto stdcall :PVOID, :PVOID, :NTSTATUS, :GUID
-  PTM_PROPAGATE_ROUTINE typedef ptr proto_PTM_PROPAGATE_ROUTINE
-  TmInitializeTransactionManager proto stdcall :PRKTM, :PCUNICODE_STRING, :PGUID, :DWORD
-  TmRenameTransactionManager proto stdcall :PUNICODE_STRING, :LPGUID
-  TmRecoverTransactionManager proto stdcall :PKTM, :PLARGE_INTEGER
-  TmCommitTransaction proto stdcall :PKTRANSACTION, :BOOLEAN
-  TmRollbackTransaction proto stdcall :PKTRANSACTION, :BOOLEAN
-  TmCreateEnlistment proto stdcall :PHANDLE, :KPROCESSOR_MODE, :ACCESS_MASK, :POBJECT_ATTRIBUTES, :PRKRESOURCEMANAGER, :PKTRANSACTION, :DWORD, :NOTIFICATION_MASK, :PVOID
-  TmRecoverEnlistment proto stdcall :PKENLISTMENT, :PVOID
-  TmPrePrepareEnlistment proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmPrepareEnlistment proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmCommitEnlistment proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmRollbackEnlistment proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmPrePrepareComplete proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmPrepareComplete proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmReadOnlyEnlistment proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmCommitComplete proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmRollbackComplete proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmReferenceEnlistmentKey proto stdcall :PKENLISTMENT, :ptr PVOID
-  TmDereferenceEnlistmentKey proto stdcall :PKENLISTMENT, :PBOOLEAN
-  TmSinglePhaseReject proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmRequestOutcomeEnlistment proto stdcall :PKENLISTMENT, :PLARGE_INTEGER
-  TmEnableCallbacks proto stdcall :PKRESOURCEMANAGER, :PTM_RM_NOTIFICATION, :PVOID
-  TmRecoverResourceManager proto stdcall :PKRESOURCEMANAGER
-  TmPropagationComplete proto stdcall :PKRESOURCEMANAGER, :DWORD, :DWORD, :PVOID
-  TmPropagationFailed proto stdcall :PKRESOURCEMANAGER, :DWORD, :NTSTATUS
-  TmGetTransactionId proto stdcall :PKTRANSACTION, :PUOW
-  TmIsTransactionActive proto stdcall :PKTRANSACTION
   PCW_VERSION_1 equ 0100h
   PCW_CURRENT_VERSION equ <PCW_VERSION_1>
   PPCW_INSTANCE typedef ptr _PCW_INSTANCE
@@ -14348,10 +10208,10 @@ ifndef _WDMDDK_
   PPCW_CALLBACK_INFORMATION typedef ptr PCW_CALLBACK_INFORMATION
   
   PCW_CALLBACK_TYPE typedef SDWORD
-  PcwCallbackAddCounter = 0 
-  PcwCallbackRemoveCounter = 1
-  PcwCallbackEnumerateInstances = 2
-  PcwCallbackCollectData = 3
+  PcwCallbackAddCounter EQU 0 
+  PcwCallbackRemoveCounter EQU 1
+  PcwCallbackEnumerateInstances EQU 2
+  PcwCallbackCollectData EQU 3
   
   PPCW_CALLBACK_TYPE typedef ptr PCW_CALLBACK_TYPE
   
@@ -14367,27 +10227,10 @@ ifndef _WDMDDK_
   PCW_REGISTRATION_INFORMATION ends
 
   PPCW_REGISTRATION_INFORMATION typedef ptr PCW_REGISTRATION_INFORMATION
-  
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PcwRegister proto stdcall :ptr PPCW_REGISTRATION, :PPCW_REGISTRATION_INFORMATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PcwUnregister proto stdcall :PPCW_REGISTRATION
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PcwCreateInstance proto stdcall :ptr PPCW_INSTANCE, :PPCW_REGISTRATION, :PCUNICODE_STRING, :DWORD, :PPCW_DATA
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PcwCloseInstance proto stdcall :PPCW_INSTANCE
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN7)
-    PcwAddInstance proto stdcall :PPCW_BUFFER, :PCUNICODE_STRING, :DWORD, :DWORD, :PPCW_DATA
-  endif
-  if (NTDDI_VERSION ge NTDDI_WIN10_RS2)
+
+
     SECURE_SECTION_ALLOW_PARTIAL_MDL equ 1
-    VslCreateSecureSection proto fastcall :PHANDLE, :PEPROCESS, :PMDL, :DWORD, :DWORD
-    VslDeleteSecureSection proto fastcall :HANDLE
-  endif
+
   ifndef _OB_REFERENCE_TAGS_
     _OB_REFERENCE_TAGS_ equ <>
     REFTAG_AFDCONN equ <'CdfA'>
@@ -14424,29 +10267,15 @@ ifndef _WDMDDK_
     REFTAG_WSKTDI equ <'TksW'>
   endif
   DRIVER_RUNTIME_INIT_FLAGS typedef SDWORD
-  DrvRtPoolNxOptIn = 00000001h 
-  LastDrvRtFlag = 2
+  DrvRtPoolNxOptIn EQU 00000001h 
+  LastDrvRtFlag EQU 2
   
   PDRIVER_RUNTIME_INIT_FLAGS typedef ptr DRIVER_RUNTIME_INIT_FLAGS
   
   PCDRIVER_RUNTIME_INIT_FLAGS typedef ptr SDWORD
   ExInitializeDriverRuntime proto fastcall :DWORD
-  if POOL_NX_OPTIN and  not POOL_NX_OPTOUT
-  else
-  endif
-  if (NTDDI_VERSION ge NTDDI_THRESHOLD)
-  endif
-  ifdef __cplusplus
-    ;}
-  endif
-  if _MSC_VER ge 1200
-    ;#pragma warning ( pop )
-  else
-    ;#pragma warning ( default : 4115 )
-    ;#pragma warning ( default : 4201 )
-    ;#pragma warning ( default : 4214 )
-  endif
+
+
 endif
 
-;Errors: 6
  

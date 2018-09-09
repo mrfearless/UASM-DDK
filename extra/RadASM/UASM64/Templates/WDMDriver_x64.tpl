@@ -1,22 +1,22 @@
 Driver64
 Driver64Template
-Driver x64
+WDM Driver x64
 [*BEGINPRO*]
 [*BEGINDEF*]
 [MakeDef]
-Menu=1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-1=0,O,$C\testsign.bat
+Menu=1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0
+1=4,O,$B\RC.EXE /v,1
 2=3,O,$B\UASM64.EXE /c -win64 -Zp8 /win64 /D_WIN64 /Cp /nologo /W2 /I"$I",2
-3=16,O,$B\LINK.EXE /RELEASE /VERSION:"10.0" /DRIVER /ENTRY:"DriverEntry" /MACHINE:X64 /SUBSYSTEM:NATIVE /MERGE:"_TEXT=.text;_PAGE=PAGE" /OPT:REF /INCREMENTAL:NO /OPT:ICF /SECTION:INIT|d /LIBPATH:"$L" /OUT:"$16",3
-4=
-5=
+3=16,O,$B\LINK.EXE /RELEASE /VERSION:"10.0" /DRIVER /ENTRY:"DriverEntry" /MACHINE:X64 /SUBSYSTEM:NATIVE /MERGE:"_TEXT=.text;_PAGE=PAGE" /OPT:REF /INCREMENTAL:NO /OPT:ICF /SECTION:INIT|d /LIBPATH:"$L" /OUT:"$16",3,4
+4=0,O,$C\testsign.bat
+5=rsrc.obj,O,$B\CVTRES.EXE,rsrc.res
 6=*.obj,O,$B\UASM64.EXE /c -win64 -Zp8 /win64 /D_WIN64 /Cp /nologo /I"$I",*.asm
 7=
-11=
+11=4,O,$B\RC.EXE /v,1
 12=3,O,$B\UASM64.EXE /c -win64 -Zp8 /win64 /D_WIN64 /Cp /nologo /W2 /Zi /Zd /I"$I",2
-13=16,O,$B\LINK.EXE /DEBUG /DEBUGTYPE:CV /PDB:"$18" /DRIVER /MACHINE:X64 /SUBSYSTEM:NATIVE /LIBPATH:"$L" /out:"$16",3
-14=
-15=
+13=16,O,$B\LINK.EXE /DEBUG /DEBUGTYPE:CV /PDB:"$18" /DRIVER /MACHINE:X64 /SUBSYSTEM:NATIVE /MERGE:"_TEXT=.text;_PAGE=PAGE" /OPT:REF /INCREMENTAL:NO /OPT:ICF /SECTION:INIT|d /LIBPATH:"$L" /out:"$16",3,4
+14=0,O,$C\testsign.bat
+15=rsrc.obj,O,$B\CVTRES.EXE,rsrc.res
 16=*.obj,O,$B\UASM64.EXE /c -win64 -Zp8 /win64 /D_WIN64 /Cp /nologo /W2 /Zi /Zd  /I"$I" *.asm
 17=
 [MakeFiles]
@@ -44,6 +44,23 @@ Menu=1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
 [StringTable]
 [Accel]
 [VerInf]
+Nme=VERINF1
+ID=1
+FV=1.0.0.0
+PV=1.0.0.0
+VerOS=0x00000004
+VerFT=0x00000003
+VerLNG=0x00000409
+VerCHS=0x000004B0
+ProductVersion=1.0.0.0
+ProductName=
+OriginalFilename=
+LegalTrademarks=
+LegalCopyright=
+InternalName=
+FileDescription=
+FileVersion=1.0.0.0
+CompanyName=
 [Group]
 Group=Assembly,Resources,Misc
 1=1
@@ -51,6 +68,7 @@ Group=Assembly,Resources,Misc
 3=2
 4=3
 5=3
+6=2
 [*ENDDEF*]
 [*BEGINTXT*]
 Driver64Template.asm
@@ -79,22 +97,17 @@ WINVER equ 0501h
 ;------------------------------------------------------------------------------
 OutputDebugString TEXTEQU <OutputDebugStringA>
 OutputDebugStringA PROTO :PTR
-DbgPrint PROTO :PTR, :PTR
+DbgPrint PROTO :VARARG
 
 
-include ntdll.inc
-include ntoskrnl.inc
-include ntstatus.inc
-include ntdef.inc
-include ntddk.inc
-;include wdm.inc
-
-includelib ntdll.lib
-includelib ntoskrnl.lib
-includelib kernel32.Lib
+include uasmddk.inc
 
 include Driver64Template.inc
 
+
+;.CODE          ; non-paged code
+;.CODE PAGExxx  ; paged code
+;.CODE INIT     ; discardable
 
 .CODE
 
@@ -123,10 +136,9 @@ DriverEntry PROC FRAME USES RBX RCX RDX pDriverObject:PDRIVER_OBJECT, pRegistryP
 	Invoke IoCreateDevice, pDriverObject, 0, Addr usDriverName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, Addr pDeviceObject
     mov NtStatus, eax
 	.IF (NtStatus == STATUS_SUCCESS)
+	    mov rbx, pDriverObject
+	    lea rbx, [rbx].DRIVER_OBJECT.MajorFunction
 		.FOR (rcx=0: rcx < IRP_MJ_MAXIMUM_FUNCTION: rcx++) ; rcx = uiIndex
-			mov rbx, pDriverObject
-			mov rax, [rbx].DRIVER_OBJECT.MajorFunction
-			mov rbx, rax ; MajorFunction in rbx
 			lea rax, [rbx+rcx*SIZEOF QWORD]
 			lea rdx, DrvUnsupported
 			mov [rax], rdx
@@ -134,20 +146,24 @@ DriverEntry PROC FRAME USES RBX RCX RDX pDriverObject:PDRIVER_OBJECT, pRegistryP
         
 		Invoke DbgPrint, Addr szFmt, "[*] Setting Devices major functions."
 		mov rbx, pDriverObject
-	    mov rax, [rbx].DRIVER_OBJECT.MajorFunction
-		mov rbx, rax ; MajorFunction in rbx
+		lea rbx, [rbx].DRIVER_OBJECT.MajorFunction
+
 		lea rax, [rbx+IRP_MJ_CLOSE*SIZEOF QWORD]
 		lea rdx, DrvClose
 		mov [rax], rdx
+
 		lea rax, [rbx+IRP_MJ_CREATE*SIZEOF QWORD]
 		lea rdx, DrvCreate
 		mov [rax], rdx
+
 		lea rax, [rbx+IRP_MJ_DEVICE_CONTROL*SIZEOF QWORD]
 		lea rdx, DrvIOCTLDispatcher
 		mov [rax], rdx
+
 		lea rax, [rbx+IRP_MJ_READ*SIZEOF QWORD]
 		lea rdx, DrvRead
 		mov [rax], rdx
+
 		lea rax, [rbx+IRP_MJ_WRITE*SIZEOF QWORD]
 		lea rdx, DrvWrite
 		mov [rax], rdx
@@ -176,7 +192,7 @@ DrvUnload PROC FRAME USES RBX pDriverObject:PDRIVER_OBJECT
 	mov rbx, pDriverObject
 	mov rax, [rbx].DRIVER_OBJECT.DeviceObject
 	Invoke IoDeleteDevice, rax
-	mov eax, STATUS_SUCCESS;
+	mov eax, STATUS_SUCCESS
 	ret	
 DrvUnload ENDP
 
@@ -184,9 +200,8 @@ DrvUnload ENDP
 ; DrvCreate
 ;------------------------------------------------------------------------------
 DrvCreate PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
-	;Invoke Enable_VMX_Operation;	// Enabling VMX Operation
-	Invoke DbgPrint, Addr szFmt, "[*] VMX Operation Enabled Successfully !"
-	mov eax, STATUS_SUCCESS;
+	Invoke DbgPrint, Addr szFmt, "[*] DrvCreate Operation!"
+	mov eax, STATUS_SUCCESS
 	ret
 DrvCreate ENDP
 
@@ -195,7 +210,7 @@ DrvCreate ENDP
 ;------------------------------------------------------------------------------
 DrvRead PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
 	Invoke DbgPrint, Addr szFmt, "[*] Not implemented yet :( !"
-	mov eax, STATUS_SUCCESS;
+	mov eax, STATUS_SUCCESS
 	ret
 DrvRead ENDP
 
@@ -204,7 +219,7 @@ DrvRead ENDP
 ;------------------------------------------------------------------------------
 DrvWrite PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
 	Invoke DbgPrint, Addr szFmt, "[*] Not implemented yet :( !"
-	mov eax, STATUS_SUCCESS;
+	mov eax, STATUS_SUCCESS
 	ret
 DrvWrite ENDP
 
@@ -213,7 +228,7 @@ DrvWrite ENDP
 ;------------------------------------------------------------------------------
 DrvClose PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
 	Invoke DbgPrint, Addr szFmt, "[*] Not implemented yet :( !"
-	mov eax, STATUS_SUCCESS;
+	mov eax, STATUS_SUCCESS
 	ret
 DrvClose ENDP
 
@@ -222,7 +237,7 @@ DrvClose ENDP
 ;------------------------------------------------------------------------------
 DrvUnsupported PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
 	Invoke DbgPrint, Addr szFmt, "[*] This function is not supported :( !"
-	mov eax, STATUS_SUCCESS;
+	mov eax, STATUS_SUCCESS
 	ret
 DrvUnsupported ENDP
 
@@ -230,9 +245,9 @@ DrvUnsupported ENDP
 ; DrvIOCTLDispatcher
 ;------------------------------------------------------------------------------
 DrvIOCTLDispatcher PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
-    mov eax, STATUS_SUCCESS;
+    mov eax, STATUS_SUCCESS
     ret
-DrvIOCTLDispatcher endp
+DrvIOCTLDispatcher ENDP
 
 
 END DriverEntry
@@ -271,6 +286,7 @@ Driver64Template.inc
 ; Driver64Template Prototypes
 ;------------------------------------------------------------------------------
 
+DriverEntry             PROTO :PDRIVER_OBJECT, :PUNICODE_STRING
 DrvUnload               PROTO :PDRIVER_OBJECT
 DrvCreate               PROTO :PDEVICE_OBJECT, :PIRP
 DrvRead                 PROTO :PDEVICE_OBJECT, :PIRP
@@ -281,18 +297,14 @@ DrvIOCTLDispatcher      PROTO :PDEVICE_OBJECT, :PIRP
 
 
 
+;PAGEDAT1 SEGMENT       ; paged data
+;PAGEDAT1 ENDS
 
-.DATA
+.DATA                   ; non-paged data
 szFmt                   DB "%s",0
 
 
 
-;INIT SEGMENT ALIGN(4) READ EXECUTE DISCARD 'DATA'
-;INIT ENDS
-
-
-;.rdata SEGMENT ALIGN(4) READ NOPAGE 'DATA'
-;.rdata ends
 [*ENDTXT*]
 [*BEGINTXT*]
 Driver64Template.inf
@@ -418,7 +430,38 @@ testsign.bat
 \UASM\bin\signtool verify /v /kp /c "Driver64Template.cat" "Driver64Template.inf"
 \UASM\bin\signtool verify /v /kp "Driver64Template.sys"
 [*ENDTXT*]
+[*BEGINTXT*]
+Driver64Template.rc
+#include "Res/Driver64TemplateVer.rc"
+[*ENDTXT*]
 [*ENDPRO*]
+[*BEGINTXT*]
+Res\Driver64TemplateVer.rc
+#define VERINF1 1
+VERINF1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEOS 0x00000004
+FILETYPE 0x00000003
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "FileVersion", "1.0.0.0\0"
+      VALUE "FileDescription", "[*PROJECTNAME*]\0"
+      VALUE "InternalName", "[*PROJECTNAME*]\0"
+      VALUE "OriginalFilename", "[*PROJECTNAME*]\0"
+      VALUE "ProductName", "[*PROJECTNAME*]\0"
+      VALUE "ProductVersion", "1.0.0.0\0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 0x04B0
+  END
+END
+[*ENDTXT*]
 [*BEGINTXT*]
 installdriver.bat
 rundll32.exe advpack.dll,LaunchINFSectionEx ".\Driver64Template.inf",,,

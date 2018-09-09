@@ -1906,3 +1906,9 @@ ZwWriteVirtualMemory PROTO :QWORD,:QWORD,:QWORD,:QWORD,:QWORD
 ZwYieldExecution PROTO 
 vDbgPrintEx PROTO :QWORD,:QWORD,:QWORD,:QWORD
 vDbgPrintExWithPrefix PROTO :QWORD,:QWORD,:QWORD,:QWORD,:QWORD
+RtlCopyBytes equ <RtlCopyMemory>
+RtlZeroBytes equ <RtlZeroMemory>
+RtlFillBytes equ <RtlFillMemory>
+RtlCopyMemory PROTO :QWORD,:QWORD,:QWORD
+RtlZeroMemory PROTO :QWORD,:QWORD
+RtlFillMemory PROTO :QWORD,:QWORD,:QWORD

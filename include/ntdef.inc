@@ -30,9 +30,16 @@ ifndef _NTDEF_
   CHAR typedef SBYTE
   SHORT_ typedef SWORD
   LONG typedef SDWORD
+  INT8 typedef SBYTE
+  UINT8 typedef BYTE
+  PUINT8 typedef QWORD
   INT_ typedef DWORD
+  INT16 typedef SWORD
   UINT16 typedef WORD
+  PUINT16 typedef QWORD
+  INT32 typedef SDWORD
   UINT32 typedef DWORD
+  INT64 typedef SQWORD
   UINT64 typedef QWORD
   WCHAR typedef WORD
   PWCHAR typedef ptr WCHAR
@@ -79,6 +86,7 @@ ifndef _NTDEF_
   PUUCSCHAR typedef ptr UCSCHAR
   PCUUCSCHAR typedef ptr UCSCHAR
 
+  ;UCHAR typedef ptr CHAR
   PCHAR typedef ptr CHAR
   LPCH typedef ptr CHAR
   PCH typedef ptr CHAR
@@ -181,6 +189,8 @@ ifndef _NTDEF_
   UCHAR typedef BYTE
   USHORT typedef WORD
   ULONG typedef DWORD
+  ULONG32 typedef DWORD
+  PULONG64 typedef QWORD
   UQUAD typedef QUAD
   PUCHAR typedef ptr BYTE
   PUSHORT typedef ptr WORD
@@ -334,7 +344,7 @@ ifndef _NTDEF_
   PULONGLONG typedef ptr QWORD
   LONG_PTR typedef ptr QWORD
   ULONG_PTR typedef ptr QWORD
-  ULONG64 typedef ptr QWORD
+  ULONG64 typedef QWORD
   USN typedef QWORD
 
   PULARGE_INTEGER typedef ptr ULARGE_INTEGER
@@ -417,6 +427,7 @@ ifndef _NTDEF_
      exitm <WCHAR _var ## _buffer [ _size ] >
     endm
 
+  BOOL typedef BYTE
   BOOLEAN typedef BYTE
   PBOOLEAN typedef ptr BOOLEAN
   LIST_ENTRY struct

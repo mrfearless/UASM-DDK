@@ -52,24 +52,24 @@ ifndef _NTDDK_
     EXCEPTION_READ_FAULT equ 0
     EXCEPTION_WRITE_FAULT equ 1
     EXCEPTION_EXECUTE_FAULT equ 8
-
-      CONTEXT_AMD64 equ 00100000h
-      CONTEXT_CONTROL equ ( CONTEXT_AMD64 or 00000001h )
-      CONTEXT_INTEGER equ ( CONTEXT_AMD64 or 00000002h )
-      CONTEXT_SEGMENTS equ ( CONTEXT_AMD64 or 00000004h )
-      CONTEXT_FLOATING_POINT equ ( CONTEXT_AMD64 or 00000008h )
-      CONTEXT_DEBUG_REGISTERS equ ( CONTEXT_AMD64 or 00000010h )
-      CONTEXT_FULL equ <( CONTEXT_CONTROL or CONTEXT_INTEGER or CONTEXT_FLOATING_POINT )>
-      CONTEXT_ALL equ <( CONTEXT_CONTROL or CONTEXT_INTEGER or CONTEXT_SEGMENTS or CONTEXT_FLOATING_POINT or CONTEXT_DEBUG_REGISTERS )>
-      CONTEXT_XSTATE equ ( CONTEXT_AMD64 or 00000040h )
-
-        CONTEXT_KERNEL_DEBUGGER equ 04000000h
-
-      CONTEXT_EXCEPTION_ACTIVE equ 08000000h
-      CONTEXT_SERVICE_ACTIVE equ 10000000h
-      CONTEXT_EXCEPTION_REQUEST equ 40000000h
-      CONTEXT_EXCEPTION_REPORTING equ 80000000h
-
+    
+    CONTEXT_AMD64 equ 00100000h
+    CONTEXT_CONTROL equ ( CONTEXT_AMD64 or 00000001h )
+    CONTEXT_INTEGER equ ( CONTEXT_AMD64 or 00000002h )
+    CONTEXT_SEGMENTS equ ( CONTEXT_AMD64 or 00000004h )
+    CONTEXT_FLOATING_POINT equ ( CONTEXT_AMD64 or 00000008h )
+    CONTEXT_DEBUG_REGISTERS equ ( CONTEXT_AMD64 or 00000010h )
+    CONTEXT_FULL equ <( CONTEXT_CONTROL or CONTEXT_INTEGER or CONTEXT_FLOATING_POINT )>
+    CONTEXT_ALL equ <( CONTEXT_CONTROL or CONTEXT_INTEGER or CONTEXT_SEGMENTS or CONTEXT_FLOATING_POINT or CONTEXT_DEBUG_REGISTERS )>
+    CONTEXT_XSTATE equ ( CONTEXT_AMD64 or 00000040h )
+    
+    CONTEXT_KERNEL_DEBUGGER equ 04000000h
+    
+    CONTEXT_EXCEPTION_ACTIVE equ 08000000h
+    CONTEXT_SERVICE_ACTIVE equ 10000000h
+    CONTEXT_EXCEPTION_REQUEST equ 40000000h
+    CONTEXT_EXCEPTION_REPORTING equ 80000000h
+    
     INITIAL_MXCSR equ 1f80h
     INITIAL_FPCSR equ 027fh
 
@@ -77,126 +77,126 @@ ifndef _NTDDK_
 
 
   WELL_KNOWN_SID_TYPE typedef SDWORD
-  WinNullSid = 0 
-  WinWorldSid = 1 
-  WinLocalSid = 2 
-  WinCreatorOwnerSid = 3 
-  WinCreatorGroupSid = 4 
-  WinCreatorOwnerServerSid = 5 
-  WinCreatorGroupServerSid = 6 
-  WinNtAuthoritySid = 7 
-  WinDialupSid = 8 
-  WinNetworkSid = 9 
-  WinBatchSid = 10 
-  WinInteractiveSid = 11 
-  WinServiceSid = 12 
-  WinAnonymousSid = 13 
-  WinProxySid = 14 
-  WinEnterpriseControllersSid = 15 
-  WinSelfSid = 16 
-  WinAuthenticatedUserSid = 17 
-  WinRestrictedCodeSid = 18 
-  WinTerminalServerSid = 19 
-  WinRemoteLogonIdSid = 20 
-  WinLogonIdsSid = 21 
-  WinLocalSystemSid = 22 
-  WinLocalServiceSid = 23 
-  WinNetworkServiceSid = 24 
-  WinBuiltinDomainSid = 25 
-  WinBuiltinAdministratorsSid = 26 
-  WinBuiltinUsersSid = 27 
-  WinBuiltinGuestsSid = 28 
-  WinBuiltinPowerUsersSid = 29 
-  WinBuiltinAccountOperatorsSid = 30 
-  WinBuiltinSystemOperatorsSid = 31 
-  WinBuiltinPrintOperatorsSid = 32 
-  WinBuiltinBackupOperatorsSid = 33 
-  WinBuiltinReplicatorSid = 34 
-  WinBuiltinPreWindows2000CompatibleAccessSid = 35 
-  WinBuiltinRemoteDesktopUsersSid = 36 
-  WinBuiltinNetworkConfigurationOperatorsSid = 37 
-  WinAccountAdministratorSid = 38 
-  WinAccountGuestSid = 39 
-  WinAccountKrbtgtSid = 40 
-  WinAccountDomainAdminsSid = 41 
-  WinAccountDomainUsersSid = 42 
-  WinAccountDomainGuestsSid = 43 
-  WinAccountComputersSid = 44 
-  WinAccountControllersSid = 45 
-  WinAccountCertAdminsSid = 46 
-  WinAccountSchemaAdminsSid = 47 
-  WinAccountEnterpriseAdminsSid = 48 
-  WinAccountPolicyAdminsSid = 49 
-  WinAccountRasAndIasServersSid = 50 
-  WinNTLMAuthenticationSid = 51 
-  WinDigestAuthenticationSid = 52 
-  WinSChannelAuthenticationSid = 53 
-  WinThisOrganizationSid = 54 
-  WinOtherOrganizationSid = 55 
-  WinBuiltinIncomingForestTrustBuildersSid = 56 
-  WinBuiltinPerfMonitoringUsersSid = 57 
-  WinBuiltinPerfLoggingUsersSid = 58 
-  WinBuiltinAuthorizationAccessSid = 59 
-  WinBuiltinTerminalServerLicenseServersSid = 60 
-  WinBuiltinDCOMUsersSid = 61 
-  WinBuiltinIUsersSid = 62 
-  WinIUserSid = 63 
-  WinBuiltinCryptoOperatorsSid = 64 
-  WinUntrustedLabelSid = 65 
-  WinLowLabelSid = 66 
-  WinMediumLabelSid = 67 
-  WinHighLabelSid = 68 
-  WinSystemLabelSid = 69 
-  WinWriteRestrictedCodeSid = 70 
-  WinCreatorOwnerRightsSid = 71 
-  WinCacheablePrincipalsGroupSid = 72 
-  WinNonCacheablePrincipalsGroupSid = 73 
-  WinEnterpriseReadonlyControllersSid = 74 
-  WinAccountReadonlyControllersSid = 75 
-  WinBuiltinEventLogReadersGroup = 76 
-  WinNewEnterpriseReadonlyControllersSid = 77 
-  WinBuiltinCertSvcDComAccessGroup = 78 
-  WinMediumPlusLabelSid = 79 
-  WinLocalLogonSid = 80 
-  WinConsoleLogonSid = 81 
-  WinThisOrganizationCertificateSid = 82 
-  WinApplicationPackageAuthoritySid = 83 
-  WinBuiltinAnyPackageSid = 84 
-  WinCapabilityInternetClientSid = 85 
-  WinCapabilityInternetClientServerSid = 86 
-  WinCapabilityPrivateNetworkClientServerSid = 87 
-  WinCapabilityPicturesLibrarySid = 88 
-  WinCapabilityVideosLibrarySid = 89 
-  WinCapabilityMusicLibrarySid = 90 
-  WinCapabilityDocumentsLibrarySid = 91 
-  WinCapabilitySharedUserCertificatesSid = 92 
-  WinCapabilityEnterpriseAuthenticationSid = 93 
-  WinCapabilityRemovableStorageSid = 94 
-  WinBuiltinRDSRemoteAccessServersSid = 95 
-  WinBuiltinRDSEndpointServersSid = 96 
-  WinBuiltinRDSManagementServersSid = 97 
-  WinUserModeDriversSid = 98 
-  WinBuiltinHyperVAdminsSid = 99 
-  WinAccountCloneableControllersSid = 100 
-  WinBuiltinAccessControlAssistanceOperatorsSid = 101 
-  WinBuiltinRemoteManagementUsersSid = 102 
-  WinAuthenticationAuthorityAssertedSid = 103 
-  WinAuthenticationServiceAssertedSid = 104 
-  WinLocalAccountSid = 105 
-  WinLocalAccountAndAdministratorSid = 106 
-  WinAccountProtectedUsersSid = 107 
-  WinCapabilityAppointmentsSid = 108 
-  WinCapabilityContactsSid = 109 
-  WinAccountDefaultSystemManagedSid = 110 
-  WinBuiltinDefaultSystemManagedGroupSid = 111 
-  WinBuiltinStorageReplicaAdminsSid = 112 
-  WinAccountKeyAdminsSid = 113 
-  WinAccountEnterpriseKeyAdminsSid = 114 
-  WinAuthenticationKeyTrustSid = 115 
-  WinAuthenticationKeyPropertyMFASid = 116 
-  WinAuthenticationKeyPropertyAttestationSid = 117 
-  WinAuthenticationFreshKeyAuthSid = 118 
-  WinBuiltinDeviceOwnersSid = 119 
+  WinNullSid EQU 0 
+  WinWorldSid EQU 1 
+  WinLocalSid EQU 2 
+  WinCreatorOwnerSid EQU 3 
+  WinCreatorGroupSid EQU 4 
+  WinCreatorOwnerServerSid EQU 5 
+  WinCreatorGroupServerSid EQU 6 
+  WinNtAuthoritySid EQU 7 
+  WinDialupSid EQU 8 
+  WinNetworkSid EQU 9 
+  WinBatchSid EQU 10 
+  WinInteractiveSid EQU 11 
+  WinServiceSid EQU 12 
+  WinAnonymousSid EQU 13 
+  WinProxySid EQU 14 
+  WinEnterpriseControllersSid EQU 15 
+  WinSelfSid EQU 16 
+  WinAuthenticatedUserSid EQU 17 
+  WinRestrictedCodeSid EQU 18 
+  WinTerminalServerSid EQU 19 
+  WinRemoteLogonIdSid EQU 20 
+  WinLogonIdsSid EQU 21 
+  WinLocalSystemSid EQU 22 
+  WinLocalServiceSid EQU 23 
+  WinNetworkServiceSid EQU 24 
+  WinBuiltinDomainSid EQU 25 
+  WinBuiltinAdministratorsSid EQU 26 
+  WinBuiltinUsersSid EQU 27 
+  WinBuiltinGuestsSid EQU 28 
+  WinBuiltinPowerUsersSid EQU 29 
+  WinBuiltinAccountOperatorsSid EQU 30 
+  WinBuiltinSystemOperatorsSid EQU 31 
+  WinBuiltinPrintOperatorsSid EQU 32 
+  WinBuiltinBackupOperatorsSid EQU 33 
+  WinBuiltinReplicatorSid EQU 34 
+  WinBuiltinPreWindows2000CompatibleAccessSid EQU 35 
+  WinBuiltinRemoteDesktopUsersSid EQU 36 
+  WinBuiltinNetworkConfigurationOperatorsSid EQU 37 
+  WinAccountAdministratorSid EQU 38 
+  WinAccountGuestSid EQU 39 
+  WinAccountKrbtgtSid EQU 40 
+  WinAccountDomainAdminsSid EQU 41 
+  WinAccountDomainUsersSid EQU 42 
+  WinAccountDomainGuestsSid EQU 43 
+  WinAccountComputersSid EQU 44 
+  WinAccountControllersSid EQU 45 
+  WinAccountCertAdminsSid EQU 46 
+  WinAccountSchemaAdminsSid EQU 47 
+  WinAccountEnterpriseAdminsSid EQU 48 
+  WinAccountPolicyAdminsSid EQU 49 
+  WinAccountRasAndIasServersSid EQU 50 
+  WinNTLMAuthenticationSid EQU 51 
+  WinDigestAuthenticationSid EQU 52 
+  WinSChannelAuthenticationSid EQU 53 
+  WinThisOrganizationSid EQU 54 
+  WinOtherOrganizationSid EQU 55 
+  WinBuiltinIncomingForestTrustBuildersSid EQU 56 
+  WinBuiltinPerfMonitoringUsersSid EQU 57 
+  WinBuiltinPerfLoggingUsersSid EQU 58 
+  WinBuiltinAuthorizationAccessSid EQU 59 
+  WinBuiltinTerminalServerLicenseServersSid EQU 60 
+  WinBuiltinDCOMUsersSid EQU 61 
+  WinBuiltinIUsersSid EQU 62 
+  WinIUserSid EQU 63 
+  WinBuiltinCryptoOperatorsSid EQU 64 
+  WinUntrustedLabelSid EQU 65 
+  WinLowLabelSid EQU 66 
+  WinMediumLabelSid EQU 67 
+  WinHighLabelSid EQU 68 
+  WinSystemLabelSid EQU 69 
+  WinWriteRestrictedCodeSid EQU 70 
+  WinCreatorOwnerRightsSid EQU 71 
+  WinCacheablePrincipalsGroupSid EQU 72 
+  WinNonCacheablePrincipalsGroupSid EQU 73 
+  WinEnterpriseReadonlyControllersSid EQU 74 
+  WinAccountReadonlyControllersSid EQU 75 
+  WinBuiltinEventLogReadersGroup EQU 76 
+  WinNewEnterpriseReadonlyControllersSid EQU 77 
+  WinBuiltinCertSvcDComAccessGroup EQU 78 
+  WinMediumPlusLabelSid EQU 79 
+  WinLocalLogonSid EQU 80 
+  WinConsoleLogonSid EQU 81 
+  WinThisOrganizationCertificateSid EQU 82 
+  WinApplicationPackageAuthoritySid EQU 83 
+  WinBuiltinAnyPackageSid EQU 84 
+  WinCapabilityInternetClientSid EQU 85 
+  WinCapabilityInternetClientServerSid EQU 86 
+  WinCapabilityPrivateNetworkClientServerSid EQU 87 
+  WinCapabilityPicturesLibrarySid EQU 88 
+  WinCapabilityVideosLibrarySid EQU 89 
+  WinCapabilityMusicLibrarySid EQU 90 
+  WinCapabilityDocumentsLibrarySid EQU 91 
+  WinCapabilitySharedUserCertificatesSid EQU 92 
+  WinCapabilityEnterpriseAuthenticationSid EQU 93 
+  WinCapabilityRemovableStorageSid EQU 94 
+  WinBuiltinRDSRemoteAccessServersSid EQU 95 
+  WinBuiltinRDSEndpointServersSid EQU 96 
+  WinBuiltinRDSManagementServersSid EQU 97 
+  WinUserModeDriversSid EQU 98 
+  WinBuiltinHyperVAdminsSid EQU 99 
+  WinAccountCloneableControllersSid EQU 100 
+  WinBuiltinAccessControlAssistanceOperatorsSid EQU 101 
+  WinBuiltinRemoteManagementUsersSid EQU 102 
+  WinAuthenticationAuthorityAssertedSid EQU 103 
+  WinAuthenticationServiceAssertedSid EQU 104 
+  WinLocalAccountSid EQU 105 
+  WinLocalAccountAndAdministratorSid EQU 106 
+  WinAccountProtectedUsersSid EQU 107 
+  WinCapabilityAppointmentsSid EQU 108 
+  WinCapabilityContactsSid EQU 109 
+  WinAccountDefaultSystemManagedSid EQU 110 
+  WinBuiltinDefaultSystemManagedGroupSid EQU 111 
+  WinBuiltinStorageReplicaAdminsSid EQU 112 
+  WinAccountKeyAdminsSid EQU 113 
+  WinAccountEnterpriseKeyAdminsSid EQU 114 
+  WinAuthenticationKeyTrustSid EQU 115 
+  WinAuthenticationKeyPropertyMFASid EQU 116 
+  WinAuthenticationKeyPropertyAttestationSid EQU 117 
+  WinAuthenticationFreshKeyAuthSid EQU 118 
+  WinBuiltinDeviceOwnersSid EQU 119 
   
   SE_UNSOLICITED_INPUT_PRIVILEGE equ 6
   SE_SIGNING_LEVEL typedef BYTE
@@ -219,13 +219,13 @@ ifndef _NTDDK_
   SE_SIGNING_LEVEL_WINDOWS_TCB equ 0000000Eh
   SE_SIGNING_LEVEL_CUSTOM_6 equ 0000000Fh
   SE_IMAGE_SIGNATURE_TYPE typedef SDWORD
-  SeImageSignatureNone = 0 
-  SeImageSignatureEmbedded = 1
-  SeImageSignatureCache = 2
-  SeImageSignatureCatalogCached = 3
-  SeImageSignatureCatalogNotCached = 4
-  SeImageSignatureCatalogHint = 5
-  SeImageSignaturePackageCatalog = 6
+  SeImageSignatureNone EQU 0 
+  SeImageSignatureEmbedded EQU 1
+  SeImageSignatureCache EQU 2
+  SeImageSignatureCatalogCached EQU 3
+  SeImageSignatureCatalogNotCached EQU 4
+  SeImageSignatureCatalogHint EQU 5
+  SeImageSignaturePackageCatalog EQU 6
   
   PSE_IMAGE_SIGNATURE_TYPE typedef ptr SE_IMAGE_SIGNATURE_TYPE
   
@@ -233,42 +233,42 @@ ifndef _NTDDK_
     ifndef _NTLSA_AUDIT_
       _NTLSA_AUDIT_ equ <>
       SE_ADT_PARAMETER_TYPE typedef SDWORD
-      SeAdtParmTypeNone = 0 
-      SeAdtParmTypeString = 1
-      SeAdtParmTypeFileSpec = 2
-      SeAdtParmTypeUlong = 3
-      SeAdtParmTypeSid = 4
-      SeAdtParmTypeLogonId = 5
-      SeAdtParmTypeNoLogonId = 6
-      SeAdtParmTypeAccessMask = 7
-      SeAdtParmTypePrivs = 8
-      SeAdtParmTypeObjectTypes = 9
-      SeAdtParmTypeHexUlong = 10
-      SeAdtParmTypePtr = 11
-      SeAdtParmTypeTime = 12
-      SeAdtParmTypeGuid = 13
-      SeAdtParmTypeLuid = 14
-      SeAdtParmTypeHexInt64 = 15
-      SeAdtParmTypeStringList = 16
-      SeAdtParmTypeSidList = 17
-      SeAdtParmTypeDuration = 18
-      SeAdtParmTypeUserAccountControl = 19
-      SeAdtParmTypeNoUac = 20
-      SeAdtParmTypeMessage = 21
-      SeAdtParmTypeDateTime = 22
-      SeAdtParmTypeSockAddr = 23
-      SeAdtParmTypeSD = 24
-      SeAdtParmTypeLogonHours = 25
-      SeAdtParmTypeLogonIdNoSid = 26
-      SeAdtParmTypeUlongNoConv = 27
-      SeAdtParmTypeSockAddrNoPort = 28
-      SeAdtParmTypeAccessReason = 29
-      SeAdtParmTypeStagingReason = 30
-      SeAdtParmTypeResourceAttribute = 31
-      SeAdtParmTypeClaims = 32
-      SeAdtParmTypeLogonIdAsSid = 33
-      SeAdtParmTypeMultiSzString = 34
-      SeAdtParmTypeLogonIdEx = 35
+      SeAdtParmTypeNone EQU 0 
+      SeAdtParmTypeString EQU 1
+      SeAdtParmTypeFileSpec EQU 2
+      SeAdtParmTypeUlong EQU 3
+      SeAdtParmTypeSid EQU 4
+      SeAdtParmTypeLogonId EQU 5
+      SeAdtParmTypeNoLogonId EQU 6
+      SeAdtParmTypeAccessMask EQU 7
+      SeAdtParmTypePrivs EQU 8
+      SeAdtParmTypeObjectTypes EQU 9
+      SeAdtParmTypeHexUlong EQU 10
+      SeAdtParmTypePtr EQU 11
+      SeAdtParmTypeTime EQU 12
+      SeAdtParmTypeGuid EQU 13
+      SeAdtParmTypeLuid EQU 14
+      SeAdtParmTypeHexInt64 EQU 15
+      SeAdtParmTypeStringList EQU 16
+      SeAdtParmTypeSidList EQU 17
+      SeAdtParmTypeDuration EQU 18
+      SeAdtParmTypeUserAccountControl EQU 19
+      SeAdtParmTypeNoUac EQU 20
+      SeAdtParmTypeMessage EQU 21
+      SeAdtParmTypeDateTime EQU 22
+      SeAdtParmTypeSockAddr EQU 23
+      SeAdtParmTypeSD EQU 24
+      SeAdtParmTypeLogonHours EQU 25
+      SeAdtParmTypeLogonIdNoSid EQU 26
+      SeAdtParmTypeUlongNoConv EQU 27
+      SeAdtParmTypeSockAddrNoPort EQU 28
+      SeAdtParmTypeAccessReason EQU 29
+      SeAdtParmTypeStagingReason EQU 30
+      SeAdtParmTypeResourceAttribute EQU 31
+      SeAdtParmTypeClaims EQU 32
+      SeAdtParmTypeLogonIdAsSid EQU 33
+      SeAdtParmTypeMultiSzString EQU 34
+      SeAdtParmTypeLogonIdEx EQU 35
       
       PSE_ADT_PARAMETER_TYPE typedef ptr SE_ADT_PARAMETER_TYPE
       
@@ -371,15 +371,15 @@ ifndef _NTDDK_
   endif
 
   TABLE_SEARCH_RESULT typedef SDWORD
-  TableEmptyTree = 0
-  TableFoundNode = 1
-  TableInsertAsLeft = 2
-  TableInsertAsRight = 3
+  TableEmptyTree EQU 0
+  TableFoundNode EQU 1
+  TableInsertAsLeft EQU 2
+  TableInsertAsRight EQU 3
   
   RTL_GENERIC_COMPARE_RESULTS typedef SDWORD
-  GenericLessThan = 0
-  GenericGreaterThan = 1
-  GenericEqual = 2
+  GenericLessThan EQU 0
+  GenericGreaterThan EQU 1
+  GenericEqual EQU 2
   
   RTL_AVL_COMPARE_ROUTINE typedef proto stdcall :ptr _RTL_AVL_TABLE,:PVOID,:PVOID
   PRTL_AVL_COMPARE_ROUTINE typedef ptr RTL_AVL_COMPARE_ROUTINE
@@ -867,20 +867,20 @@ ifndef _NTDDK_
   IOCTL_AVIO_FREE_STREAM equ CTL_CODE ( FILE_DEVICE_AVIO , 2 , METHOD_BUFFERED , FILE_SPECIAL_ACCESS )
   IOCTL_AVIO_MODIFY_STREAM equ CTL_CODE ( FILE_DEVICE_AVIO , 3 , METHOD_BUFFERED , FILE_SPECIAL_ACCESS )
   BUS_DATA_TYPE typedef SDWORD
-  ConfigurationSpaceUndefined = - 1 
-  Cmos = 2
-  EisaConfiguration = 3
-  Pos = 4
-  CbusConfiguration = 5
-  PCIConfiguration = 6
-  VMEConfiguration = 7
-  NuBusConfiguration = 8
-  PCMCIAConfiguration = 9
-  MPIConfiguration = 10
-  MPSAConfiguration = 11
-  PNPISAConfiguration = 12
-  SgiInternalConfiguration = 13
-  MaximumBusDataType = 14
+  ConfigurationSpaceUndefined EQU - 1 
+  Cmos EQU 2
+  EisaConfiguration EQU 3
+  Pos EQU 4
+  CbusConfiguration EQU 5
+  PCIConfiguration EQU 6
+  VMEConfiguration EQU 7
+  NuBusConfiguration EQU 8
+  PCMCIAConfiguration EQU 9
+  MPIConfiguration EQU 10
+  MPSAConfiguration EQU 11
+  PNPISAConfiguration EQU 12
+  SgiInternalConfiguration EQU 13
+  MaximumBusDataType EQU 14
   
   PBUS_DATA_TYPE typedef ptr BUS_DATA_TYPE
   
@@ -960,123 +960,123 @@ ifndef _NTDDK_
   PNT_TIB64 typedef ptr NT_TIB64
   
   PROCESSINFOCLASS typedef SDWORD
-  ProcessBasicInformation = 0 
-  ProcessQuotaLimits = 1 
-  ProcessIoCounters = 2 
-  ProcessVmCounters = 3 
-  ProcessTimes = 4 
-  ProcessBasePriority = 5 
-  ProcessRaisePriority = 6 
-  ProcessDebugPort = 7 
-  ProcessExceptionPort = 8 
-  ProcessAccessToken = 9 
-  ProcessLdtInformation = 10 
-  ProcessLdtSize = 11 
-  ProcessDefaultHardErrorMode = 12 
-  ProcessIoPortHandlers = 13 
-  ProcessPooledUsageAndLimits = 14 
-  ProcessWorkingSetWatch = 15 
-  ProcessUserModeIOPL = 16 
-  ProcessEnableAlignmentFaultFixup = 17 
-  ProcessPriorityClass = 18 
-  ProcessWx86Information = 19 
-  ProcessHandleCount = 20 
-  ProcessAffinityMask = 21 
-  ProcessPriorityBoost = 22 
-  ProcessDeviceMap = 23 
-  ProcessSessionInformation = 24 
-  ProcessForegroundInformation = 25 
-  ProcessWow64Information = 26 
-  ProcessImageFileName = 27 
-  ProcessLUIDDeviceMapsEnabled = 28 
-  ProcessBreakOnTermination = 29 
-  ProcessDebugObjectHandle = 30 
-  ProcessDebugFlags = 31 
-  ProcessHandleTracing = 32 
-  ProcessIoPriority = 33 
-  ProcessExecuteFlags = 34 
-  ProcessTlsInformation = 35 
-  ProcessCookie = 36 
-  ProcessImageInformation = 37 
-  ProcessCycleTime = 38 
-  ProcessPagePriority = 39 
-  ProcessInstrumentationCallback = 40 
-  ProcessThreadStackAllocation = 41 
-  ProcessWorkingSetWatchEx = 42 
-  ProcessImageFileNameWin32 = 43 
-  ProcessImageFileMapping = 44 
-  ProcessAffinityUpdateMode = 45 
-  ProcessMemoryAllocationMode = 46 
-  ProcessGroupInformation = 47 
-  ProcessTokenVirtualizationEnabled = 48 
-  ProcessOwnerInformation = 49 
-  ProcessWindowInformation = 50 
-  ProcessHandleInformation = 51 
-  ProcessMitigationPolicy = 52 
-  ProcessDynamicFunctionTableInformation = 53 
-  ProcessHandleCheckingMode = 54 
-  ProcessKeepAliveCount = 55 
-  ProcessRevokeFileHandles = 56 
-  ProcessWorkingSetControl = 57 
-  ProcessHandleTable = 58 
-  ProcessCheckStackExtentsMode = 59 
-  ProcessCommandLineInformation = 60 
-  ProcessProtectionInformation = 61 
-  ProcessMemoryExhaustion = 62 
-  ProcessFaultInformation = 63 
-  ProcessTelemetryIdInformation = 64 
-  ProcessCommitReleaseInformation = 65 
-  ProcessReserved1Information = 66 
-  ProcessReserved2Information = 67 
-  ProcessSubsystemProcess = 68 
-  ProcessInPrivate = 70 
-  ProcessRaiseUMExceptionOnInvalidHandleClose = 71 
-  ProcessSubsystemInformation = 75 
-  ProcessWin32kSyscallFilterInformation = 79 
-  ProcessEnergyTrackingState = 82 
-  MaxProcessInfoClass = 83
+  ProcessBasicInformation EQU 0 
+  ProcessQuotaLimits EQU 1 
+  ProcessIoCounters EQU 2 
+  ProcessVmCounters EQU 3 
+  ProcessTimes EQU 4 
+  ProcessBasePriority EQU 5 
+  ProcessRaisePriority EQU 6 
+  ProcessDebugPort EQU 7 
+  ProcessExceptionPort EQU 8 
+  ProcessAccessToken EQU 9 
+  ProcessLdtInformation EQU 10 
+  ProcessLdtSize EQU 11 
+  ProcessDefaultHardErrorMode EQU 12 
+  ProcessIoPortHandlers EQU 13 
+  ProcessPooledUsageAndLimits EQU 14 
+  ProcessWorkingSetWatch EQU 15 
+  ProcessUserModeIOPL EQU 16 
+  ProcessEnableAlignmentFaultFixup EQU 17 
+  ProcessPriorityClass EQU 18 
+  ProcessWx86Information EQU 19 
+  ProcessHandleCount EQU 20 
+  ProcessAffinityMask EQU 21 
+  ProcessPriorityBoost EQU 22 
+  ProcessDeviceMap EQU 23 
+  ProcessSessionInformation EQU 24 
+  ProcessForegroundInformation EQU 25 
+  ProcessWow64Information EQU 26 
+  ProcessImageFileName EQU 27 
+  ProcessLUIDDeviceMapsEnabled EQU 28 
+  ProcessBreakOnTermination EQU 29 
+  ProcessDebugObjectHandle EQU 30 
+  ProcessDebugFlags EQU 31 
+  ProcessHandleTracing EQU 32 
+  ProcessIoPriority EQU 33 
+  ProcessExecuteFlags EQU 34 
+  ProcessTlsInformation EQU 35 
+  ProcessCookie EQU 36 
+  ProcessImageInformation EQU 37 
+  ProcessCycleTime EQU 38 
+  ProcessPagePriority EQU 39 
+  ProcessInstrumentationCallback EQU 40 
+  ProcessThreadStackAllocation EQU 41 
+  ProcessWorkingSetWatchEx EQU 42 
+  ProcessImageFileNameWin32 EQU 43 
+  ProcessImageFileMapping EQU 44 
+  ProcessAffinityUpdateMode EQU 45 
+  ProcessMemoryAllocationMode EQU 46 
+  ProcessGroupInformation EQU 47 
+  ProcessTokenVirtualizationEnabled EQU 48 
+  ProcessOwnerInformation EQU 49 
+  ProcessWindowInformation EQU 50 
+  ProcessHandleInformation EQU 51 
+  ProcessMitigationPolicy EQU 52 
+  ProcessDynamicFunctionTableInformation EQU 53 
+  ProcessHandleCheckingMode EQU 54 
+  ProcessKeepAliveCount EQU 55 
+  ProcessRevokeFileHandles EQU 56 
+  ProcessWorkingSetControl EQU 57 
+  ProcessHandleTable EQU 58 
+  ProcessCheckStackExtentsMode EQU 59 
+  ProcessCommandLineInformation EQU 60 
+  ProcessProtectionInformation EQU 61 
+  ProcessMemoryExhaustion EQU 62 
+  ProcessFaultInformation EQU 63 
+  ProcessTelemetryIdInformation EQU 64 
+  ProcessCommitReleaseInformation EQU 65 
+  ProcessReserved1Information EQU 66 
+  ProcessReserved2Information EQU 67 
+  ProcessSubsystemProcess EQU 68 
+  ProcessInPrivate EQU 70 
+  ProcessRaiseUMExceptionOnInvalidHandleClose EQU 71 
+  ProcessSubsystemInformation EQU 75 
+  ProcessWin32kSyscallFilterInformation EQU 79 
+  ProcessEnergyTrackingState EQU 82 
+  MaxProcessInfoClass EQU 83
   
   THREADINFOCLASS typedef SDWORD
-  ThreadBasicInformation = 0 
-  ThreadTimes = 1 
-  ThreadPriority = 2 
-  ThreadBasePriority = 3 
-  ThreadAffinityMask = 4 
-  ThreadImpersonationToken = 5 
-  ThreadDescriptorTableEntry = 6 
-  ThreadEnableAlignmentFaultFixup = 7 
-  ThreadEventPair_Reusable = 8 
-  ThreadQuerySetWin32StartAddress = 9 
-  ThreadZeroTlsCell = 10 
-  ThreadPerformanceCount = 11 
-  ThreadAmILastThread = 12 
-  ThreadIdealProcessor = 13 
-  ThreadPriorityBoost = 14 
-  ThreadSetTlsArrayAddress = 15 
-  ThreadIsIoPending = 16 
-  ThreadHideFromDebugger = 17 
-  ThreadBreakOnTermination = 18 
-  ThreadSwitchLegacyState = 19 
-  ThreadIsTerminated = 20 
-  ThreadLastSystemCall = 21 
-  ThreadIoPriority = 22 
-  ThreadCycleTime = 23 
-  ThreadPagePriority = 24 
-  ThreadActualBasePriority = 25 
-  ThreadTebInformation = 26 
-  ThreadCSwitchMon = 27 
-  ThreadCSwitchPmu = 28 
-  ThreadWow64Context = 29 
-  ThreadGroupInformation = 30 
-  ThreadUmsInformation = 31 
-  ThreadCounterProfiling = 32 
-  ThreadIdealProcessorEx = 33 
-  ThreadCpuAccountingInformation = 34 
-  ThreadSuspendCount = 35 
-  ThreadActualGroupAffinity = 41 
-  ThreadDynamicCodePolicyInfo = 42 
-  ThreadSubsystemInformation = 45 
-  MaxThreadInfoClass = 50 
+  ThreadBasicInformation EQU 0 
+  ThreadTimes EQU 1 
+  ThreadPriority EQU 2 
+  ThreadBasePriority EQU 3 
+  ThreadAffinityMask EQU 4 
+  ThreadImpersonationToken EQU 5 
+  ThreadDescriptorTableEntry EQU 6 
+  ThreadEnableAlignmentFaultFixup EQU 7 
+  ThreadEventPair_Reusable EQU 8 
+  ThreadQuerySetWin32StartAddress EQU 9 
+  ThreadZeroTlsCell EQU 10 
+  ThreadPerformanceCount EQU 11 
+  ThreadAmILastThread EQU 12 
+  ThreadIdealProcessor EQU 13 
+  ThreadPriorityBoost EQU 14 
+  ThreadSetTlsArrayAddress EQU 15 
+  ThreadIsIoPending EQU 16 
+  ThreadHideFromDebugger EQU 17 
+  ThreadBreakOnTermination EQU 18 
+  ThreadSwitchLegacyState EQU 19 
+  ThreadIsTerminated EQU 20 
+  ThreadLastSystemCall EQU 21 
+  ThreadIoPriority EQU 22 
+  ThreadCycleTime EQU 23 
+  ThreadPagePriority EQU 24 
+  ThreadActualBasePriority EQU 25 
+  ThreadTebInformation EQU 26 
+  ThreadCSwitchMon EQU 27 
+  ThreadCSwitchPmu EQU 28 
+  ThreadWow64Context EQU 29 
+  ThreadGroupInformation EQU 30 
+  ThreadUmsInformation EQU 31 
+  ThreadCounterProfiling EQU 32 
+  ThreadIdealProcessorEx EQU 33 
+  ThreadCpuAccountingInformation EQU 34 
+  ThreadSuspendCount EQU 35 
+  ThreadActualGroupAffinity EQU 41 
+  ThreadDynamicCodePolicyInfo EQU 42 
+  ThreadSubsystemInformation EQU 45 
+  MaxThreadInfoClass EQU 50 
   
   THREAD_CSWITCH_PMU_DISABLE equ <FALSE>
   THREAD_CSWITCH_PMU_ENABLE equ <TRUE>
@@ -1297,8 +1297,8 @@ PCLIENT_ID typedef PTR CLIENT_ID
   MAX_HW_COUNTERS equ 16
   THREAD_PROFILING_FLAG_DISPATCH equ 00000001h
   HARDWARE_COUNTER_TYPE typedef SDWORD
-  PMCCounter = 0
-  MaxHardwareCounterType = 1
+  PMCCounter EQU 0
+  MaxHardwareCounterType EQU 1
   
   PHARDWARE_COUNTER_TYPE typedef ptr HARDWARE_COUNTER_TYPE
   
@@ -1311,21 +1311,21 @@ PCLIENT_ID typedef PTR CLIENT_ID
   PHARDWARE_COUNTER typedef ptr HARDWARE_COUNTER
   
   PROCESS_MITIGATION_POLICY typedef SDWORD
-  ProcessDEPPolicy = 0
-  ProcessASLRPolicy = 1
-  ProcessDynamicCodePolicy = 2
-  ProcessStrictHandleCheckPolicy = 3
-  ProcessSystemCallDisablePolicy = 4
-  ProcessMitigationOptionsMask = 5
-  ProcessExtensionPointDisablePolicy = 6
-  ProcessControlFlowGuardPolicy = 7
-  ProcessSignaturePolicy = 8
-  ProcessFontDisablePolicy = 9
-  ProcessImageLoadPolicy = 10
-  ProcessSystemCallFilterPolicy = 11
-  ProcessPayloadRestrictionPolicy = 12
-  ProcessChildProcessPolicy = 13
-  MaxProcessMitigationPolicy = 14
+  ProcessDEPPolicy EQU 0
+  ProcessASLRPolicy EQU 1
+  ProcessDynamicCodePolicy EQU 2
+  ProcessStrictHandleCheckPolicy EQU 3
+  ProcessSystemCallDisablePolicy EQU 4
+  ProcessMitigationOptionsMask EQU 5
+  ProcessExtensionPointDisablePolicy EQU 6
+  ProcessControlFlowGuardPolicy EQU 7
+  ProcessSignaturePolicy EQU 8
+  ProcessFontDisablePolicy EQU 9
+  ProcessImageLoadPolicy EQU 10
+  ProcessSystemCallFilterPolicy EQU 11
+  ProcessPayloadRestrictionPolicy EQU 12
+  ProcessChildProcessPolicy EQU 13
+  MaxProcessMitigationPolicy EQU 14
   
   PPROCESS_MITIGATION_POLICY typedef ptr PROCESS_MITIGATION_POLICY
   
@@ -1551,9 +1551,9 @@ PCLIENT_ID typedef PTR CLIENT_ID
 
   PKERNEL_USER_TIMES typedef ptr KERNEL_USER_TIMES
   SUBSYSTEM_INFORMATION_TYPE typedef SDWORD
-  SubsystemInformationTypeWin32 = 0 
-  SubsystemInformationTypeWSL = 1 
-  MaxSubsystemInformationType = 2
+  SubsystemInformationTypeWin32 EQU 0 
+  SubsystemInformationTypeWSL EQU 1 
+  MaxSubsystemInformationType EQU 2
   
   PSUBSYSTEM_INFORMATION_TYPE typedef ptr SUBSYSTEM_INFORMATION_TYPE
   
@@ -1586,16 +1586,18 @@ PCLIENT_ID typedef PTR CLIENT_ID
       KeRaiseIrqlToSynchLevel proto fastcall
 
 
-M128A  STRUCT
-	qwLow     ULONGLONG ?
-	qwHigh    LONGLONG ?
-M128A ENDS
-PM128A TYPEDEF PTR M128A
-
-KSPIN_LOCK_QUEUE STRUCT
-    Next    ULONG ?
-KSPIN_LOCK_QUEUE ends
-PKSPIN_LOCK_QUEUE TYPEDEF PTR KSPIN_LOCK_QUEUE
+    M128A  STRUCT
+    	qwLow     ULONGLONG ?
+    	qwHigh    LONGLONG ?
+    M128A ENDS
+    PM128A TYPEDEF PTR M128A
+    
+    IFNDEF KSPIN_LOCK_QUEUE
+    KSPIN_LOCK_QUEUE STRUCT
+        Next    ULONG ?
+    KSPIN_LOCK_QUEUE ends
+    ENDIF
+    PKSPIN_LOCK_QUEUE TYPEDEF PTR KSPIN_LOCK_QUEUE
 
 
     PCR_MINOR_VERSION equ 1
@@ -1785,9 +1787,9 @@ PXMM_SAVE_AREA32 TYPEDEF PTR XMM_SAVE_AREA32
       RESULT_NEGATIVE equ 1
       RESULT_POSITIVE equ 2
       INTERLOCKED_RESULT typedef SDWORD
-      ResultNegative = RESULT_NEGATIVE 
-      ResultZero = RESULT_ZERO 
-      ResultPositive = RESULT_POSITIVE 
+      ResultNegative EQU RESULT_NEGATIVE 
+      ResultZero EQU RESULT_ZERO 
+      ResultPositive EQU RESULT_POSITIVE 
 
       _ExInterlockedExchangeUlong proto fastcall :PULONG, :DWORD
 
@@ -1801,8 +1803,8 @@ PXMM_SAVE_AREA32 TYPEDEF PTR XMM_SAVE_AREA32
 
 
   SYSTEM_FIRMWARE_TABLE_ACTION typedef SDWORD
-  SystemFirmwareTable_Enumerate = 0
-  SystemFirmwareTable_Get = 1
+  SystemFirmwareTable_Enumerate EQU 0
+  SystemFirmwareTable_Get EQU 1
 
   ANYSIZE_ARRAY EQU 1
   
@@ -1830,8 +1832,8 @@ PXMM_SAVE_AREA32 TYPEDEF PTR XMM_SAVE_AREA32
   proto_PTIMER_APC_ROUTINE typedef proto fastcall :PVOID, :DWORD, :SDWORD
   PTIMER_APC_ROUTINE typedef ptr proto_PTIMER_APC_ROUTINE
   TIMER_SET_INFORMATION_CLASS typedef SDWORD
-  TimerSetCoalescableTimer = 0
-  MaxTimerInfoClass = 1
+  TimerSetCoalescableTimer EQU 0
+  MaxTimerInfoClass EQU 1
   
 
     TIMER_SET_COALESCABLE_TIMER_INFO struct
@@ -2110,48 +2112,48 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   ifndef _ARC_DDK_
     _ARC_DDK_ equ <>
     CONFIGURATION_TYPE typedef SDWORD
-    ArcSystem = 0
-    CentralProcessor = 1
-    FloatingPointProcessor = 2
-    PrimaryIcache = 3
-    PrimaryDcache = 4
-    SecondaryIcache = 5
-    SecondaryDcache = 6
-    SecondaryCache = 7
-    EisaAdapter = 8
-    TcAdapter = 9
-    ScsiAdapter = 10
-    DtiAdapter = 11
-    MultiFunctionAdapter = 12
-    DiskController = 13
-    TapeController = 14
-    CdromController = 15
-    WormController = 16
-    SerialController = 17
-    NetworkController = 18
-    DisplayController = 19
-    ParallelController = 20
-    PointerController = 21
-    KeyboardController = 22
-    AudioController = 23
-    OtherController = 24
-    DiskPeripheral = 25
-    FloppyDiskPeripheral = 26
-    TapePeripheral = 27
-    ModemPeripheral = 28
-    MonitorPeripheral = 29
-    PrinterPeripheral = 30
-    PointerPeripheral = 31
-    KeyboardPeripheral = 32
-    TerminalPeripheral = 33
-    OtherPeripheral = 34
-    LinePeripheral = 35
-    NetworkPeripheral = 36
-    SystemMemory = 37
-    DockingInformation = 38
-    RealModeIrqRoutingTable = 39
-    RealModePCIEnumeration = 40
-    MaximumType = 41
+    ArcSystem EQU 0
+    CentralProcessor EQU 1
+    FloatingPointProcessor EQU 2
+    PrimaryIcache EQU 3
+    PrimaryDcache EQU 4
+    SecondaryIcache EQU 5
+    SecondaryDcache EQU 6
+    SecondaryCache EQU 7
+    EisaAdapter EQU 8
+    TcAdapter EQU 9
+    ScsiAdapter EQU 10
+    DtiAdapter EQU 11
+    MultiFunctionAdapter EQU 12
+    DiskController EQU 13
+    TapeController EQU 14
+    CdromController EQU 15
+    WormController EQU 16
+    SerialController EQU 17
+    NetworkController EQU 18
+    DisplayController EQU 19
+    ParallelController EQU 20
+    PointerController EQU 21
+    KeyboardController EQU 22
+    AudioController EQU 23
+    OtherController EQU 24
+    DiskPeripheral EQU 25
+    FloppyDiskPeripheral EQU 26
+    TapePeripheral EQU 27
+    ModemPeripheral EQU 28
+    MonitorPeripheral EQU 29
+    PrinterPeripheral EQU 30
+    PointerPeripheral EQU 31
+    KeyboardPeripheral EQU 32
+    TerminalPeripheral EQU 33
+    OtherPeripheral EQU 34
+    LinePeripheral EQU 35
+    NetworkPeripheral EQU 36
+    SystemMemory EQU 37
+    DockingInformation EQU 38
+    RealModeIrqRoutingTable EQU 39
+    RealModePCIEnumeration EQU 40
+    MaximumType EQU 41
     
     PCONFIGURATION_TYPE typedef ptr CONFIGURATION_TYPE
     
@@ -2265,11 +2267,11 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
   PMM_ROTATE_COPY_CALLBACK_FUNCTION typedef ptr proto_PMM_ROTATE_COPY_CALLBACK_FUNCTION
   MM_ROTATE_DIRECTION typedef SDWORD
-  MmToFrameBuffer = 0
-  MmToFrameBufferNoCopy = 1
-  MmToRegularMemory = 2
-  MmToRegularMemoryNoCopy = 3
-  MmMaximumRotateDirection = 4
+  MmToFrameBuffer EQU 0
+  MmToFrameBufferNoCopy EQU 1
+  MmToRegularMemory EQU 2
+  MmToRegularMemoryNoCopy EQU 3
+  MmMaximumRotateDirection EQU 4
   
   PMM_ROTATE_DIRECTION typedef ptr MM_ROTATE_DIRECTION
   
@@ -2344,7 +2346,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
 
     PSCREATEPROCESSNOTIFYTYPE typedef SDWORD
-    PsCreateProcessNotifySubsystems = 0 
+    PsCreateProcessNotifySubsystems EQU 0 
     
     PsSetCreateProcessNotifyRoutineEx2 proto fastcall :PSCREATEPROCESSNOTIFYTYPE, :PVOID, :BOOLEAN
 
@@ -2354,8 +2356,8 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
 
     PSCREATETHREADNOTIFYTYPE typedef SDWORD
-    PsCreateThreadNotifyNonSystem = 0 
-    PsCreateThreadNotifySubsystems = 1 
+    PsCreateThreadNotifyNonSystem EQU 0 
+    PsCreateThreadNotifySubsystems EQU 1 
     
     PsSetCreateThreadNotifyRoutineEx proto fastcall :PSCREATETHREADNOTIFYTYPE, :PVOID
 
@@ -2489,27 +2491,30 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
     PsGetParentSilo proto fastcall :PEJOB
 
-;typedef enum _INTERFACE_TYPE
-     InterfaceTypeUndefined = -1
-     Internal = 0
-     Isa = 1
-     Eisa = 2
-     MicroChannel = 3
-     TurboChannel = 4
-     PCIBus = 5
-     VMEBus = 6
-     NuBus = 7
-     PCMCIABus = 8
-     CBus = 9
-     MPIBus = 10
-     MPSABus = 11
-     ProcessorInternal = 12
-     InternalPowerBus = 13
-     PNPISABus = 14
-     PNPBus = 15
-     MaximumInterfaceType = 16
-         
-    INTERFACE_TYPE TYPEDEF QWORD
+    ; enum _INTERFACE_TYPE
+    InterfaceTypeUndefined EQU - 1 
+    Internal EQU 2
+    Isa EQU 3
+    Eisa EQU 4
+    MicroChannel EQU 5
+    TurboChannel EQU 6
+    PCIBus EQU 7
+    VMEBus EQU 8
+    NuBus EQU 9
+    PCMCIABus EQU 10
+    CBus EQU 11
+    MPIBus EQU 12
+    MPSABus EQU 13
+    ProcessorInternal EQU 14
+    InternalPowerBus EQU 15
+    PNPISABus EQU 16
+    PNPBus EQU 17
+    Vmcs EQU 18
+    ACPIBus EQU 19
+    MaximumInterfaceType EQU 20
+
+    INTERFACE_TYPE TYPEDEF SDWORD
+    PINTERFACE_TYPE typedef ptr INTERFACE_TYPE
 
   IRP_MN_QUERY_DIRECTORY equ 01h
   IRP_MN_NOTIFY_CHANGE_DIRECTORY equ 02h
@@ -2547,14 +2552,15 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   proto_PIO_QUERY_DEVICE_ROUTINE typedef proto fastcall :PVOID, :PUNICODE_STRING, :INTERFACE_TYPE, :DWORD, :ptr PKEY_VALUE_FULL_INFORMATION, :CONFIGURATION_TYPE, :DWORD, :ptr PKEY_VALUE_FULL_INFORMATION, :CONFIGURATION_TYPE, :DWORD, :ptr PKEY_VALUE_FULL_INFORMATION
   PIO_QUERY_DEVICE_ROUTINE typedef ptr proto_PIO_QUERY_DEVICE_ROUTINE
   IO_QUERY_DEVICE_DATA_FORMAT typedef SDWORD
-  IoQueryDeviceIdentifier = 0 
-  IoQueryDeviceConfigurationData = 1
-  IoQueryDeviceComponentInformation = 2
-  IoQueryDeviceMaxData = 3
+  IoQueryDeviceIdentifier EQU 0 
+  IoQueryDeviceConfigurationData EQU 1
+  IoQueryDeviceComponentInformation EQU 2
+  IoQueryDeviceMaxData EQU 3
   
   PIO_QUERY_DEVICE_DATA_FORMAT typedef ptr IO_QUERY_DEVICE_DATA_FORMAT
 
-    KSPIN_LOCK				typedef	DWORD
+    KSPIN_LOCK				typedef	ULONG_PTR
+    IFNDEF KDEVICE_QUEUE
     KDEVICE_QUEUE STRUCT	; sizeof = 14h
     	fwType			WORD		IO_TYPE_DEVICE_QUEUE; 14h
     	cbSize			WORD		?					; cb
@@ -2563,6 +2569,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Busy			BOOLEAN		?
     					db			3 dup(?)			; padding
     KDEVICE_QUEUE ENDS
+    ENDIF
     PKDEVICE_QUEUE	typedef PTR KDEVICE_QUEUE
 
   
@@ -2776,24 +2783,24 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
     BDCB_IMAGEFLAGS_FAILED_CODE_INTEGRITY equ ( 1 shl 0 )
     BDCB_CALLBACK_TYPE typedef SDWORD
-    BdCbStatusUpdate = 0
-    BdCbInitializeImage = 1
+    BdCbStatusUpdate EQU 0
+    BdCbInitializeImage EQU 1
     
     PBDCB_CALLBACK_TYPE typedef ptr BDCB_CALLBACK_TYPE
     
     BDCB_CLASSIFICATION typedef SDWORD
-    BdCbClassificationUnknownImage = 0
-    BdCbClassificationKnownGoodImage = 1
-    BdCbClassificationKnownBadImage = 2
-    BdCbClassificationKnownBadImageBootCritical = 3
-    BdCbClassificationEnd = 4
+    BdCbClassificationUnknownImage EQU 0
+    BdCbClassificationKnownGoodImage EQU 1
+    BdCbClassificationKnownBadImage EQU 2
+    BdCbClassificationKnownBadImageBootCritical EQU 3
+    BdCbClassificationEnd EQU 4
     
     PBDCB_CLASSIFICATION typedef ptr BDCB_CLASSIFICATION
     
     BDCB_STATUS_UPDATE_TYPE typedef SDWORD
-    BdCbStatusPrepareForDependencyLoad = 0
-    BdCbStatusPrepareForDriverLoad = 1
-    BdCbStatusPrepareForUnload = 2
+    BdCbStatusPrepareForDependencyLoad EQU 0
+    BdCbStatusPrepareForDriverLoad EQU 1
+    BdCbStatusPrepareForUnload EQU 2
     
     PBDCB_STATUS_UPDATE_TYPE typedef ptr BDCB_STATUS_UPDATE_TYPE
     
@@ -2856,16 +2863,16 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PPNP_LOCATION_INTERFACE typedef ptr PNP_LOCATION_INTERFACE
   
   ARBITER_ACTION typedef SDWORD
-  ArbiterActionTestAllocation = 0
-  ArbiterActionRetestAllocation = 1
-  ArbiterActionCommitAllocation = 2
-  ArbiterActionRollbackAllocation = 3
-  ArbiterActionQueryAllocatedResources = 4
-  ArbiterActionWriteReservedResources = 5
-  ArbiterActionQueryConflict = 6
-  ArbiterActionQueryArbitrate = 7
-  ArbiterActionAddReserved = 8
-  ArbiterActionBootAllocation = 9
+  ArbiterActionTestAllocation EQU 0
+  ArbiterActionRetestAllocation EQU 1
+  ArbiterActionCommitAllocation EQU 2
+  ArbiterActionRollbackAllocation EQU 3
+  ArbiterActionQueryAllocatedResources EQU 4
+  ArbiterActionWriteReservedResources EQU 5
+  ArbiterActionQueryConflict EQU 6
+  ArbiterActionQueryArbitrate EQU 7
+  ArbiterActionAddReserved EQU 8
+  ArbiterActionBootAllocation EQU 9
   
   PARBITER_ACTION typedef ptr ARBITER_ACTION
 
@@ -2893,7 +2900,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ;
     ;      Mdl->StartVa | Mdl->ByteOffset
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
+    IFNDEF MDL
     MDL STRUCT			; sizeof= 1Ch
     	Next			PVOID	?	; PTR MDL
     	woSize			WORD	?	; 04h original name Size
@@ -2904,6 +2911,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	ByteCount		DWORD	?	; 14h
     	ByteOffset		DWORD	?	; 18h
     MDL ENDS
+    ENDIF
     PMDL typedef PTR MDL
     
     MDL_MAPPED_TO_SYSTEM_VA     equ 0001h
@@ -2914,15 +2922,19 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     MDL_PARTIAL_HAS_BEEN_MAPPED equ 0020h
     MDL_IO_PAGE_READ            equ 0040h
     MDL_WRITE_OPERATION         equ 0080h
-    MDL_PARENT_MAPPED_SYSTEM_VA equ 0100h
+    MDL_LOCKED_PAGE_TABLES      equ 0100h
+    MDL_PARENT_MAPPED_SYSTEM_VA equ MDL_LOCKED_PAGE_TABLES
+    MDL_FREE_EXTRA_PTES         equ 0200h
+    MDL_DESCRIBES_AWE           equ 0400h
     MDL_LOCK_HELD               equ 0200h
     MDL_PHYSICAL_VIEW           equ 0400h
     MDL_IO_SPACE                equ 0800h
     MDL_NETWORK_HEADER          equ 1000h
     MDL_MAPPING_CAN_FAIL        equ 2000h
-    MDL_ALLOCATED_MUST_SUCCEED  equ 4000h
-    
-    MDL_MAPPING_FLAGS equ MDL_MAPPED_TO_SYSTEM_VA or MDL_PAGES_LOCKED or MDL_SOURCE_IS_NONPAGED_POOL or MDL_PARTIAL_HAS_BEEN_MAPPED or MDL_PARENT_MAPPED_SYSTEM_VA or MDL_LOCK_HELD or MDL_SYSTEM_VA or MDL_IO_SPACE
+    MDL_PAGE_CONTENTS_INVARIANT equ 4000h
+    MDL_ALLOCATED_MUST_SUCCEED  equ MDL_PAGE_CONTENTS_INVARIANT
+    MDL_INTERNAL                equ 8000h
+    MDL_MAPPING_FLAGS           equ (MDL_MAPPED_TO_SYSTEM_VA or MDL_PAGES_LOCKED or MDL_SOURCE_IS_NONPAGED_POOL or MDL_PARTIAL_HAS_BEEN_MAPPED or MDL_PARENT_MAPPED_SYSTEM_VA or MDL_LOCK_HELD or MDL_SYSTEM_VA or MDL_IO_SPACE)
     
 
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -3033,18 +3045,27 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ; (NtReleaseSemaphore)
     
     SEMAPHORE_INCREMENT		equ 1
-
-    IO_STATUS_BLOCK STRUCT		; sizeof = 8
+    
+    IFNDEF IO_STATUS_BLOCK
+    IO_STATUS_BLOCK STRUCT
     	Status			NTSTATUS	?
-    	Information		DWORD		?
+    	Information		ULONG_PTR	?
     IO_STATUS_BLOCK ENDS
+    ENDIF
     PIO_STATUS_BLOCK typedef PTR IO_STATUS_BLOCK
 
+    IFNDEF 
+    IO_STATUS_BLOCK32 struct
+    Status NTSTATUS ?
+    Information DWORD ?
+    IO_STATUS_BLOCK32 ends
+    ENDIF
+    PIO_STATUS_BLOCK32 typedef ptr IO_STATUS_BLOCK32
 
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ; Asynchronous Procedure Call (APC) object
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
+    IFNDEF KAPC
     KAPC STRUCT			; sizeof = 30h
     	fwType			WORD		IO_TYPE_APC	; 12h
     	cbSize			WORD		?			; cb
@@ -3065,6 +3086,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Inserted		BOOLEAN		?
     					db			?			; padding
     KAPC ENDS
+    ENDIF
     PKAPC typedef PTR KAPC
 
     ; Define the format of a completion message.
@@ -3082,7 +3104,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ; 
     ; N.B. The size field contains the number of dwords in the structure.
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+    IFNDEF DISPATCHER_HEADER
     DISPATCHER_HEADER STRUCT		; sizeof = 10h
     	byType			BYTE		?	; DISP_TYPE_* (original name Type)
     	Absolute		BYTE		?
@@ -3091,7 +3113,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	SignalState		DWORD		?
     	WaitListHead	LIST_ENTRY	<>
     DISPATCHER_HEADER ENDS
-
+    ENDIF
+    PDISPATCHER_HEADER typedef ptr DISPATCHER_HEADER
+    
+    IFNDEF KWAIT_BLOCK
     KWAIT_BLOCK STRUCT		; sizeof = 18h
     	WaitListEntry	LIST_ENTRY	<>
     	Thread			PVOID		?	; PTR KTHREAD
@@ -3100,6 +3125,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	WaitKey			WORD		?
     	WaitType		WORD		?
     KWAIT_BLOCK ENDS
+    ENDIF
     PKWAIT_BLOCK typedef PTR KWAIT_BLOCK
 
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -3110,7 +3136,8 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Header	DISPATCHER_HEADER	<>
     KEVENT ENDS
     PKEVENT typedef PTR KEVENT
-
+    
+    IFNDEF KDEVICE_QUEUE
     KDEVICE_QUEUE STRUCT	; sizeof = 14h
     	fwType			WORD		IO_TYPE_DEVICE_QUEUE; 14h
     	cbSize			WORD		?					; cb
@@ -3119,16 +3146,20 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Busy			BOOLEAN		?
     					db			3 dup(?)			; padding
     KDEVICE_QUEUE ENDS
+    ENDIF
     PKDEVICE_QUEUE	typedef PTR KDEVICE_QUEUE
     
+    IFNDEF
     KDEVICE_QUEUE_ENTRY STRUCT	; sizeof = 10h
     	DeviceListEntry	LIST_ENTRY	<>
     	SortKey		DWORD		?
     	Inserted	BOOLEAN		?
     				db			3 dup(?)			; padding
     KDEVICE_QUEUE_ENTRY ENDS
+    ENDIF
     PKDEVICE_QUEUE_ENTRY typedef PTR KDEVICE_QUEUE_ENTRY
-
+    
+    IFNDEF KDPC
     KDPC STRUCT			; sizeof = 20h
     	woType			WORD		IO_TYPE_DPC	; 13h (original name Type)
     	Number			BYTE		?
@@ -3140,8 +3171,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	SystemArgument2	QWORD		?
     	DpcData			QWORD		?			; (original Lock)
     KDPC ENDS
+    ENDIF
     PKDPC typedef PTR KDPC
 
+    IFNDEF WAIT_CONTEXT_BLOCK
     WAIT_CONTEXT_BLOCK STRUCT	; sizeof = 28h
     	WaitQueueEntry			KDEVICE_QUEUE_ENTRY	<>
     	DeviceRoutine			QWORD				?	; PDRIVER_CONTROL
@@ -3151,10 +3184,12 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	CurrentIrp				QWORD				?
     	BufferChainingDpc		QWORD				?	; PKDPC
     WAIT_CONTEXT_BLOCK ENDS
+    ENDIF
     PWAIT_CONTEXT_BLOCK typedef PTR WAIT_CONTEXT_BLOCK
 
     MAXIMUM_VOLUME_LABEL_LENGTH	equ (32 * sizeof(WCHAR))	; 32 characters
     
+    IFNDEF VPB
     VPB STRUCT				; sizeof = 58h
     	fwType				WORD			IO_TYPE_VPB	; 0Ah
     	cbSize				WORD			?			; cb
@@ -3166,6 +3201,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	ReferenceCount		DWORD			?
     	VolumeLabel			WORD			(MAXIMUM_VOLUME_LABEL_LENGTH / (sizeof WCHAR)) dup(?)
     VPB ENDS
+    ENDIF
     PVPB typedef PTR VPB
 
 
@@ -3209,6 +3245,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     FO_FILE_OPEN_CANCELLED          equ 00200000h
     FO_VOLUME_OPEN                  equ 00400000h
     
+    IFNDEF FILE_OBJECT
     FILE_OBJECT STRUCT		; sizeof = 70h
     	fwType				WORD				IO_TYPE_FILE	; 5
     	cbSize				WORD				?				; cb
@@ -3235,13 +3272,17 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Busy				DWORD				?				; 44h
     	LastLock			PVOID				?				; 48h
     	kevLock				KEVENT				<>				; 4Ch Lock is masm reserved symbol
-    	Event				KEVENT				<>				; 5Ch
+    	Event_			    KEVENT				<>				; 5Ch
     	CompletionContext	PIO_COMPLETION_CONTEXT	?			; 6Ch
+        IrpListLock         KSPIN_LOCK ?
+        IrpList             LIST_ENTRY <>
+        FileObjectExtension PVOID ?    	
     FILE_OBJECT ENDS
+    ENDIF
     PFILE_OBJECT typedef PTR FILE_OBJECT
 
 
-  
+    IFNDEF DEVICE_OBJECT
     DEVICE_OBJECT STRUCT	; sizeof = 0B8h
     	fwType				WORD			IO_TYPE_DEVICE	; 3
     	cbSize				WORD			?	; 02h
@@ -3279,25 +3320,29 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	DeviceObjectExtension	QWORD		?	; 0B0h PDEVOBJ_EXTENSION
     	Reserved				PVOID		?	; 0B4h
     DEVICE_OBJECT ENDS
+    ENDIF
     PDEVICE_OBJECT TYPEDEF PTR DEVICE_OBJECT
 
+    IFNDEF DEVOBJ_EXTENSION
     DEVOBJ_EXTENSION STRUCT		; sizeof = 8h
     	woType			WORD			IO_TYPE_DEVICE_OBJECT_EXTENSION	; 00h (original name Type)
     	cbSize			WORD			?						; 02h (original name Size)
     	; Public part of the DeviceObjectExtension structure
     	DeviceObject	PDEVICE_OBJECT	?						; 04h owning device object
-    
-    ; kd displays this additional fields (sizeof=24h))
-    ;+08 uint32   PowerFlags
-    ;+0c  *Dope
-    ;+10 uint32   ExtensionFlags
-    ;+14 void     *DeviceNode
-    ;+18 struct   _DEVICE_OBJECT *AttachedTo
-    ;+1c struct   _LIST_ENTRY FileObjectList
-    ;+1c    struct   _LIST_ENTRY *Flink
-    ;+20    struct   _LIST_ENTRY *Blink
-    
+        PowerFlags DWORD ?
+        Dope POINTER ?
+        ExtensionFlags DWORD ?
+        DeviceNode PVOID ?
+        AttachedTo PDEVICE_OBJECT ?
+        StartIoCount SDWORD ?
+        StartIoKey SDWORD ?
+        StartIoFlags DWORD ?
+        Vpb PVPB ?
+        DependencyNode PVOID ?
+        InterruptContext PVOID ?
+        VerifierContext PVOID ?
     DEVOBJ_EXTENSION ENDS
+    ENDIF
     PDEVOBJ_EXTENSION typedef PTR DEVOBJ_EXTENSION
   
     ; Define I/O system data structure type codes.  Each major data structure in
@@ -3359,14 +3404,59 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     IRP_MJ_PNP						equ 1Bh
     IRP_MJ_PNP_POWER				equ IRP_MJ_PNP	; Obsolete....
     IRP_MJ_MAXIMUM_FUNCTION			equ 1Bh
+    IRP_MJ_SCSI                     equ IRP_MJ_INTERNAL_DEVICE_CONTROL
 
+    IRP_MN_SCSI_CLASS               equ 01h
+    IRP_MN_START_DEVICE             equ 00h
+    IRP_MN_QUERY_REMOVE_DEVICE      equ 01h
+    IRP_MN_REMOVE_DEVICE            equ 02h
+    IRP_MN_CANCEL_REMOVE_DEVICE     equ 03h
+    IRP_MN_STOP_DEVICE              equ 04h
+    IRP_MN_QUERY_STOP_DEVICE        equ 05h
+    IRP_MN_CANCEL_STOP_DEVICE       equ 06h
+    IRP_MN_QUERY_DEVICE_RELATIONS   equ 07h
+    IRP_MN_QUERY_INTERFACE          equ 08h
+    IRP_MN_QUERY_CAPABILITIES       equ 09h
+    IRP_MN_QUERY_RESOURCES          equ 0Ah
+    IRP_MN_QUERY_RESOURCE_REQUIREMENTS equ 0Bh
+    IRP_MN_QUERY_DEVICE_TEXT        equ 0Ch
+    IRP_MN_FILTER_RESOURCE_REQUIREMENTS equ 0Dh
+    IRP_MN_READ_CONFIG              equ 0Fh
+    IRP_MN_WRITE_CONFIG             equ 10h
+    IRP_MN_EJECT                    equ 11h
+    IRP_MN_SET_LOCK                 equ 12h
+    IRP_MN_QUERY_ID                 equ 13h
+    IRP_MN_QUERY_PNP_DEVICE_STATE   equ 14h
+    IRP_MN_QUERY_BUS_INFORMATION    equ 15h
+    IRP_MN_DEVICE_USAGE_NOTIFICATION equ 16h
+    IRP_MN_SURPRISE_REMOVAL         equ 17h
+    IRP_MN_DEVICE_ENUMERATED        equ 19h
+    IRP_MN_WAIT_WAKE                equ 00h
+    IRP_MN_POWER_SEQUENCE           equ 01h
+    IRP_MN_SET_POWER                equ 02h
+    IRP_MN_QUERY_POWER              equ 03h
+    IRP_MN_QUERY_ALL_DATA           equ 00h
+    IRP_MN_QUERY_SINGLE_INSTANCE    equ 01h
+    IRP_MN_CHANGE_SINGLE_INSTANCE   equ 02h
+    IRP_MN_CHANGE_SINGLE_ITEM       equ 03h
+    IRP_MN_ENABLE_EVENTS            equ 04h
+    IRP_MN_DISABLE_EVENTS           equ 05h
+    IRP_MN_ENABLE_COLLECTION        equ 06h
+    IRP_MN_DISABLE_COLLECTION       equ 07h
+    IRP_MN_REGINFO                  equ 08h
+    IRP_MN_EXECUTE_METHOD           equ 09h
+    IRP_MN_REGINFO_EX               equ 0bh
+
+    PDRIVER_ADD_DEVICE typedef QWORD
+
+    IFNDEF DRIVER_EXTENSION
     DRIVER_EXTENSION STRUCT		; sizeof = 14h
     	; Back pointer to Driver Object
-    	DriverObject	PVOID			?	; PDRIVER_OBJECT
+    	DriverObject	POINTER			?	; PDRIVER_OBJECT
     	; The AddDevice entry point is called by the Plug & Play manager
     	; to inform the driver when a new device instance arrives that this
     	; driver must control.
-    	AddDevice		PVOID			?	; 04h PDRIVER_ADD_DEVICE
+    	AddDevice		PDRIVER_ADD_DEVICE			?	; 04h PDRIVER_ADD_DEVICE
     	; The count field is used to count the number of times the driver has
     	; had its registered reinitialization routine invoked.
     	Count			DWORD			?	; 08h
@@ -3376,10 +3466,16 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	; Note: any new shared fields get added here.
     ; kd displays additional field
     ;+14 struct   _IO_CLIENT_EXTENSION *ClientDriverExtension
-    
+        ClientDriverExtension QWORD ? ; ptr to IO_CLIENT_EXTENSION 
+        FsFilterCallbacks QWORD ? ; ptr to FS_FILTER_CALLBACKS 
+        KseCallbacks QWORD ?
+        DvCallbacks QWORD ?
+        VerifierContext QWORD ?
     DRIVER_EXTENSION ENDS
+    ENDIF
     PDRIVER_EXTENSION typedef PTR DRIVER_EXTENSION
 
+    IFNDEF DRIVER_OBJECT
     DRIVER_OBJECT STRUCT	; sizeof= 0A8h
     	fwType			WORD			IO_TYPE_DRIVER	; 4
     	cbSize			WORD			?			; cb
@@ -3416,6 +3512,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	DriverUnload	PVOID			?
     	MajorFunction	PVOID			(IRP_MJ_MAXIMUM_FUNCTION + 1) dup(?)
     DRIVER_OBJECT ENDS
+    ENDIF
     PDRIVER_OBJECT typedef PTR DRIVER_OBJECT
   
   
@@ -3452,6 +3549,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ; I/O Request Packet (IRP) definition
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     
+    IFNDEF _IRP
     _IRP STRUCT			; sizeof = 70h
     	fwType			WORD	?
     	cbSize			WORD	?	; 02h
@@ -3633,9 +3731,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	ENDS	;Tail
     
     _IRP ENDS
+    ENDIF
     PIRP typedef PTR _IRP
   
-
+    IFNDEF IO_STACK_LOCATION
     IO_STACK_LOCATION STRUCT	; sizeof = 24h
     	MajorFunction		BYTE	?	; 00h
     	MinorFunction		BYTE	?	; 01h
@@ -3748,6 +3847,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Context				PVOID	?
     
     IO_STACK_LOCATION ENDS
+    ENDIF
     PIO_STACK_LOCATION typedef PTR IO_STACK_LOCATION
 
 
@@ -3928,61 +4028,102 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     FILE_CHARACTERISTICS_PROPAGATED equ FILE_REMOVABLE_MEDIA or FILE_READ_ONLY_DEVICE or FILE_FLOPPY_DISKETTE or FILE_WRITE_ONCE_MEDIA or FILE_DEVICE_SECURE_OPEN
   
 
-    ;typedef enum _FILE_INFORMATION_CLASS {
-        FileDirectoryInformation      equ 1
-        FileFullDirectoryInformation  equ 2
-        FileBothDirectoryInformation  equ 3
-        FileBasicInformation          equ 4  ; wdm
-        FileStandardInformation       equ 5  ; wdm
-        FileInternalInformation       equ 6
-        FileEaInformation             equ 7
-        FileAccessInformation         equ 8
-        FileNameInformation           equ 9
-        FileRenameInformation         equ 10
-        FileLinkInformation           equ 11
-        FileNamesInformation          equ 12
-        FileDispositionInformation    equ 13
-        FilePositionInformation       equ 14 ; wdm
-        FileFullEaInformation         equ 15
-        FileModeInformation           equ 16
-        FileAlignmentInformation      equ 17
-        FileAllInformation            equ 18
-        FileAllocationInformation     equ 19
-        FileEndOfFileInformation      equ 20 ; wdm
-        FileAlternateNameInformation  equ 21
-        FileStreamInformation         equ 22
-        FilePipeInformation           equ 23
-        FilePipeLocalInformation      equ 24
-        FilePipeRemoteInformation     equ 25
-        FileMailslotQueryInformation  equ 26
-        FileMailslotSetInformation    equ 27
-        FileCompressionInformation    equ 28
-        FileObjectIdInformation       equ 29
-        FileCompletionInformation     equ 30
-        FileMoveClusterInformation    equ 31
-        FileQuotaInformation          equ 32
-        FileReparsePointInformation   equ 33
-        FileNetworkOpenInformation    equ 34
-        FileAttributeTagInformation   equ 35
-        FileTrackingInformation       equ 36
-        FileMaximumInformation        equ 37
+    ; enum FILE_INFORMATION_CLASS
+    FileDirectoryInformation EQU 1 
+    FileFullDirectoryInformation EQU 2
+    FileBothDirectoryInformation EQU 3
+    FileBasicInformation EQU 4
+    FileStandardInformation EQU 5
+    FileInternalInformation EQU 6
+    FileEaInformation EQU 7
+    FileAccessInformation EQU 8
+    FileNameInformation EQU 9
+    FileRenameInformation EQU 10
+    FileLinkInformation EQU 11
+    FileNamesInformation EQU 12
+    FileDispositionInformation EQU 13
+    FilePositionInformation EQU 14
+    FileFullEaInformation EQU 15
+    FileModeInformation EQU 16
+    FileAlignmentInformation EQU 17
+    FileAllInformation EQU 18
+    FileAllocationInformation EQU 19
+    FileEndOfFileInformation EQU 20
+    FileAlternateNameInformation EQU 21
+    FileStreamInformation EQU 22
+    FilePipeInformation EQU 23
+    FilePipeLocalInformation EQU 24
+    FilePipeRemoteInformation EQU 25
+    FileMailslotQueryInformation EQU 26
+    FileMailslotSetInformation EQU 27
+    FileCompressionInformation EQU 28
+    FileObjectIdInformation EQU 29
+    FileCompletionInformation EQU 30
+    FileMoveClusterInformation EQU 31
+    FileQuotaInformation EQU 32
+    FileReparsePointInformation EQU 33
+    FileNetworkOpenInformation EQU 34
+    FileAttributeTagInformation EQU 35
+    FileTrackingInformation EQU 36
+    FileIdBothDirectoryInformation EQU 37
+    FileIdFullDirectoryInformation EQU 38
+    FileValidDataLengthInformation EQU 39
+    FileShortNameInformation EQU 40
+    FileIoCompletionNotificationInformation EQU 41
+    FileIoStatusBlockRangeInformation EQU 42
+    FileIoPriorityHintInformation EQU 43
+    FileSfioReserveInformation EQU 44
+    FileSfioVolumeInformation EQU 45
+    FileHardLinkInformation EQU 46
+    FileProcessIdsUsingFileInformation EQU 47
+    FileNormalizedNameInformation EQU 48
+    FileNetworkPhysicalNameInformation EQU 49
+    FileIdGlobalTxDirectoryInformation EQU 50
+    FileIsRemoteDeviceInformation EQU 51
+    FileUnusedInformation EQU 52
+    FileNumaNodeInformation EQU 53
+    FileStandardLinkInformation EQU 54
+    FileRemoteProtocolInformation EQU 55
+    FileRenameInformationBypassAccessCheck EQU 56
+    FileLinkInformationBypassAccessCheck EQU 57
+    FileVolumeNameInformation EQU 58
+    FileIdInformation EQU 59
+    FileIdExtdDirectoryInformation EQU 60
+    FileReplaceCompletionInformation EQU 61
+    FileHardLinkFullIdInformation EQU 62
+    FileIdExtdBothDirectoryInformation EQU 63
+    FileDispositionInformationEx EQU 64
+    FileRenameInformationEx EQU 65
+    FileRenameInformationExBypassAccessCheck EQU 66
+    FileDesiredStorageClassInformation EQU 67
+    FileStatInformation EQU 68
+    FileMemoryPartitionInformation EQU 69
+    FileStatLxInformation EQU 70
+    FileCaseSensitiveInformation EQU 71
+    FileMaximumInformation EQU 72
 
+    ; enum _FSINFOCLASS
+    FileFsVolumeInformation EQU 1 
+    FileFsLabelInformation EQU 2
+    FileFsSizeInformation EQU 3
+    FileFsDeviceInformation EQU 4
+    FileFsAttributeInformation EQU 5
+    FileFsControlInformation EQU 6
+    FileFsFullSizeInformation EQU 7
+    FileFsObjectIdInformation EQU 8
+    FileFsDriverPathInformation EQU 9
+    FileFsVolumeFlagsInformation EQU 10
+    FileFsSectorSizeInformation EQU 11
+    FileFsDataCopyInformation EQU 12
+    FileFsMetadataSizeInformation EQU 13
+    FileFsMaximumInformation EQU 14
 
-    ;typedef enum _FSINFOCLASS {
-        FileFsVolumeInformation      equ 1
-        FileFsLabelInformation       equ 2
-        FileFsSizeInformation        equ 3
-        FileFsDeviceInformation      equ 4
-        FileFsAttributeInformation   equ 5
-        FileFsControlInformation     equ 6
-        FileFsFullSizeInformation    equ 7
-        FileFsObjectIdInformation    equ 8
-        FileFsMaximumInformation     equ 9
-
+    IFNDEF FILE_FS_DEVICE_INFORMATION
     FILE_FS_DEVICE_INFORMATION STRUCT		; sizeof = 8
     	DeviceType			DWORD	?	; 00h DEVICE_TYPE
     	Characteristics		DWORD	?	; 04h
     FILE_FS_DEVICE_INFORMATION ENDS
+    ENDIF
     PFILE_FS_DEVICE_INFORMATION typedef PTR FILE_FS_DEVICE_INFORMATION   
 
     
@@ -3990,50 +4131,63 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ; Registry Specific Access Rights.
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     
-    KEY_QUERY_VALUE         equ 0001h
-    KEY_SET_VALUE           equ 0002h
-    KEY_CREATE_SUB_KEY      equ 0004h
-    KEY_ENUMERATE_SUB_KEYS  equ 0008h
-    KEY_NOTIFY              equ 0010h
-    KEY_CREATE_LINK         equ 0020h
-    
-    KEY_READ	equ (STANDARD_RIGHTS_READ or KEY_QUERY_VALUE or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY) AND NOT SYNCHRONIZE
-    KEY_WRITE	equ (STANDARD_RIGHTS_WRITE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY) AND NOT SYNCHRONIZE
-    KEY_EXECUTE	equ KEY_READ AND NOT SYNCHRONIZE
-    KEY_ALL_ACCESS	equ (STANDARD_RIGHTS_ALL or KEY_QUERY_VALUE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY or KEY_CREATE_LINK) AND NOT SYNCHRONIZE
-    
-    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    ; Open/Create Options
-    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
-    REG_OPTION_RESERVED         equ 00000000   ; Parameter is reserved
-    REG_OPTION_NON_VOLATILE     equ 00000000   ; Key is preserved when system is rebooted
-    REG_OPTION_VOLATILE         equ 00000001   ; Key is not preserved when system is rebooted
-    REG_OPTION_CREATE_LINK      equ 00000002   ; Created key is a symbolic link
-    REG_OPTION_BACKUP_RESTORE   equ 00000004   ; open for backup or restore special access rules privilege required
-    REG_OPTION_OPEN_LINK        equ 00000008   ; Open symbolic link
-    REG_LEGAL_OPTION			equ REG_OPTION_RESERVED or REG_OPTION_NON_VOLATILE or REG_OPTION_VOLATILE or REG_OPTION_CREATE_LINK or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK
-    
-    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    ; Key creation/open disposition
-    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
-    REG_CREATED_NEW_KEY         equ 00000001   ; New Registry Key created
-    REG_OPENED_EXISTING_KEY     equ 00000002   ; Existing Key opened
-    
-    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    ; Key restore flags
-    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
-    REG_WHOLE_HIVE_VOLATILE     equ 00000001   ; Restore whole hive volatile
-    REG_REFRESH_HIVE            equ 00000002   ; Unwind changes to last flush
-    REG_NO_LAZY_FLUSH           equ 00000004   ; Never lazy flush this hive
-    REG_FORCE_RESTORE           equ 00000008   ; Force the restore process even when we have open handles on subkeys
+    KEY_QUERY_VALUE                 equ 0001h
+    KEY_SET_VALUE                   equ 0002h
+    KEY_CREATE_SUB_KEY              equ 0004h
+    KEY_ENUMERATE_SUB_KEYS          equ 0008h
+    KEY_NOTIFY                      equ 0010h
+    KEY_CREATE_LINK                 equ 0020h
+    KEY_WOW64_32KEY                 equ 0200h
+    KEY_WOW64_64KEY                 equ 0100h
+    KEY_WOW64_RES                   equ 0300h
+    KEY_READ	                    equ (STANDARD_RIGHTS_READ or KEY_QUERY_VALUE or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY) AND NOT SYNCHRONIZE
+    KEY_WRITE	                    equ (STANDARD_RIGHTS_WRITE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY) AND NOT SYNCHRONIZE
+    KEY_EXECUTE	                    equ KEY_READ AND NOT SYNCHRONIZE
+    KEY_ALL_ACCESS	                equ (STANDARD_RIGHTS_ALL or KEY_QUERY_VALUE or KEY_SET_VALUE or KEY_CREATE_SUB_KEY or KEY_ENUMERATE_SUB_KEYS or KEY_NOTIFY or KEY_CREATE_LINK) AND NOT SYNCHRONIZE
+    REG_OPTION_RESERVED             equ 00000000h
+    REG_OPTION_NON_VOLATILE         equ 00000000h
+    REG_OPTION_VOLATILE             equ 00000001h
+    REG_OPTION_CREATE_LINK          equ 00000002h
+    REG_OPTION_BACKUP_RESTORE       equ 00000004h
+    REG_OPTION_OPEN_LINK            equ 00000008h
+    REG_OPTION_DONT_VIRTUALIZE      equ 00000010h
+    REG_LEGAL_OPTION                equ (REG_OPTION_RESERVED or REG_OPTION_NON_VOLATILE or REG_OPTION_VOLATILE or REG_OPTION_CREATE_LINK or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK or REG_OPTION_DONT_VIRTUALIZE)
+    REG_OPEN_LEGAL_OPTION           equ (REG_OPTION_RESERVED or REG_OPTION_BACKUP_RESTORE or REG_OPTION_OPEN_LINK or REG_OPTION_DONT_VIRTUALIZE)
+    REG_CREATED_NEW_KEY             equ 00000001h
+    REG_OPENED_EXISTING_KEY         equ 00000002h
+    REG_STANDARD_FORMAT             equ 1
+    REG_LATEST_FORMAT               equ 2
+    REG_NO_COMPRESSION              equ 4
+    REG_WHOLE_HIVE_VOLATILE         equ 00000001h
+    REG_REFRESH_HIVE                equ 00000002h
+    REG_NO_LAZY_FLUSH               equ 00000004h
+    REG_FORCE_RESTORE               equ 00000008h
+    REG_APP_HIVE                    equ 00000010h
+    REG_PROCESS_PRIVATE             equ 00000020h
+    REG_START_JOURNAL               equ 00000040h
+    REG_HIVE_EXACT_FILE_GROWTH      equ 00000080h
+    REG_HIVE_NO_RM                  equ 00000100h
+    REG_HIVE_SINGLE_LOG             equ 00000200h
+    REG_BOOT_HIVE                   equ 00000400h
+    REG_LOAD_HIVE_OPEN_HANDLE       equ 00000800h
+    REG_FLUSH_HIVE_FILE_GROWTH      equ 00001000h
+    REG_OPEN_READ_ONLY              equ 00002000h
+    REG_IMMUTABLE                   equ 00004000h
+    REG_APP_HIVE_OPEN_READ_ONLY     equ REG_OPEN_READ_ONLY
+    REG_FORCE_UNLOAD                equ 1
+    REG_UNLOAD_LEGAL_FLAGS          equ REG_FORCE_UNLOAD
+    REG_NOTIFY_CHANGE_NAME          equ 00000001h
+    REG_NOTIFY_CHANGE_ATTRIBUTES    equ 00000002h
+    REG_NOTIFY_CHANGE_LAST_SET      equ 00000004h
+    REG_NOTIFY_CHANGE_SECURITY      equ 00000008h
+    REG_NOTIFY_THREAD_AGNOSTIC      equ 10000000h
+    REG_LEGAL_CHANGE_FILTER         equ (REG_NOTIFY_CHANGE_NAME or REG_NOTIFY_CHANGE_ATTRIBUTES or REG_NOTIFY_CHANGE_LAST_SET or REG_NOTIFY_CHANGE_SECURITY or REG_NOTIFY_THREAD_AGNOSTIC)
     
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ; Key query structures
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     
+    IFNDEF KEY_VALUE_BASIC_INFORMATION
     KEY_VALUE_BASIC_INFORMATION STRUCT	; sizeof = 10h
     	TitleIndex	DWORD	?	; 00h
     	dwType		DWORD	?	; 04h (original field name Type)
@@ -4041,8 +4195,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	woName		WORD	?	; 0Ch Variable size (original field name Name)
     				WORD	?	; padding
     KEY_VALUE_BASIC_INFORMATION ENDS
+    ENDIF
     PKEY_VALUE_BASIC_INFORMATION typedef PTR KEY_VALUE_BASIC_INFORMATION
     
+    IFNDEF KEY_VALUE_FULL_INFORMATION
     KEY_VALUE_FULL_INFORMATION STRUCT	; sizeof = 18h
     	TitleIndex	DWORD	?	; 00h
     	dwType		DWORD	?	; 04h (original field name Type)
@@ -4053,8 +4209,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     				WORD	?	; 16h padding
     	;Data[1];            // Variable size data not declared
     KEY_VALUE_FULL_INFORMATION ENDS
+    ENDIF
     PKEY_VALUE_FULL_INFORMATION typedef PTR KEY_VALUE_FULL_INFORMATION
     
+    IFNDEF KEY_VALUE_PARTIAL_INFORMATION
     KEY_VALUE_PARTIAL_INFORMATION STRUCT	; sizeof = 10h
     	TitleIndex	DWORD	?
     	dwType		DWORD	?	; original field name Type
@@ -4062,22 +4220,27 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	Data		BYTE	?	; Variable size
     				db 3 dup(?)	; padding
     KEY_VALUE_PARTIAL_INFORMATION ENDS
+    ENDIF
     PKEY_VALUE_PARTIAL_INFORMATION typedef PTR KEY_VALUE_PARTIAL_INFORMATION
     
+    IFNDEF KEY_VALUE_PARTIAL_INFORMATION_ALIGN64
     KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 STRUCT	; sizeof = 0Ch
     	dwType		DWORD	?	; original field name Type
     	DataLength	DWORD	?
     	Data		BYTE	?	; Variable size
     				db 3 dup(?)	; padding
     KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 ENDS
+    ENDIF
     PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 typedef PTR KEY_VALUE_PARTIAL_INFORMATION_ALIGN64
     
+    IFNDEF KEY_VALUE_ENTRY
     KEY_VALUE_ENTRY STRUCT	; sizeof = 10h
     	ValueName	PVOID	?	; PTR UNICODE_STRING
     	DataLength	DWORD	?
     	DataOffset	DWORD	?
     	dwType		DWORD	?	; original field name Type
     KEY_VALUE_ENTRY ENDS
+    ENDIF
     PKEY_VALUE_ENTRY typedef PTR KEY_VALUE_ENTRY
     
     ;typedef enum _KEY_VALUE_INFORMATION_CLASS {
@@ -4132,6 +4295,7 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ; Exception record definition.
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     
+    IFNDEF EXCEPTION_RECORD
     EXCEPTION_RECORD STRUCT
     	ExceptionCode			NTSTATUS	?
     	ExceptionFlags			DWORD		?
@@ -4140,8 +4304,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	NumberParameters		DWORD		?
     	ExceptionInformation	DWORD 		EXCEPTION_MAXIMUM_PARAMETERS dup(?)
     EXCEPTION_RECORD ENDS
+    ENDIF
     PEXCEPTION_RECORD typedef PTR EXCEPTION_RECORD
     
+    IFNDEF EXCEPTION_RECORD32
     EXCEPTION_RECORD32 STRUCT
     	ExceptionCode			NTSTATUS	?
     	ExceptionFlags			DWORD	?
@@ -4150,16 +4316,32 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     	NumberParameters		DWORD	?
     	ExceptionInformation	DWORD EXCEPTION_MAXIMUM_PARAMETERS dup(?)
     EXCEPTION_RECORD32 ENDS
+    ENDIF
     PEXCEPTION_RECORD32 typedef PTR EXCEPTION_RECORD32
+    
+    IFNDEF EXCEPTION_RECORD64
+    EXCEPTION_RECORD64 struct
+        ExceptionCode NTSTATUS ?
+        ExceptionFlags DWORD ?
+        ExceptionRecord ULONG64 ?
+        ExceptionAddress ULONG64 ?
+        NumberParameters DWORD ?
+        __unusedAlignment DWORD ?
+        ExceptionInformation ULONG64 EXCEPTION_MAXIMUM_PARAMETERS dup (?)
+    EXCEPTION_RECORD64 ends
+    ENDIF
+    PEXCEPTION_RECORD64 typedef ptr EXCEPTION_RECORD64    
+    
     
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ; Typedef for pointer returned by exception_info()
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
+    IFNDEF EXCEPTION_POINTERS
     EXCEPTION_POINTERS STRUCT
     	ExceptionRecord	PVOID	?	; PTR EXCEPTION_RECORD
     	ContextRecord	PVOID	?	; PTR CONTEXT
     EXCEPTION_POINTERS ENDS
+    ENDIF
     PEXCEPTION_POINTERS typedef PTR EXCEPTION_POINTERS
   
   
@@ -4179,13 +4361,135 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
   PARBITER_CONFLICT_INFO typedef ptr ARBITER_CONFLICT_INFO
 
-    CM_PARTIAL_RESOURCE_DESCRIPTOR STRUCT
-        Type_ UCHAR ?
-        ShareDisposition UCHAR ? 
-        Flags WORD ? 
-        u ULONG ?
-    CM_PARTIAL_RESOURCE_DESCRIPTOR ENDS
-    PCM_PARTIAL_RESOURCE_DESCRIPTOR TYPEDEF PTR CM_PARTIAL_RESOURCE_DESCRIPTOR
+    IFNDEF CM_PARTIAL_RESOURCE_DESCRIPTOR
+    CM_PARTIAL_RESOURCE_DESCRIPTOR struct
+    Type_ BYTE ?
+    ShareDisposition BYTE ?
+    Flags WORD ?
+    union u
+      struct Generic
+        Start PHYSICAL_ADDRESS <>
+        Length_ DWORD ?
+      ends
+      struct Port
+        Start PHYSICAL_ADDRESS <>
+        Length_ DWORD ?
+      ends
+      struct Interrupt
+        ;if defined(NT_PROCESSOR_GROUPS)
+        ;  Level WORD ?
+        ;  Group_ WORD ?
+        ;else
+          Level DWORD ?
+        ;endif
+        Vector DWORD ?
+        Affinity KAFFINITY ?
+      ends
+      struct MessageInterrupt
+        union DUMMYUNIONNAME_6
+          struct Raw
+            ;if defined(NT_PROCESSOR_GROUPS)
+            ;  Group_ WORD ?
+            ;else
+              Reserved WORD ?
+            ;endif
+            MessageCount WORD ?
+            Vector DWORD ?
+            Affinity KAFFINITY ?
+          ends
+          struct Translated
+            ;if defined(NT_PROCESSOR_GROUPS)
+            ;  Level WORD ?
+            ;  Group_ WORD ?
+            ;else
+              Level DWORD ?
+            ;endif
+            Vector DWORD ?
+            Affinity KAFFINITY ?
+          ends
+        ends
+      ends
+      struct Memory
+        Start PHYSICAL_ADDRESS <>
+        Length_ DWORD ?
+      ends
+      struct Dma
+        Channel DWORD ?
+        Port DWORD ?
+        Reserved1 DWORD ?
+      ends
+      struct DmaV3
+        Channel DWORD ?
+        RequestLine DWORD ?
+        TransferWidth BYTE ?
+        Reserved1 BYTE ?
+        Reserved2 BYTE ?
+        Reserved3 BYTE ?
+      ends
+      struct DevicePrivate
+        Data DWORD 3 dup (?)
+      ends
+      struct BusNumber
+        Start DWORD ?
+        Length_ DWORD ?
+        Reserved DWORD ?
+      ends
+      struct DeviceSpecificData
+        DataSize DWORD ?
+        Reserved1 DWORD ?
+        Reserved2 DWORD ?
+      ends
+      struct Memory40
+        Start PHYSICAL_ADDRESS <>
+        Length40 DWORD ?
+      ends
+      struct Memory48
+        Start PHYSICAL_ADDRESS <>
+        Length48 DWORD ?
+      ends
+      struct Memory64
+        Start PHYSICAL_ADDRESS <>
+        Length64 DWORD ?
+      ends
+      struct Connection
+        Class BYTE ?
+        Type_ BYTE ?
+        Reserved1 BYTE ?
+        Reserved2 BYTE ?
+        IdLowPart DWORD ?
+        IdHighPart DWORD ?
+      ends
+    ends
+    CM_PARTIAL_RESOURCE_DESCRIPTOR ends
+    ENDIF
+    PCM_PARTIAL_RESOURCE_DESCRIPTOR typedef ptr CM_PARTIAL_RESOURCE_DESCRIPTOR
+  
+    IFNDEF CM_PARTIAL_RESOURCE_LIST
+    CM_PARTIAL_RESOURCE_LIST struct
+        Version WORD ?
+        Revision WORD ?
+        Count DWORD ?
+        PartialDescriptors CM_PARTIAL_RESOURCE_DESCRIPTOR 1 dup (<>)
+    CM_PARTIAL_RESOURCE_LIST ends
+    ENDIF
+    PCM_PARTIAL_RESOURCE_LIST typedef ptr CM_PARTIAL_RESOURCE_LIST
+    
+    IFNDEF CM_FULL_RESOURCE_DESCRIPTOR
+    CM_FULL_RESOURCE_DESCRIPTOR struct
+        InterfaceType INTERFACE_TYPE ?
+        BusNumber DWORD ?
+        PartialResourceList CM_PARTIAL_RESOURCE_LIST <>
+    CM_FULL_RESOURCE_DESCRIPTOR ends
+    ENDIF
+    PCM_FULL_RESOURCE_DESCRIPTOR typedef ptr CM_FULL_RESOURCE_DESCRIPTOR
+    
+    IFNDEF CM_RESOURCE_LIST
+    CM_RESOURCE_LIST struct
+        Count DWORD ?
+        List CM_FULL_RESOURCE_DESCRIPTOR 1 dup (<>)
+    CM_RESOURCE_LIST ends
+    ENDIF
+    PCM_RESOURCE_LIST typedef ptr CM_RESOURCE_LIST
 
   
   ARBITER_TEST_ALLOCATION_PARAMETERS struct
@@ -4216,17 +4520,103 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
   PARBITER_QUERY_ALLOCATED_RESOURCES_PARAMETERS typedef ptr ARBITER_QUERY_ALLOCATED_RESOURCES_PARAMETERS
 
-    IO_RESOURCE_DESCRIPTOR STRUCT
-        Option_ UCHAR ?
-        Type_ UCHAR ?
-        ShareDisposition UCHAR ? 
-        Spare1 UCHAR ?
-        Flags WORD ?
-        Spare2 WORD ? 
-        u ULONG ?
-    IO_RESOURCE_DESCRIPTOR ENDS
-    PIO_RESOURCE_DESCRIPTOR TYPEDEF PTR IO_RESOURCE_DESCRIPTOR
+    IRQ_DEVICE_POLICY typedef SDWORD
+    IRQ_PRIORITY typedef SDWORD
 
+  IFNDEF IO_RESOURCE_DESCRIPTOR
+  IO_RESOURCE_DESCRIPTOR struct
+    Option_ BYTE ?
+    Type_ BYTE ?
+    ShareDisposition BYTE ?
+    Spare1 BYTE ?
+    Flags WORD ?
+    Spare2 WORD ?
+    union u
+      struct Port
+        Length_ DWORD ?
+        Alignment DWORD ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
+      ends
+      struct Memory
+        Length_ DWORD ?
+        Alignment DWORD ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
+      ends
+      struct Interrupt
+        MinimumVector DWORD ?
+        MaximumVector DWORD ?
+        ;if defined(NT_PROCESSOR_GROUPS)
+        ;  AffinityPolicy IRQ_DEVICE_POLICY ?
+        ;  Group_ WORD ?
+        ;else
+          AffinityPolicy IRQ_DEVICE_POLICY ?
+        ;endif
+        PriorityPolicy IRQ_PRIORITY ?
+        TargetedProcessors KAFFINITY ?
+      ends
+      struct Dma
+        MinimumChannel DWORD ?
+        MaximumChannel DWORD ?
+      ends
+      struct DmaV3
+        RequestLine DWORD ?
+        Reserved DWORD ?
+        Channel DWORD ?
+        TransferWidth DWORD ?
+      ends
+      struct Generic
+        Length_ DWORD ?
+        Alignment DWORD ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
+      ends
+      struct DevicePrivate
+        Data DWORD 3 dup (?)
+      ends
+      struct BusNumber
+        Length_ DWORD ?
+        MinBusNumber DWORD ?
+        MaxBusNumber DWORD ?
+        Reserved DWORD ?
+      ends
+      struct ConfigData
+        Priority DWORD ?
+        Reserved1 DWORD ?
+        Reserved2 DWORD ?
+      ends
+      struct Memory40
+        Length40 DWORD ?
+        Alignment40 DWORD ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
+      ends
+      struct Memory48
+        Length48 DWORD ?
+        Alignment48 DWORD ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
+      ends
+      struct Memory64
+        Length64 DWORD ?
+        Alignment64 DWORD ?
+        MinimumAddress PHYSICAL_ADDRESS <>
+        MaximumAddress PHYSICAL_ADDRESS <>
+      ends
+      struct Connection
+        Class BYTE ?
+        Type_ BYTE ?
+        Reserved1 BYTE ?
+        Reserved2 BYTE ?
+        IdLowPart DWORD ?
+        IdHighPart DWORD ?
+      ends
+    ends
+  IO_RESOURCE_DESCRIPTOR ends
+  ENDIF
+
+  PIO_RESOURCE_DESCRIPTOR typedef ptr IO_RESOURCE_DESCRIPTOR
   
   ARBITER_QUERY_CONFLICT_PARAMETERS struct
     PhysicalDeviceObject PDEVICE_OBJECT ?
@@ -4264,18 +4654,18 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PARBITER_PARAMETERS typedef ptr ARBITER_PARAMETERS
   
   ARBITER_REQUEST_SOURCE typedef SDWORD
-  ArbiterRequestUndefined = - 1 
-  ArbiterRequestLegacyReported = 2
-  ArbiterRequestHalReported = 3
-  ArbiterRequestLegacyAssigned = 4
-  ArbiterRequestPnpDetected = 5
-  ArbiterRequestPnpEnumerated = 6
+  ArbiterRequestUndefined EQU - 1 
+  ArbiterRequestLegacyReported EQU 2
+  ArbiterRequestHalReported EQU 3
+  ArbiterRequestLegacyAssigned EQU 4
+  ArbiterRequestPnpDetected EQU 5
+  ArbiterRequestPnpEnumerated EQU 6
   
   ARBITER_RESULT typedef SDWORD
-  ArbiterResultUndefined = - 1 
-  ArbiterResultSuccess = 2
-  ArbiterResultExternalConflict = 3
-  ArbiterResultNullRequest = 4
+  ArbiterResultUndefined EQU - 1 
+  ArbiterResultSuccess EQU 2
+  ArbiterResultExternalConflict EQU 3
+  ArbiterResultNullRequest EQU 4
   
   ARBITER_FLAG_BOOT_CONFIG equ 00000001h
   ARBITER_FLAG_ROOT_ENUM equ 00000002h
@@ -4316,8 +4706,8 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PARBITER_INTERFACE typedef ptr ARBITER_INTERFACE
   
   RESOURCE_TRANSLATION_DIRECTION typedef SDWORD
-  TranslateChildToParent = 0
-  TranslateParentToChild = 1
+  TranslateChildToParent EQU 0
+  TranslateParentToChild EQU 1
 
     PTRANSLATE_RESOURCE_HANDLER typedef QWORD
     PTRANSLATE_RESOURCE_REQUIREMENTS_HANDLER typedef QWORD
@@ -4335,88 +4725,88 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PTRANSLATOR_INTERFACE typedef ptr TRANSLATOR_INTERFACE
   
       HAL_DMA_CRASH_DUMP_REGISTER_TYPE typedef SDWORD
-      HalDmaCrashDumpRegisterSet1 = 0 
-      HalDmaCrashDumpRegisterSet2 = 1
-      HalDmaCrashDumpRegisterSetMax = 2
+      HalDmaCrashDumpRegisterSet1 EQU 0 
+      HalDmaCrashDumpRegisterSet2 EQU 1
+      HalDmaCrashDumpRegisterSetMax EQU 2
       
       PHAL_DMA_CRASH_DUMP_REGISTER_TYPE typedef ptr HAL_DMA_CRASH_DUMP_REGISTER_TYPE
 
   HAL_QUERY_INFORMATION_CLASS typedef SDWORD
-  HalInstalledBusInformation = 0
-  HalProfileSourceInformation = 1
-  HalInformationClassUnused1 = 2
-  HalPowerInformation = 3
-  HalProcessorSpeedInformation = 4
-  HalCallbackInformation = 5
-  HalMapRegisterInformation = 6
-  HalMcaLogInformation = 7
-  HalFrameBufferCachingInformation = 8
-  HalDisplayBiosInformation = 9
-  HalProcessorFeatureInformation = 10
-  HalNumaTopologyInterface = 11
-  HalErrorInformation = 12
-  HalCmcLogInformation = 13
-  HalCpeLogInformation = 14
-  HalQueryMcaInterface = 15
-  HalQueryAMLIIllegalIOPortAddresses = 16
-  HalQueryMaxHotPlugMemoryAddress = 17
-  HalPartitionIpiInterface = 18
-  HalPlatformInformation = 19
-  HalQueryProfileSourceList = 20
-  HalInitLogInformation = 21
-  HalFrequencyInformation = 22
-  HalProcessorBrandString = 23
-  HalHypervisorInformation = 24
-  HalPlatformTimerInformation = 25
-  HalAcpiAuditInformation = 26
-  HalIrtInformation = 27
-  HalSecondaryInterruptInformation = 28
-  HalParkingPageInformation = 29
-  HalNumaRangeTableInformation = 30
-  HalChannelTopologyInformation = 31
-  HalExternalCacheInformation = 32
-  HalQueryDebuggerInformation = 33
-  HalFwBootPerformanceInformation = 34
-  HalFwS3PerformanceInformation = 35
-  HalGetChannelPowerInformation = 36
-  HalQueryStateElementInformation = 37
-  HalPsciInformation = 38
-  HalInterruptControllerInformation = 39
-  HalQueryIommuReservedRegionInformation = 40
-  HalQueryArmErrataInformation = 41
-  HalQueryProcessorEfficiencyInformation = 42
-  HalQueryAcpiWakeAlarmSystemPowerStateInformation = 43
-  HalQueryProfileNumberOfCounters = 44
-  HalQueryHyperlaunchEntrypoint = 45
-  HalHardwareWatchdogInformation = 46
-  HalDmaRemappingInformation = 47
-  HalQueryRuntimeServicesBlockInformation = 48
+  HalInstalledBusInformation EQU 0
+  HalProfileSourceInformation EQU 1
+  HalInformationClassUnused1 EQU 2
+  HalPowerInformation EQU 3
+  HalProcessorSpeedInformation EQU 4
+  HalCallbackInformation EQU 5
+  HalMapRegisterInformation EQU 6
+  HalMcaLogInformation EQU 7
+  HalFrameBufferCachingInformation EQU 8
+  HalDisplayBiosInformation EQU 9
+  HalProcessorFeatureInformation EQU 10
+  HalNumaTopologyInterface EQU 11
+  HalErrorInformation EQU 12
+  HalCmcLogInformation EQU 13
+  HalCpeLogInformation EQU 14
+  HalQueryMcaInterface EQU 15
+  HalQueryAMLIIllegalIOPortAddresses EQU 16
+  HalQueryMaxHotPlugMemoryAddress EQU 17
+  HalPartitionIpiInterface EQU 18
+  HalPlatformInformation EQU 19
+  HalQueryProfileSourceList EQU 20
+  HalInitLogInformation EQU 21
+  HalFrequencyInformation EQU 22
+  HalProcessorBrandString EQU 23
+  HalHypervisorInformation EQU 24
+  HalPlatformTimerInformation EQU 25
+  HalAcpiAuditInformation EQU 26
+  HalIrtInformation EQU 27
+  HalSecondaryInterruptInformation EQU 28
+  HalParkingPageInformation EQU 29
+  HalNumaRangeTableInformation EQU 30
+  HalChannelTopologyInformation EQU 31
+  HalExternalCacheInformation EQU 32
+  HalQueryDebuggerInformation EQU 33
+  HalFwBootPerformanceInformation EQU 34
+  HalFwS3PerformanceInformation EQU 35
+  HalGetChannelPowerInformation EQU 36
+  HalQueryStateElementInformation EQU 37
+  HalPsciInformation EQU 38
+  HalInterruptControllerInformation EQU 39
+  HalQueryIommuReservedRegionInformation EQU 40
+  HalQueryArmErrataInformation EQU 41
+  HalQueryProcessorEfficiencyInformation EQU 42
+  HalQueryAcpiWakeAlarmSystemPowerStateInformation EQU 43
+  HalQueryProfileNumberOfCounters EQU 44
+  HalQueryHyperlaunchEntrypoint EQU 45
+  HalHardwareWatchdogInformation EQU 46
+  HalDmaRemappingInformation EQU 47
+  HalQueryRuntimeServicesBlockInformation EQU 48
   
   PHAL_QUERY_INFORMATION_CLASS typedef ptr HAL_QUERY_INFORMATION_CLASS
   
   HAL_SET_INFORMATION_CLASS typedef SDWORD
-  HalProfileSourceInterval = 0
-  HalProfileSourceInterruptHandler = 1
-  HalMcaRegisterDriver = 2
-  HalKernelErrorHandler = 3
-  HalCmcRegisterDriver = 4
-  HalCpeRegisterDriver = 5
-  HalMcaLog = 6
-  HalCmcLog = 7
-  HalCpeLog = 8
-  HalGenerateCmcInterrupt = 9
-  HalProfileSourceTimerHandler = 10
-  HalEnlightenment = 11
-  HalProfileDpgoSourceInterruptHandler = 12
-  HalRegisterSecondaryInterruptInterface = 13
-  HalSetChannelPowerInformation = 14
-  HalI386ExceptionChainTerminatorInformation = 15
-  HalSetResetParkDisposition = 16
-  HalSetPsciSuspendMode = 17
-  HalSetHvciEnabled = 18
-  HalSetProcessorTraceInterruptHandler = 19
-  HalProfileSourceAdd = 20
-  HalProfileSourceRemove = 21
+  HalProfileSourceInterval EQU 0
+  HalProfileSourceInterruptHandler EQU 1
+  HalMcaRegisterDriver EQU 2
+  HalKernelErrorHandler EQU 3
+  HalCmcRegisterDriver EQU 4
+  HalCpeRegisterDriver EQU 5
+  HalMcaLog EQU 6
+  HalCmcLog EQU 7
+  HalCpeLog EQU 8
+  HalGenerateCmcInterrupt EQU 9
+  HalProfileSourceTimerHandler EQU 10
+  HalEnlightenment EQU 11
+  HalProfileDpgoSourceInterruptHandler EQU 12
+  HalRegisterSecondaryInterruptInterface EQU 13
+  HalSetChannelPowerInformation EQU 14
+  HalI386ExceptionChainTerminatorInformation EQU 15
+  HalSetResetParkDisposition EQU 16
+  HalSetPsciSuspendMode EQU 17
+  HalSetHvciEnabled EQU 18
+  HalSetProcessorTraceInterruptHandler EQU 19
+  HalProfileSourceAdd EQU 20
+  HalProfileSourceRemove EQU 21
   
   PHAL_SET_INFORMATION_CLASS typedef ptr HAL_SET_INFORMATION_CLASS
   
@@ -4486,19 +4876,19 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PDEBUG_MEMORY_REQUIREMENTS typedef ptr DEBUG_MEMORY_REQUIREMENTS
   
   KD_NAMESPACE_ENUM typedef SDWORD
-  KdNameSpacePCI = 0
-  KdNameSpaceACPI = 1
-  KdNameSpaceAny = 2
-  KdNameSpaceNone = 3
-  KdNameSpaceMax = 4
+  KdNameSpacePCI EQU 0
+  KdNameSpaceACPI EQU 1
+  KdNameSpaceAny EQU 2
+  KdNameSpaceNone EQU 3
+  KdNameSpaceMax EQU 4
   
   PKD_NAMESPACE_ENUM typedef ptr KD_NAMESPACE_ENUM
   
   KD_CALLBACK_ACTION typedef SDWORD
-  KdConfigureDeviceAndContinue = 0
-  KdSkipDeviceAndContinue = 1
-  KdConfigureDeviceAndStop = 2
-  KdSkipDeviceAndStop = 3
+  KdConfigureDeviceAndContinue EQU 0
+  KdSkipDeviceAndContinue EQU 1
+  KdConfigureDeviceAndStop EQU 2
+  KdSkipDeviceAndStop EQU 3
   
   PKD_CALLBACK_ACTION typedef ptr KD_CALLBACK_ACTION
   
@@ -4639,9 +5029,9 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PHAL_BUS_INFORMATION typedef ptr HAL_BUS_INFORMATION
   
   HAL_DISPLAY_BIOS_INFORMATION typedef SDWORD
-  HalDisplayInt10Bios = 0
-  HalDisplayEmulatedBios = 1
-  HalDisplayNoBios = 2
+  HalDisplayInt10Bios EQU 0
+  HalDisplayEmulatedBios EQU 1
+  HalDisplayNoBios EQU 2
   
   PHAL_DISPLAY_BIOS_INFORMATION typedef ptr HAL_DISPLAY_BIOS_INFORMATION
   
@@ -4692,10 +5082,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   HAL_MCA_INTERFACE ends
 
   HAL_APIC_DESTINATION_MODE typedef SDWORD
-  ApicDestinationModePhysical = 1 
-  ApicDestinationModeLogicalFlat = 2
-  ApicDestinationModeLogicalClustered = 3
-  ApicDestinationModeUnknown = 4
+  ApicDestinationModePhysical EQU 1 
+  ApicDestinationModeLogicalFlat EQU 2
+  ApicDestinationModeLogicalClustered EQU 3
+  ApicDestinationModeUnknown EQU 4
   
   PHAL_APIC_DESTINATION_MODE typedef ptr HAL_APIC_DESTINATION_MODE
   
@@ -4797,11 +5187,11 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
 
   PHYSICAL_COUNTER_RESOURCE_DESCRIPTOR_TYPE typedef SDWORD
-  ResourceTypeSingle = 0 
-  ResourceTypeRange = 1
-  ResourceTypeExtendedCounterConfiguration = 2
-  ResourceTypeOverflow = 3
-  ResourceTypeMax = 4
+  ResourceTypeSingle EQU 0 
+  ResourceTypeRange EQU 1
+  ResourceTypeExtendedCounterConfiguration EQU 2
+  ResourceTypeOverflow EQU 3
+  ResourceTypeMax EQU 4
   
   PHYSICAL_COUNTER_RESOURCE_DESCRIPTOR struct
     Type_ PHYSICAL_COUNTER_RESOURCE_DESCRIPTOR_TYPE ?
@@ -4839,11 +5229,12 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
       ends
     PCI_EXPRESS_ENHANCED_CAPABILITY_HEADER ends
 
-
+    IFNDEF 
     PCI_CAPABILITIES_HEADER struct
       CapabilityID  UCHAR ?
       Next          UCHAR ?
-    PCI_CAPABILITIES_HEADER ends 
+    PCI_CAPABILITIES_HEADER ends
+    ENDIF 
     PPCI_CAPABILITIES_HEADER typedef ptr PCI_CAPABILITIES_HEADER
 
     PCI_AGP_VER RECORD Minor:4,Major:4,Rsvdv:8
@@ -4873,13 +5264,13 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PPCI_AGP_CAPABILITY typedef ptr PCI_AGP_CAPABILITY
   
   EXTENDED_AGP_REGISTER typedef SDWORD
-  IsochStatus = 0
-  AgpControl = 1
-  ApertureSize = 2
-  AperturePageSize = 3
-  GartLow = 4
-  GartHigh = 5
-  IsochCommand = 6
+  IsochStatus EQU 0
+  AgpControl EQU 1
+  ApertureSize EQU 2
+  AperturePageSize EQU 3
+  GartLow EQU 4
+  GartHigh EQU 5
+  IsochCommand EQU 6
   
   PEXTENDED_AGP_REGISTER typedef ptr EXTENDED_AGP_REGISTER
   
@@ -5065,16 +5456,16 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PPCI_FIRMWARE_BUS_CAPS_RETURN_BUFFER typedef ptr PCI_FIRMWARE_BUS_CAPS_RETURN_BUFFER
   
   PCI_HARDWARE_INTERFACE typedef SDWORD
-  PciConventional = 0
-  PciXMode1 = 1
-  PciXMode2 = 2
-  PciExpress = 3
+  PciConventional EQU 0
+  PciXMode1 EQU 1
+  PciXMode2 EQU 2
+  PciExpress EQU 3
   
   PPCI_HARDWARE_INTERFACE typedef ptr PCI_HARDWARE_INTERFACE
   
   PCI_BUS_WIDTH typedef SDWORD
-  BusWidth32Bits = 0
-  BusWidth64Bits = 1
+  BusWidth32Bits EQU 0
+  BusWidth64Bits EQU 1
   
   PCI_ROOT_BUS_HARDWARE_CAPABILITY struct
     SecondaryInterface PCI_HARDWARE_INTERFACE ?
@@ -5281,72 +5672,72 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PPCI_EXPRESS_CAPABILITY typedef ptr PCI_EXPRESS_CAPABILITY
   
   PCI_EXPRESS_MRL_STATE typedef SDWORD
-  MRLClosed = 0 
-  MRLOpen = 1
+  MRLClosed EQU 0 
+  MRLOpen EQU 1
   
   PCI_EXPRESS_CARD_PRESENCE typedef SDWORD
-  SlotEmpty = 0 
-  CardPresent = 1
+  SlotEmpty EQU 0 
+  CardPresent EQU 1
   
   PCI_EXPRESS_INDICATOR_STATE typedef SDWORD
-  IndicatorOn = 1 
-  IndicatorBlink = 2
-  IndicatorOff = 3
+  IndicatorOn EQU 1 
+  IndicatorBlink EQU 2
+  IndicatorOff EQU 3
   
   PCI_EXPRESS_POWER_STATE typedef SDWORD
-  PowerOn = 0 
-  PowerOff = 1
+  PowerOn EQU 0 
+  PowerOff EQU 1
   
   PCI_EXPRESS_ASPM_SUPPORT typedef SDWORD
-  NoAspmSupport = 0 
-  L0sEntrySupport = 1 
-  L1EntrySupport = 2 
-  L0sAndL1EntrySupport = 3 
+  NoAspmSupport EQU 0 
+  L0sEntrySupport EQU 1 
+  L1EntrySupport EQU 2 
+  L0sAndL1EntrySupport EQU 3 
   
   PCI_EXPRESS_ASPM_CONTROL typedef SDWORD
-  L0sAndL1EntryDisabled = 0
-  L0sEntryEnabled = 1
-  L1EntryEnabled = 2
-  L0sAndL1EntryEnabled = 3
+  L0sAndL1EntryDisabled EQU 0
+  L0sEntryEnabled EQU 1
+  L1EntryEnabled EQU 2
+  L0sAndL1EntryEnabled EQU 3
   
   PCI_EXPRESS_L0s_EXIT_LATENCY typedef SDWORD
-  L0s_Below64ns = 0 
-  L0s_64ns_128ns = 1
-  L0s_128ns_256ns = 2
-  L0s_256ns_512ns = 3
-  L0s_512ns_1us = 4
-  L0s_1us_2us = 5
-  L0s_2us_4us = 6
-  L0s_Above4us = 7
+  L0s_Below64ns EQU 0 
+  L0s_64ns_128ns EQU 1
+  L0s_128ns_256ns EQU 2
+  L0s_256ns_512ns EQU 3
+  L0s_512ns_1us EQU 4
+  L0s_1us_2us EQU 5
+  L0s_2us_4us EQU 6
+  L0s_Above4us EQU 7
   
   PCI_EXPRESS_L1_EXIT_LATENCY typedef SDWORD
-  L1_Below1us = 0 
-  L1_1us_2us = 1
-  L1_2us_4us = 2
-  L1_4us_8us = 3
-  L1_8us_16us = 4
-  L1_16us_32us = 5
-  L1_32us_64us = 6
-  L1_Above64us = 7
+  L1_Below1us EQU 0 
+  L1_1us_2us EQU 1
+  L1_2us_4us EQU 2
+  L1_4us_8us EQU 3
+  L1_8us_16us EQU 4
+  L1_16us_32us EQU 5
+  L1_32us_64us EQU 6
+  L1_Above64us EQU 7
   
   PCI_EXPRESS_DEVICE_TYPE typedef SDWORD
-  PciExpressEndpoint = 0 
-  PciExpressLegacyEndpoint = 1
-  PciExpressRootPort = 4 
-  PciExpressUpstreamSwitchPort = 5
-  PciExpressDownstreamSwitchPort = 6
-  PciExpressToPciXBridge = 7
-  PciXToExpressBridge = 8
-  PciExpressRootComplexIntegratedEndpoint = 9
-  PciExpressRootComplexEventCollector = 10
+  PciExpressEndpoint EQU 0 
+  PciExpressLegacyEndpoint EQU 1
+  PciExpressRootPort EQU 4 
+  PciExpressUpstreamSwitchPort EQU 5
+  PciExpressDownstreamSwitchPort EQU 6
+  PciExpressToPciXBridge EQU 7
+  PciXToExpressBridge EQU 8
+  PciExpressRootComplexIntegratedEndpoint EQU 9
+  PciExpressRootComplexEventCollector EQU 10
   
   PCI_EXPRESS_MAX_PAYLOAD_SIZE typedef SDWORD
-  MaxPayload128Bytes = 0 
-  MaxPayload256Bytes = 1
-  MaxPayload512Bytes = 2
-  MaxPayload1024Bytes = 3
-  MaxPayload2048Bytes = 4
-  MaxPayload4096Bytes = 5
+  MaxPayload128Bytes EQU 0 
+  MaxPayload256Bytes EQU 1
+  MaxPayload512Bytes EQU 2
+  MaxPayload1024Bytes EQU 3
+  MaxPayload2048Bytes EQU 4
+  MaxPayload4096Bytes EQU 5
   
   PCI_EXPRESS_PME_REQUESTOR_ID union
     struct DUMMYSTRUCTNAME_64
@@ -5627,11 +6018,12 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
     PPCI_COMMON_HEADER typedef ptr PCI_COMMON_HEADER
 
-
+    IFNDEF PCI_COMMON_CONFIG
     PCI_COMMON_CONFIG STRUCT
       DeviceSpecific    UCHAR 192 DUP (?)
       base_class PCI_COMMON_HEADER <>
     PCI_COMMON_CONFIG ENDS
+    ENDIF
     PPCI_COMMON_CONFIG TYPEDEF PTR PCI_COMMON_CONFIG
 
   
@@ -5675,27 +6067,27 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
 
   WHEA_PHYSICAL_ADDRESS equ <LARGE_INTEGER>
   WHEA_ERROR_SOURCE_TYPE typedef SDWORD
-  WheaErrSrcTypeMCE = 00h 
-  WheaErrSrcTypeCMC = 01h 
-  WheaErrSrcTypeCPE = 02h 
-  WheaErrSrcTypeNMI = 03h 
-  WheaErrSrcTypePCIe = 04h 
-  WheaErrSrcTypeGeneric = 05h 
-  WheaErrSrcTypeINIT = 06h 
-  WheaErrSrcTypeBOOT = 07h 
-  WheaErrSrcTypeSCIGeneric = 08h 
-  WheaErrSrcTypeIPFMCA = 09h 
-  WheaErrSrcTypeIPFCMC = 0ah 
-  WheaErrSrcTypeIPFCPE = 0bh 
-  WheaErrSrcTypeGenericV2 = 0ch 
-  WheaErrSrcTypeSCIGenericV2 = 0dh 
-  WheaErrSrcTypeMax = 1
+  WheaErrSrcTypeMCE EQU 00h 
+  WheaErrSrcTypeCMC EQU 01h 
+  WheaErrSrcTypeCPE EQU 02h 
+  WheaErrSrcTypeNMI EQU 03h 
+  WheaErrSrcTypePCIe EQU 04h 
+  WheaErrSrcTypeGeneric EQU 05h 
+  WheaErrSrcTypeINIT EQU 06h 
+  WheaErrSrcTypeBOOT EQU 07h 
+  WheaErrSrcTypeSCIGeneric EQU 08h 
+  WheaErrSrcTypeIPFMCA EQU 09h 
+  WheaErrSrcTypeIPFCMC EQU 0ah 
+  WheaErrSrcTypeIPFCPE EQU 0bh 
+  WheaErrSrcTypeGenericV2 EQU 0ch 
+  WheaErrSrcTypeSCIGenericV2 EQU 0dh 
+  WheaErrSrcTypeMax EQU 1
   
   PWHEA_ERROR_SOURCE_TYPE typedef ptr WHEA_ERROR_SOURCE_TYPE
   
   WHEA_ERROR_SOURCE_STATE typedef SDWORD
-  WheaErrSrcStateStopped = 01h 
-  WheaErrSrcStateStarted = 02h 
+  WheaErrSrcStateStopped EQU 01h 
+  WheaErrSrcStateStarted EQU 02h 
   
   PWHEA_ERROR_SOURCE_STATE typedef ptr WHEA_ERROR_SOURCE_STATE
   
@@ -6093,10 +6485,10 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
   PWHEA_REVISION typedef ptr WHEA_REVISION
   
   WHEA_ERROR_SEVERITY typedef SDWORD
-  WheaErrSevRecoverable = 0 
-  WheaErrSevFatal = 1 
-  WheaErrSevCorrected = 2 
-  WheaErrSevInformational = 3 
+  WheaErrSevRecoverable EQU 0 
+  WheaErrSevFatal EQU 1 
+  WheaErrSevCorrected EQU 2 
+  WheaErrSevInformational EQU 3 
   
   PWHEA_ERROR_SEVERITY typedef ptr WHEA_ERROR_SEVERITY
   
@@ -6662,15 +7054,15 @@ PWHEA128A TYPEDEF PTR WHEA128A
   PWHEA_PCIEXPRESS_BRIDGE_CONTROL_STATUS typedef ptr WHEA_PCIEXPRESS_BRIDGE_CONTROL_STATUS
   
   WHEA_PCIEXPRESS_DEVICE_TYPE typedef SDWORD
-  WheaPciExpressEndpoint = 0 
-  WheaPciExpressLegacyEndpoint = 1
-  WheaPciExpressRootPort = 4 
-  WheaPciExpressUpstreamSwitchPort = 5
-  WheaPciExpressDownstreamSwitchPort = 6
-  WheaPciExpressToPciXBridge = 7
-  WheaPciXToExpressBridge = 8
-  WheaPciExpressRootComplexIntegratedEndpoint = 9
-  WheaPciExpressRootComplexEventCollector = 10
+  WheaPciExpressEndpoint EQU 0 
+  WheaPciExpressLegacyEndpoint EQU 1
+  WheaPciExpressRootPort EQU 4 
+  WheaPciExpressUpstreamSwitchPort EQU 5
+  WheaPciExpressDownstreamSwitchPort EQU 6
+  WheaPciExpressToPciXBridge EQU 7
+  WheaPciXToExpressBridge EQU 8
+  WheaPciExpressRootComplexIntegratedEndpoint EQU 9
+  WheaPciExpressRootComplexEventCollector EQU 10
   
   WHEA_PCIEXPRESS_ERROR_SECTION struct
     ValidBits WHEA_PCIEXPRESS_ERROR_SECTION_VALIDBITS <>
@@ -6837,9 +7229,9 @@ PWHEA128A TYPEDEF PTR WHEA128A
   PMCI_STATUS typedef ptr MCI_STATUS
   
   WHEA_CPU_VENDOR typedef SDWORD
-  WheaCpuVendorOther = 0 
-  WheaCpuVendorIntel = 1
-  WheaCpuVendorAmd = 2
+  WheaCpuVendorOther EQU 0 
+  WheaCpuVendorIntel EQU 1
+  WheaCpuVendorAmd EQU 2
   
   PWHEA_CPU_VENDOR typedef ptr WHEA_CPU_VENDOR
   
@@ -7229,13 +7621,13 @@ PWHEA128A TYPEDEF PTR WHEA128A
 
 
   WHEA_ERROR_TYPE typedef SDWORD
-  WheaErrTypeProcessor = 0 
-  WheaErrTypeMemory = 1
-  WheaErrTypePCIExpress = 2
-  WheaErrTypeNMI = 3
-  WheaErrTypePCIXBus = 4
-  WheaErrTypePCIXDevice = 5
-  WheaErrTypeGeneric = 6
+  WheaErrTypeProcessor EQU 0 
+  WheaErrTypeMemory EQU 1
+  WheaErrTypePCIExpress EQU 2
+  WheaErrTypeNMI EQU 3
+  WheaErrTypePCIXBus EQU 4
+  WheaErrTypePCIXDevice EQU 5
+  WheaErrTypeGeneric EQU 6
   
   PWHEA_ERROR_TYPE typedef ptr WHEA_ERROR_TYPE
   
@@ -7250,30 +7642,30 @@ PWHEA128A TYPEDEF PTR WHEA128A
   PWHEA_ERROR_PACKET_FLAGS typedef ptr WHEA_ERROR_PACKET_FLAGS
   
   WHEA_ERROR_PACKET_DATA_FORMAT typedef SDWORD
-  WheaDataFormatIPFSalRecord = 0 
-  WheaDataFormatXPFMCA = 1
-  WheaDataFormatMemory = 2
-  WheaDataFormatPCIExpress = 3
-  WheaDataFormatNMIPort = 4
-  WheaDataFormatPCIXBus = 5
-  WheaDataFormatPCIXDevice = 6
-  WheaDataFormatGeneric = 7
-  WheaDataFormatMax = 8
+  WheaDataFormatIPFSalRecord EQU 0 
+  WheaDataFormatXPFMCA EQU 1
+  WheaDataFormatMemory EQU 2
+  WheaDataFormatPCIExpress EQU 3
+  WheaDataFormatNMIPort EQU 4
+  WheaDataFormatPCIXBus EQU 5
+  WheaDataFormatPCIXDevice EQU 6
+  WheaDataFormatGeneric EQU 7
+  WheaDataFormatMax EQU 8
   
   PWHEA_ERROR_PACKET_DATA_FORMAT typedef ptr WHEA_ERROR_PACKET_DATA_FORMAT
   
   WHEA_RAW_DATA_FORMAT typedef SDWORD
-  WheaRawDataFormatIPFSalRecord = 00h 
-  WheaRawDataFormatIA32MCA = 1
-  WheaRawDataFormatIntel64MCA = 2
-  WheaRawDataFormatAMD64MCA = 3
-  WheaRawDataFormatMemory = 4
-  WheaRawDataFormatPCIExpress = 5
-  WheaRawDataFormatNMIPort = 6
-  WheaRawDataFormatPCIXBus = 7
-  WheaRawDataFormatPCIXDevice = 8
-  WheaRawDataFormatGeneric = 9
-  WheaRawDataFormatMax = 10
+  WheaRawDataFormatIPFSalRecord EQU 00h 
+  WheaRawDataFormatIA32MCA EQU 1
+  WheaRawDataFormatIntel64MCA EQU 2
+  WheaRawDataFormatAMD64MCA EQU 3
+  WheaRawDataFormatMemory EQU 4
+  WheaRawDataFormatPCIExpress EQU 5
+  WheaRawDataFormatNMIPort EQU 6
+  WheaRawDataFormatPCIXBus EQU 7
+  WheaRawDataFormatPCIXDevice EQU 8
+  WheaRawDataFormatGeneric EQU 9
+  WheaRawDataFormatMax EQU 10
   
   PWHEA_RAW_DATA_FORMAT typedef ptr WHEA_RAW_DATA_FORMAT
   
@@ -7482,12 +7874,12 @@ PWHEA128A TYPEDEF PTR WHEA128A
   WheaFindErrorRecordSection proto fastcall :PWHEA_ERROR_RECORD, :ptr GUID, :ptr PWHEA_ERROR_RECORD_SECTION_DESCRIPTOR, :ptr PVOID
   WheaFindNextErrorRecordSection proto fastcall :PWHEA_ERROR_RECORD, :ptr DWORD, :ptr PWHEA_ERROR_RECORD_SECTION_DESCRIPTOR, :ptr PVOID
   SOC_SUBSYSTEM_TYPE typedef SDWORD
-  SOC_SUBSYS_WIRELESS_MODEM = 0 
-  SOC_SUBSYS_AUDIO_DSP = 1 
-  SOC_SUBSYS_WIRELSS_CONNECTIVITY = 2 
-  SOC_SUBSYS_SENSORS = 3 
-  SOC_SUBSYS_COMPUTE_DSP = 4 
-  SOC_SUBSYS_VENDOR_DEFINED = 10000h 
+  SOC_SUBSYS_WIRELESS_MODEM EQU 0 
+  SOC_SUBSYS_AUDIO_DSP EQU 1 
+  SOC_SUBSYS_WIRELSS_CONNECTIVITY EQU 2 
+  SOC_SUBSYS_SENSORS EQU 3 
+  SOC_SUBSYS_COMPUTE_DSP EQU 4 
+  SOC_SUBSYS_VENDOR_DEFINED EQU 10000h 
   
   PSOC_SUBSYSTEM_TYPE typedef ptr SOC_SUBSYSTEM_TYPE
   
