@@ -1,6 +1,6 @@
 Driver64
 Driver64Template
-WDF 1.9 (KMDF or UMDF) Driver x64
+WDF KMDF Driver x64
 [*BEGINPRO*]
 [*BEGINDEF*]
 [MakeDef]
