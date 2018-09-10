@@ -1,10 +1,9 @@
-;========================================================================
-; Type definitions for the basic types.
+;==============================================================================
+; UASM-DDK - ntdef.inc
 ; 
-; Converted from ntdef.h of Windows Kit 8.1 to asm format 
-; for KMDF64 by fearless
-;    
-;========================================================================
+; www.github.com/mrfearless/UASM-DDK by fearless
+; 
+;==============================================================================
 
 ifndef _NTDEF_
   _NTDEF_ equ <>

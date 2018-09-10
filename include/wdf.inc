@@ -1,10 +1,10 @@
-;========================================================================
-; Windows Driver Framework (WDF) for UASM x64
+;==============================================================================
+; UASM-DDK - wdf.inc
 ; 
-; Converted from wdfxxxxxxx.h to asm format 
-; for KMDF64 by fearless
-;    
-;========================================================================
+; www.github.com/mrfearless/UASM-DDK by fearless
+; 
+;==============================================================================
+
 
 include wdfdriverentry.inc
 include wdfldr.inc

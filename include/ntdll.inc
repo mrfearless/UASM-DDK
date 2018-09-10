@@ -1,3 +1,10 @@
+;==============================================================================
+; UASM-DDK - ntdll.inc
+; 
+; www.github.com/mrfearless/UASM-DDK by fearless
+; 
+;==============================================================================
+
 ; NTDLL x64 - FASTCALL CONVENTION
 
 AlpcAdjustCompletionListConcurrencyCount PROTO :QWORD,:QWORD

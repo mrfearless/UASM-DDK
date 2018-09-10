@@ -1,6 +1,13 @@
-;Include file created by h2incX, Version 00.10.00, (C) 2018 Biterider, 2005-2009 Japheth
-;Source file: 'A:\SDKs\Windows Kits\10\Include\10.0.17134.0\km\ntddk.h', last modified: 4/10/2018 19:55
-;Command line used for creation:  ntddk.h
+;==============================================================================
+; UASM-DDK - ntddk.inc
+; 
+; www.github.com/mrfearless/UASM-DDK by fearless
+; 
+;==============================================================================
+
+
+option nokeyword:<irp> ; required for IRP structure, otherwise rename IRP struct to _IRP
+
 
 ifndef _NTDDK_
   _NTDDK_ equ <>
@@ -3549,8 +3556,8 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ; I/O Request Packet (IRP) definition
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     
-    IFNDEF _IRP
-    _IRP STRUCT			; sizeof = 70h
+    IFNDEF IRP
+    IRP STRUCT
     	fwType			WORD	?
     	cbSize			WORD	?	; 02h
     
@@ -3730,9 +3737,9 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     
     	ENDS	;Tail
     
-    _IRP ENDS
+    IRP ENDS
     ENDIF
-    PIRP typedef PTR _IRP
+    PIRP typedef PTR IRP
   
     IFNDEF IO_STACK_LOCATION
     IO_STACK_LOCATION STRUCT	; sizeof = 24h
@@ -3869,13 +3876,25 @@ PKSYSTEM_TIME typedef PTR KSYSTEM_TIME
     ;     packet.
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     
-    IoGetCurrentIrpStackLocation MACRO pIrp:REQ
-    	IFDIFI <pIrp>, <rax>	;; don't move eax onto itself
-    		mov rax, pIrp
-    	ENDIF
-    	mov rax, (_IRP PTR [rax]).Tail.Overlay.CurrentStackLocation
-    ENDM
-  
+    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    ; IoGetCurrentIrpStackLocation procedure
+    ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    IoGetCurrentIrpStackLocation PROTO :PIRP
+    .CODE
+    IoGetCurrentIrpStackLocation PROC FRAME pIrp:PIRP
+        mov rax, pIrp
+        mov rax, (IRP PTR [rax]).Tail.Overlay.CurrentStackLocation
+        ret
+    IoGetCurrentIrpStackLocation ENDP
+    .CONST
+    
+;    IoGetCurrentIrpStackLocation MACRO pIrp:REQ
+;    	IFDIFI <pIrp>, <rax>	;; don't move eax onto itself
+;    		mov rax, pIrp
+;    	ENDIF
+;    	mov rax, (IRP PTR [rax]).Tail.Overlay.CurrentStackLocation
+;    ENDM
+    
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ; Define share access rights to files and directories
     ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

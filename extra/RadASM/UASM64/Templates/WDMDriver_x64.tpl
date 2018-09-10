@@ -130,8 +130,8 @@ DriverEntry PROC FRAME USES RBX RCX RDX pDriverObject:PDRIVER_OBJECT, pRegistryP
     Invoke OutputDebugString, "[*] DriverEntry Called - OutputDebugString"
     Invoke DbgPrint, Addr szFmt, "[*] DriverEntry Called - DbgPrint"
     
-	Invoke RtlInitUnicodeString, Addr usDriverName, L"\\Device\\MyHypervisorDevice"
-	Invoke RtlInitUnicodeString, Addr usDosDeviceName, L"\\DosDevices\\MyHypervisorDevice"
+	Invoke RtlInitUnicodeString, Addr usDriverName, L"\\Device\\[*PROJECTNAME*]"
+	Invoke RtlInitUnicodeString, Addr usDosDeviceName, L"\\DosDevices\\[*PROJECTNAME*]"
     
 	Invoke IoCreateDevice, pDriverObject, 0, Addr usDriverName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, Addr pDeviceObject
     mov NtStatus, eax
@@ -187,7 +187,7 @@ DrvUnload PROC FRAME USES RBX pDriverObject:PDRIVER_OBJECT
 	LOCAL usDosDeviceName:UNICODE_STRING
 	
 	Invoke DbgPrint, Addr szFmt, "[*] DrvUnload Called."
-	Invoke RtlInitUnicodeString, Addr usDosDeviceName, L"\\Device\\MyDriverx64"
+	Invoke RtlInitUnicodeString, Addr usDosDeviceName, L"\\Device\\[*PROJECTNAME*]"
 	Invoke IoDeleteSymbolicLink, Addr usDosDeviceName
 	mov rbx, pDriverObject
 	mov rax, [rbx].DRIVER_OBJECT.DeviceObject
