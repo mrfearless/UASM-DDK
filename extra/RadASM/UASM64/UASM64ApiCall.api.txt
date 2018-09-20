@@ -1,0 +1,931 @@
+;------------------------------------------------------------------------------
+; UASM-DDK Additions 
+;
+; http://github.com/mrfearless/UASM-DDK
+;
+; Paste this text at end of \Radasm\Uasm64\UASM64ApiCall.api to add to Radasm
+;
+;------------------------------------------------------------------------------
+
+;adapter.c
+IoAllocateAdapterChannel,pAdapterObject:PADAPTER_OBJECT,DeviceObject:PDEVICE_OBJECT,NumberOfMapRegisters,ExecutionRoutine:PDRIVER_CONTROL,Context
+
+;arcname.c
+IopCreateArcNamesCd,pLoaderBlock:PLOADER_PARAMETER_BLOCK
+IopCreateArcNamesDisk,pLoaderBlock:PLOADER_PARAMETER_BLOCK,bSingleDisk,lpboolFoundBoot
+IopCreateArcNames,pLoaderBlock:PLOADER_PARAMETER_BLOCK
+IopReassignSystemRoot,pLoaderBlock:PLOADER_PARAMETER_BLOCK,lpszNtBootPath
+IopVerifyDiskSignature,pDriveLayout,pArcDiskSignature:PARC_DISK_SIGNATURE,pdwSignature
+
+;bootlog.c
+IopInitBootLog,StartBootLog
+IopStartBootLog 
+IopStopBootLog 
+IopBootLog,DriverName,Success
+IopWriteLogFile,pszUniLogText:PUNICODE_STRING
+IopCreateLogFile 
+IopSaveBootLogToFile
+
+;controller.c
+IoAllocateController,pControllerObject:PCONTROLLER_OBJECT,pDeviceObject:PDEVICE_OBJECT,pExecutionRoutine:PDRIVER_CONTROL,pContext
+IoCreateController,dwSize
+IoDeleteController,pControllerObject:PCONTROLLER_OBJECT
+IoFreeController,pControllerObject:PCONTROLLER_OBJECT
+
+;device.c
+IopReadyDeviceObjects,pDriver:PDRIVER_OBJECT
+IopDeleteDevice,pObjectBody
+IopAttachDeviceToDeviceStackSafe,pSourceDevice:PDEVICE_OBJECT,pTargetDevice:PDEVICE_OBJECT,pAttachedToDeviceObject:PDEVICE_OBJECT
+IoShutdownPnpDevices
+IoShutdownSystem,dwPhase
+IopGetDeviceObjectPointer,pszUniObjectName:PUNICODE_STRING,DesiredAccess:ACCESS_MASK,pFileObject:PFILE_OBJECT,pDeviceObject:PDEVICE_OBJECT,dwAttachFlag
+IopGetLowestDevice,pDeviceObject:PDEVICE_OBJECT
+IopEditDeviceList,pDriverObject:PDRIVER_OBJECT,pDeviceObject:PDEVICE_OBJECT,iopType:IOP_DEVICE_LIST_OPERATION
+IopUnloadDevice,pDeviceObject:PDEVICE_OBJECT
+IopDereferenceDeviceObject,pDeviceObject:PDEVICE_OBJECT,bForceUnload
+IopStartNextPacketByKey,pDeviceObject:PDEVICE_OBJECT,bCancelable,dwKey
+IopStartNextPacket,pDeviceObject:PDEVICE_OBJECT,bCancelable
+IopStartNextPacketByKeyEx,pDeviceObject:PDEVICE_OBJECT,dwKey,dwFlags
+IopGetRelatedTargetDevice,pFileObject:PFILE_OBJECT,pDeviceNode:PDEVICE_NODE
+IoAttachDevice,pSourceDevice:PDEVICE_OBJECT,pszUniTargetDeviceName:PUNICODE_STRING,pAttachedDevice:PDEVICE_OBJECT
+IoAttachDeviceByPointer,pSourceDevice:PDEVICE_OBJECT,pTargetDevice:PDEVICE_OBJECT
+IoAttachDeviceToDeviceStack,pSourceDevice:PDEVICE_OBJECT,pTargetDevice:PDEVICE_OBJECT
+IoAttachDeviceToDeviceStackSafe,pSourceDevice:PDEVICE_OBJECT,pTargetDevice:PDEVICE_OBJECT,pAttachedToDeviceObject:PDEVICE_OBJECT
+IoCreateDevice,pDriverObject:PDRIVER_OBJECT,dwDeviceExtensionSize,pszUniDeviceName:PUNICODE_STRING,DeviceType:DEVICE_TYPE,dwDeviceCharacteristics,bExclusive,pDeviceObject:PDEVICE_OBJECT
+IoDeleteDevice,pDeviceObject:PDEVICE_OBJECT
+IoDetachDevice,pTargetDevice:PDEVICE_OBJECT
+IoEnumerateDeviceObjectList,pDriverObject:PDRIVER_OBJECT,pDeviceObjectList:PDEVICE_OBJECT,dwDeviceObjectListSize,pdwActualNumberDeviceObjects
+IoGetAttachedDevice,pDeviceObject:PDEVICE_OBJECT
+IoGetAttachedDeviceReference,pDeviceObject:PDEVICE_OBJECT
+IoGetDeviceAttachmentBaseRef,pDeviceObject:PDEVICE_OBJECT
+IoGetDeviceObjectPointer,pszUniObjectName:PUNICODE_STRING,DesiredAccess:ACCESS_MASK,pFileObject:PFILE_OBJECT,pDeviceObject:PDEVICE_OBJECT
+IoGetDiskDeviceObject,pFileSystemDeviceObject:PDEVICE_OBJECT,pDiskDeviceObject:PDEVICE_OBJECT
+IoGetLowerDeviceObject,pDeviceObject:PDEVICE_OBJECT
+IoGetRelatedDeviceObject,pFileObject:PFILE_OBJECT
+IoGetRelatedTargetDevice,pFileObject:PFILE_OBJECT,pDeviceObject:PDEVICE_OBJECT
+IoGetBaseFileSystemDeviceObject,pFileObject:PFILE_OBJECT
+IoRegisterLastChanceShutdownNotification,pDeviceObject:PDEVICE_OBJECT
+IoRegisterShutdownNotification,pDeviceObject:PDEVICE_OBJECT
+IoUnregisterShutdownNotification,pDeviceObject:PDEVICE_OBJECT
+IoSetStartIoAttributes,pDeviceObject:PDEVICE_OBJECT,bDeferredStartIo,bNonCancelable
+IoStartNextPacketByKey,pDeviceObject:PDEVICE_OBJECT,bCancelable,dwKey
+IoStartNextPacket,pDeviceObject:PDEVICE_OBJECT,bCancelable
+IoStartPacket,pDeviceObject:PDEVICE_OBJECT,pIrp:PIRP,pdwKey,pCancelFunction:PDRIVER_CANCEL
+
+
+;deviface.c
+IopGetDeviceObjectFromDeviceInstance,pszUniDeviceInstance:PUNICODE_STRING
+OpenRegistryHandlesFromSymbolicLink,pszUniSymbolicLinkName:PUNICODE_STRING,DesiredAccess:ACCESS_MASK,phGuidKey:PHANDLE,phDeviceKey:PHANDLE,phInstanceKey:PHANDLE
+IoOpenDeviceInterfaceRegistryKey,pszUniSymbolicLinkName:PUNICODE_STRING,DesiredAccess:ACCESS_MASK,phDeviceInterfaceKey:PHANDLE
+IoGetDeviceInterfaceAlias,pszUniSymbolicLinkName:PUNICODE_STRING,pAliasInterfaceClassGuid:PGUID,pszUniAliasSymbolicLinkName:PUNICODE_STRING
+IopOpenInterfaceKey,pInterfaceClassGuid:PGUID,DesiredAccess:ACCESS_MASK,pInterfaceKey:PHANDLE
+IoGetDeviceInterfaces,pInterfaceClassGuid:PGUID,pPhysicalDeviceObject:PDEVICE_OBJECT,dwFlags,pWstrSymbolicLinkList:PWSTR
+IoRegisterDeviceInterface,pPhysicalDeviceObject:PDEVICE_OBJECT,pInterfaceClassGuid:PGUID,pszUniReferenceString:PUNICODE_STRING,pszUniSymbolicLinkName:PUNICODE_STRING
+IoSetDeviceInterfaceState,pszUniSymbolicLinkName:PUNICODE_STRING,bEnable
+
+
+;driver.c
+IopInvalidDeviceRequest,pDeviceObject:PDEVICE_OBJECT,pIrp:PIRP
+IopDeleteDriver,pObjectBody
+IopGetDriverObject,pDriverObject:PDRIVER_OBJECT,pszUniServiceName:PUNICODE_STRING,bFileSystem
+IopSuffixUnicodeString,pszUniString1:PUNICODE_STRING,pszUniString2:PUNICODE_STRING
+IopDisplayLoadingMessage,pszUniServiceName:PUNICODE_STRING
+IopNormalizeImagePath,pszUniImagePath,pszUniServiceName:PUNICODE_STRING
+IopLoadServiceModule,pszUniServiceName:PUNICODE_STRING,pModuleObject:PLDR_DATA_TABLE_ENTRY
+IopInitializeDriverModule,pDeviceNode:PDEVICE_NODE,pModuleObject:PLDR_DATA_TABLE_ENTRY,pszUniServiceName:PUNICODE_STRING,bFileSystemDriver,pDriverObject:PDRIVER_OBJECT
+IopAttachFilterDriversCallback,pWstrValueName:PWSTR,dwValueType,pValueData,dwValueLength,pContext,pEntryContext
+IopAttachFilterDrivers,pDeviceNode:PDEVICE_NODE,hEnumSubKey,hClassKey,bLower
+IopInitializeBuiltinDriver,pBootLdrEntry:PLDR_DATA_TABLE_ENTRY
+IopInitializeBootDrivers
+IopInitializeSystemDrivers
+IopUnloadDriver,pszUniDriverServiceName:PUNICODE_STRING,bUnloadPnpDrivers
+IopReinitializeDrivers
+IopReinitializeBootDrivers
+IopCreateDriver,pszUniDriverName:PUNICODE_STRING,pInitializationFunction,pszUniRegistryPath:PUNICODE_STRING,pszUniServiceName:PUNICODE_STRING,pModuleObject,pDriverObject:PDRIVER_OBJECT
+IoCreateDriver,pszUniDriverName:PUNICODE_STRING,pInitializationFunction:PDRIVER_INITIALIZE
+IoDeleteDriver,pDriverObject:PDRIVER_OBJECT
+IoRegisterBootDriverReinitialization,pDriverObject:PDRIVER_OBJECT,pReinitRoutine:PDRIVER_REINITIALIZE ,pContext
+IoRegisterDriverReinitialization,pDriverObject:PDRIVER_OBJECT,pReinitRoutine:PDRIVER_REINITIALIZE ,pContext
+IoAllocateDriverObjectExtension,pDriverObject:PDRIVER_OBJECT,pClientIdentificationAddress,dwDriverObjectExtensionSize,pDriverObjectExtension
+IoGetDriverObjectExtension,pDriverObject:PDRIVER_OBJECT,pClientIdentificationAddress
+IopLoadUnloadDriverWorker,pParameter
+IopLoadUnloadDriver,pszUniRegistryPath:PUNICODE_STRING,pDriverObject:PDRIVER_OBJECT
+NtLoadDriver,pszUniDriverServiceName:PUNICODE_STRING
+NtUnloadDriver,pszUniDriverServiceName:PUNICODE_STRING
+
+
+;file.c
+IopCheckBackupRestorePrivilege,pAccessState:PACCESS_STATE,pCreateOptions,PreviousMode:KPROCESSOR_MODE,dwDisposition
+IopCheckDeviceAndDriver,pOpenPacket:POPEN_PACKET,pDeviceObject:PDEVICE_OBJECT
+IopDoNameTransmogrify,pIrp:PIRP,pFileObject:PFILE_OBJECT,pDataBuffer:PREPARSE_DATA_BUFFER
+IopParseDevice,pParseObject,pObjectType,pAccessState:PACCESS_STATE,AccessMode:KPROCESSOR_MODE,dwAttributes,pszUniCompleteName:PUNICODE_STRING,pszUniRemainingName:PUNICODE_STRING,pContext,pSecurityQos:PSECURITY_QUALITY_OF_SERVICE,pObject
+IopParseFile,ParseObject,pObjectType,pAccessState:PACCESS_STATE,AccessMode:KPROCESSOR_MODE,dwAttributes,pszUniCompleteName:PUNICODE_STRING,pszUniRemainingName:PUNICODE_STRING,pContextp,pSecurityQos:PSECURITY_QUALITY_OF_SERVICE,pObject
+IopDeleteFile,pObjectBody
+IopGetDeviceAttachmentBase,pDeviceObject:PDEVICE_OBJECT
+IopGetDevicePDO,pDeviceObject:PDEVICE_OBJECT
+IopSetDeviceSecurityDescriptor,pDeviceObject:PDEVICE_OBJECT,pSecurityInformation:PSECURITY_INFORMATION,pSecurityDescriptor:PSECURITY_DESCRIPTOR,PoolType:POOL_TYPE,pGenericMapping:PGENERIC_MAPPING
+IopSetDeviceSecurityDescriptors,UpperDeviceObject:PDEVICE_OBJECT,PhysicalDeviceObject:PDEVICE_OBJECT,pSecurityInformation:PSECURITY_INFORMATION,pSecurityDescriptor:PSECURITY_DESCRIPTOR,PoolType:POOL_TYPE,pGenericMapping:PGENERIC_MAPPING
+IopGetSetSecurityObject,pObjectBody,OperationCode:SECURITY_OPERATION_CODE,pSecurityInformation:PSECURITY_INFORMATION,pSecurityDescriptor:PSECURITY_DESCRIPTOR,pdwBufferLength,pOldSecurityDescriptor:PSECURITY_DESCRIPTOR,PoolType:POOL_TYPE,pGenericMapping:PGENERIC_MAPPING
+IopQueryNameFile,pObjectBody,bHasName,pObjectNameInfo:POBJECT_NAME_INFORMATION,dwLength,pdwReturnLength,PreviousMode:KPROCESSOR_MODE
+IopCloseFile,Process:PEPROCESS,pObjectBody,GrantedAccess:ACCESS_MASK,dwHandleCount,dwSystemHandleCount
+IopQueryAttributesFile,pObjectAttributes:POBJECT_ATTRIBUTES,FileInformationClass:FILE_INFORMATION_CLASS,dwFileInformationSize,pFileInformation
+IoGetFileObjectFilterContext,pFileObject:PFILE_OBJECT
+IoChangeFileObjectFilterContext,pFileObject:PFILE_OBJECT,pFilterContext,bDefine
+IopCreateFile,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,AllocationSize:PLARGE_INTEGER,dwFileAttributes,dwShareAccess,dwDisposition,dwCreateOptions,pEaBuffer,dwEaLength,CreateFileType:CREATE_FILE_TYPE,pExtraCreateParameters,dwOptions,dwFlags,pDeviceObject:PDEVICE_OBJECT
+IoCheckQuerySetFileInformation,FileInformationClass:FILE_INFORMATION_CLASS,dwLength,bSetOperation
+IoCheckQuotaBufferValidity,pQuotaBuffer:PFILE_QUOTA_INFORMATION,dwQuotaLength,pdwErrorOffset
+IoCreateFile,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,AllocationSize:PLARGE_INTEGER,dwFileAttributes,dwShareAccess,dwDisposition,dwCreateOptions,pEaBuffer,dwEaLength,CreateFileType:CREATE_FILE_TYPE,pExtraCreateParameters,dwOptions
+IoCreateFileSpecifyDeviceObjectHint,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,AllocationSize:PLARGE_INTEGER,dwFileAttributes,dwShareAccess,dwDisposition,dwCreateOptions,pEaBuffer,dwEaLength, CreateFileType:CREATE_FILE_TYPE,pExtraCreateParameters,dwOptions,pDeviceObject:PDEVICE_OBJECT
+IoCreateStreamFileObjectEx,pFileObject:PFILE_OBJECT,pDeviceObject:PDEVICE_OBJECT,pFileObjectHandle:PHANDLE
+IoCreateStreamFileObject,pFileObject:PFILE_OBJECT,pDeviceObject:PDEVICE_OBJECT
+IoCreateStreamFileObjectLite,pFileObject:PFILE_OBJECT,pDeviceObject:PDEVICE_OBJECT
+IoGetFileObjectGenericMapping
+IoIsFileOriginRemote,pFileObject:PFILE_OBJECT
+IoFastQueryNetworkAttributes,pObjectAttributes:POBJECT_ATTRIBUTES,DesiredAccess:ACCESS_MASK,dwOpenOptions,pIoStatus:PIO_STATUS_BLOCK,pBuffer:PFILE_NETWORK_OPEN_INFORMATION
+IoUpdateShareAccess,pFileObject:PFILE_OBJECT,pShareAccess:PSHARE_ACCESS
+IoCheckShareAccess,DesiredAccess:ACCESS_MASK,dwDesiredShareAccess,pFileObject:PFILE_OBJECT,pShareAccess:PSHARE_ACCESS,bUpdate
+IoRemoveShareAccess,pFileObject:PFILE_OBJECT,pShareAccess:PSHARE_ACCESS
+IoSetShareAccess,DesiredAccess:ACCESS_MASK,dwDesiredShareAccess,pFileObject:PFILE_OBJECT,pShareAccess:PSHARE_ACCESS
+IoCancelFileOpen,pDeviceObject:PDEVICE_OBJECT,pFileObject:PFILE_OBJECT
+IoQueryFileDosDeviceName,pFileObject:PFILE_OBJECT,pObjectNameInformation:POBJECT_NAME_INFORMATION
+IoSetFileOrigin,pFileObject:PFILE_OBJECT,bRemote
+NtCreateFile,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,AllocateSize:PLARGE_INTEGER,dwFileAttributes,dwShareAccess,dwCreateDisposition,dwCreateOptions,pEaBuffer,dwEaLength
+NtCreateMailslotFile,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,dwCreateOptions,dwMailslotQuota,dwMaxMessageSize,pTimeOut:PLARGE_INTEGER
+NtCreateNamedPipeFile,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,dwShareAccess,dwCreateDisposition,dwCreateOptions,dwNamedPipeType,dwReadMode,dwCompletionMode,dwMaximumInstances,dwInboundQuota,dwOutboundQuota,pDefaultTimeout:PLARGE_INTEGER
+NtFlushWriteBuffer
+NtOpenFile,pFileHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,pIoStatusBlock:PIO_STATUS_BLOCK,dwShareAccess,dwOpenOptions 
+NtQueryAttributesFile,pObjectAttributes:POBJECT_ATTRIBUTES,pFileInformation:PFILE_BASIC_INFORMATION
+NtQueryFullAttributesFile,pObjectAttributes:POBJECT_ATTRIBUTES,pFileInformation:PFILE_NETWORK_OPEN_INFORMATION
+
+
+;iocomp.c
+IopUnloadSafeCompletion,pDeviceObject:PDEVICE_OBJECT,pIrp:PIRP,pContext
+IopFreeMiniPacket,pPacket:PIOP_MINI_COMPLETION_PACKET
+IopDeleteIoCompletion,pObjectBody
+IoSetIoCompletion,pIoCompletion,pKeyContext,pApcContext,IoStatus:NTSTATUS,pIoStatusInformation,bQuota
+IoSetCompletionRoutineEx,pDeviceObject:PDEVICE_OBJECT,pIrp:PIRP,pCompletionRoutine:PIO_COMPLETION_ROUTINE,pContext,bInvokeOnSuccess,bInvokeOnError,bInvokeOnCancel
+NtCreateIoCompletion,pIoCompletionHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES,dwNumberOfConcurrentThreads
+NtOpenIoCompletion,pIoCompletionHandle:PHANDLE,DesiredAccess:ACCESS_MASK,pObjectAttributes:POBJECT_ATTRIBUTES
+NtQueryIoCompletion,IoCompletionHandle:HANDLE,IoCompletionInformationClass:IO_COMPLETION_INFORMATION_CLASS,pIoCompletionInformation,dwIoCompletionInformationLength,pdwResultLength
+NtRemoveIoCompletion,IoCompletionHandle:HANDLE,pKeyContext,pApcContext,pIoStatusBlock:PIO_STATUS_BLOCK,pTimeout:PLARGE_INTEGER
+NtSetIoCompletion,IoCompletionPortHandle:HANDLE,pCompletionKey,pCompletionContext,CompletionStatus:NTSTATUS,dwCompletionInformation
+
+
+;ioevent.c
+IopCreateEvent,pszUniEventName:PUNICODE_STRING,pEventHandle:PHANDLE,Type:EVENT_TYPE
+IoCreateNotificationEvent,pszUniEventName:PUNICODE_STRING,pEventHandle:PHANDLE
+IoCreateSynchronizationEvent,pszUniEventName:PUNICODE_STRING,pEventHandle:PHANDLE
+
+
+;iofunc.c
+IopCleanupAfterException,pFileObject:PFILE_OBJECT,pIrp:PIRP OPTIONAL,pEvent:PKEVENT,pLocalEvent:PKEVENT
+IopFinalizeAsynchronousIo,SynchStatus:NTSTATUS,pEvent:PKEVENT,pIrp:PIRP,PreviousMode:KPROCESSOR_MODE,pKernelIosbPIO_STATUS_BLOCK,pIoStatusBlock:PIO_STATUS_BLOCK
+IopPerformSynchronousRequest,pDeviceObject:PDEVICE_OBJECT,pIrp:PIRP,pFileObject:PFILE_OBJECT,bDeferred,PreviousMode:KPROCESSOR_MODE,bSynchIo,TransferType:IOP_TRANSFER_TYPE
+IopDeviceFsIoControl,DeviceHandle:HANDLE,Event:HANDLE,pUserApcRoutine:PIO_APC_ROUTINE,pUserApcContext,pIoStatusBlock:PIO_STATUS_BLOCK,dwIoControlCode,pInputBuffer,dwInputBufferLength,pOutputBuffer,dwOutputBufferLength,bIsDevIoCtl
+IopQueryDeviceInformation,pFileObject:PFILE_OBJECT,dwInformationClass,dwLength,pInformation,pdwReturnedLength,bFile
+IopGetFileInformation,pFileObject:PFILE_OBJECT,dwLength,FileInfoClass:FILE_INFORMATION_CLASS,pBuffer,pdwReturnedLength
+IopGetBasicInformationFile,pFileObject:PFILE_OBJECT,pBasicInfo:PFILE_BASIC_INFORMATION
+IopOpenLinkOrRenameTarget,pHandle:PHANDLE,pIrp:PIRP,pRenameInfo:PFILE_RENAME_INFORMATION,pFileObject:PFILE_OBJECT
+IopGetFileMode,pFileObject:PFILE_OBJECT
+IoSynchronousPageWrite,pFileObject:PFILE_OBJECT,pMdl:PMDL,pOffset:PLARGE_INTEGER,pEvent:PKEVENT,pStatusBlock:PIO_STATUS_BLOCK
+IoPageRead,pFileObject:PFILE_OBJECT,pMdl:PMDL,pOffset:PLARGE_INTEGER,pEvent:PKEVENT,pStatusBlock:PIO_STATUS_BLOCK
+IoQueryFileInformation,pFileObject:PFILE_OBJECT,FileInformationClass:FILE_INFORMATION_CLASS,dwLength,pFileInformation,pdwReturnedLength
+IoQueryVolumeInformation,pFileObject:PFILE_OBJECT,FsInformationClass:FS_INFORMATION_CLASS,dwLength,pFsInformation,pdwReturnedLength
+IoSetInformation,pFileObject:PFILE_OBJECT,FileInformationClass:FILE_INFORMATION_CLASS,dwLength,pFileInformation
+NtDeviceIoControlFile,DeviceHandle:HANDLE,Event:HANDLE,pUserApcRoutine:PIO_APC_ROUTINE,pUserApcContext,pIoStatusBlock:PIO_STATUS_BLOCK,dwIoControlCode, pInputBuffer,dwInputBufferLength,pOutputBuffer,dwOutputBufferLength
+NtFsControlFile (DeviceHandle:HANDLE, Event:HANDLE, pUserApcRoutine:PIO_APC_ROUTINE, pUserApcContext, OUT pIoStatusBlock:PIO_STATUS_BLOCK, IN ULONG IoControlCode, pInputBuffer, dwInputBufferLength, pOutputBuffer, dwOutputBufferLength)
+NtFlushBuffersFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK
+NtNotifyChangeDirectoryFile,FileHandle:HANDLE,EventHandle:HANDLE,pApcRoutine:PIO_APC_ROUTINE,pApcContext,pIoStatusBlock:PIO_STATUS_BLOCK, pBuffer,dwBufferSize,dwCompletionFilter,bWatchTree
+NtLockFile,FileHandle:HANDLE,EventHandle:HANDLE,pApcRoutine:PIO_APC_ROUTINE,pApcContext,pIoStatusBlock:PIO_STATUS_BLOCK,pByteOffset:PLARGE_INTEGER,pLength:PLARGE_INTEGER,dwKey,bFailImmediately,bExclusiveLock
+NtQueryDirectoryFile,FileHandle:HANDLE,EventHandle:HANDLE,pApcRoutine:PIO_APC_ROUTINE,pApcContext,pIoStatusBlock:PIO_STATUS_BLOCK,pFileInformation,dwLength,FileInformationClass:FILE_INFORMATION_CLASS,bReturnSingleEntry,pszUniFileName:PUNICODE_STRING,bRestartScan
+NtQueryEaFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK,pBuffer,dwLength,bReturnSingleEntry,pEaList,dwEaListLength,pdwEaIndex,bRestartScan
+NtQueryInformationFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK,pFileInformation,dwLength,FileInformationClass:FILE_INFORMATION_CLASS
+NtQueryQuotaInformationFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK,pBuffer,dwLength,bReturnSingleEntry,pSidList,dwSidListLength,pStartSid:PSID,bRestartScan
+NtReadFile,FileHandle:HANDLE,Event:HANDLE,pApcRoutine:PIO_APC_ROUTINE,pApcContext,pIoStatusBlock:PIO_STATUS_BLOCK,pBuffer,dwLength,pByteOffset:PLARGE_INTEGER,pdwKey
+NtReadFileScatter,FileHandle:HANDLE,Event:HANDLE,pUserApcRoutine:PIO_APC_ROUTINE,pUserApcContext,pUserIoStatusBlock:PIO_STATUS_BLOCK,BufferDescription:FILE_SEGMENT_ELEMENT,dwBufferLength,pByteOffset:PLARGE_INTEGER,pdwKey
+NtSetEaFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK,pEaBuffer,dwEaBufferSize
+NtSetInformationFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK,pFileInformation,dwLength,FileInformationClass:FILE_INFORMATION_CLASS
+NtSetQuotaInformationFile,FileHandle:HANDLEpIoStatusBlock:PIO_STATUS_BLOCK,pBuffer,dwBufferLength
+NtUnlockFile,FileHandle:HANDLE,pIoStatusBlock:PIO_STATUS_BLOCK,pByteOffset:PLARGE_INTEGER,pLength:PLARGE_INTEGER,dwKey
+ 
+NtWriteFile (FileHandle:HANDLE, Event:HANDLE, pApcRoutine:PIO_APC_ROUTINE, pApcContext, OUT pIoStatusBlock:PIO_STATUS_BLOCK, pBuffer, dwLength, pByteOffset:PLARGE_INTEGER, pdwKey)
+ 
+NtWriteFileGather (FileHandle:HANDLE, Event:HANDLE, pUserApcRoutine:PIO_APC_ROUTINE, pUserApcContext, pUserIoStatusBlock:PIO_STATUS_BLOCK, IN FILE_SEGMENT_ELEMENT BufferDescription[], dwBufferLength, IN PLARGE_INTEGER ByteOffset, pdwKey)
+ 
+NtQueryVolumeInformationFile (FileHandle:HANDLE, OUT pIoStatusBlock:PIO_STATUS_BLOCK, OUT PVOID FsInformation, dwLength, FsInformationClass:FS_INFORMATION_CLASS)
+ 
+NtSetVolumeInformationFile (FileHandle:HANDLE, OUT pIoStatusBlock:PIO_STATUS_BLOCK, IN PVOID FsInformation, dwLength, FsInformationClass:FS_INFORMATION_CLASS)
+ 
+NtCancelDeviceWakeupRequest (DeviceHandle:HANDLE)
+ 
+NtRequestDeviceWakeup (DeviceHandle:HANDLE)
+
+
+
+;iomdl.c
+IoAllocateMdl (IN PVOID VirtualAddress, dwLength, IN BOOLEAN SecondaryBuffer, IN BOOLEAN ChargeQuota, pIrp:PIRP)
+ 
+IoBuildPartialMdl (IN PMDL SourceMdl, IN PMDL TargetMdl, IN PVOID VirtualAddress, dwLength)
+ 
+IoFreeMdl (PMDL Mdl)
+
+
+;iomgr.c
+IopTimerDispatch (IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
+ 
+WmiInitialize
+ 
+IopInitLookasideLists
+ 
+IopCreateObjectTypes
+ 
+IopCreateRootDirectories
+ 
+IopMarkBootPartition (IN PLOADER_PARAMETER_BLOCK LoaderBlock)
+ 
+IoInitSystem (IN PLOADER_PARAMETER_BLOCK LoaderBlock)
+
+
+
+;iorsrce.c
+IopQueryDeviceDescription (pQuery:PIO_QUERY, UNICODE_STRING RootKey, HANDLE RootKeyHandle, ULONG Bus, PKEY_VALUE_FULL_INFORMATION *BusInformation)
+ 
+IopQueryBusDescription (pQuery:PIO_QUERY, UNICODE_STRING RootKey, HANDLE RootKeyHandle, PULONG Bus, BOOLEAN KeyIsRoot)
+ 
+IopFetchConfigurationInformation (OUT PWSTR *SymbolicLinkList, IN GUID Guid, IN ULONG ExpectedInterfaces, IN PULONG Interfaces)
+ 
+IopStoreSystemPartitionInformation (IN PUNICODE_STRING NtSystemPartitionDeviceName, IN PUNICODE_STRING OsLoaderPathName)
+ 
+PCONFIGURATION_INFORMATION NTAPI 	IoGetConfigurationInformation
+ 
+IoReportResourceUsage (PUNICODE_STRING DriverClassName, pDriverObject:PDRIVER_OBJECT, PCM_RESOURCE_LIST DriverList, ULONG DriverListSize, pDeviceObject:PDEVICE_OBJECT, PCM_RESOURCE_LIST DeviceList, ULONG DeviceListSize, BOOLEAN OverrideConflict, PBOOLEAN ConflictDetected)
+ 
+IopLegacyResourceAllocation (IN ARBITER_REQUEST_SOURCE AllocationType, pDriverObject:PDRIVER_OBJECT, pDeviceObject:PDEVICE_OBJECT OPTIONAL, IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements, IN OUT PCM_RESOURCE_LIST *AllocatedResources)
+ 
+IoAssignResources (pszUniRegistryPath:PUNICODE_STRING, IN PUNICODE_STRING DriverClassName, pDriverObject:PDRIVER_OBJECT, pDeviceObject:PDEVICE_OBJECT, IN PIO_RESOURCE_REQUIREMENTS_LIST RequestedResources, IN OUT PCM_RESOURCE_LIST *AllocatedResources)
+ 
+IoQueryDeviceDescription (PINTERFACE_TYPE BusType OPTIONAL, PULONG BusNumber OPTIONAL, PCONFIGURATION_TYPE ControllerType OPTIONAL, PULONG ControllerNumber OPTIONAL, PCONFIGURATION_TYPE PeripheralType OPTIONAL, PULONG PeripheralNumber OPTIONAL, PIO_QUERY_DEVICE_ROUTINE CalloutRoutine, pContext)
+ 
+IoReportHalResourceUsage (PUNICODE_STRING HalDescription, PCM_RESOURCE_LIST RawList, PCM_RESOURCE_LIST TranslatedList, ULONG ListSize)
+
+
+
+
+
+;iotimer.c
+IopTimerDispatch (IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
+ 
+IopRemoveTimerFromTimerList (IN PIO_TIMER Timer)
+ 
+IoInitializeTimer (pDeviceObject:PDEVICE_OBJECT, IN PIO_TIMER_ROUTINE TimerRoutine, pContext)
+ 
+IoStartTimer (pDeviceObject:PDEVICE_OBJECT)
+ 
+IoStopTimer (pDeviceObject:PDEVICE_OBJECT)
+
+
+
+;iowork.c
+
+IopWorkItemCallback (IN PVOID Parameter)
+ 
+IoQueueWorkItem (IN PIO_WORKITEM IoWorkItem, IN PIO_WORKITEM_ROUTINE WorkerRoutine, IN WORK_QUEUE_TYPE QueueType, pContext)
+ 
+IoFreeWorkItem (IN PIO_WORKITEM IoWorkItem)
+ 
+PIO_WORKITEM NTAPI 	IoAllocateWorkItem (pDeviceObject:PDEVICE_OBJECT)
+
+
+
+
+;irp.c
+IopFreeIrpKernelApc (IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext, IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
+ 
+IopAbortIrpKernelApc (IN PKAPC Apc)
+ 
+IopCleanupFailedIrp (IN pFileObject:PFILE_OBJECT,pEvent:PKEVENTObject OPTIONAL, pBuffer OPTIONAL)
+ 
+IopAbortInterruptedIrp (IN PKEVENT EventObject, pIrp:PIRP)
+ 
+IopDisassociateThreadIrp
+ 
+IopCleanupIrp (pIrp:PIRP, IN pFileObject:PFILE_OBJECT)
+ 
+IopCompleteRequest (IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext, IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
+ 
+IopInitializeReserveIrp (IN PRESERVE_IRP_ALLOCATOR ReserveIrpAllocator)
+ 
+IopAllocateReserveIrp (IN CCHAR StackSize)
+ 
+IopFreeReserveIrp (IN CCHAR PriorityBoost)
+ 
+IoAllocateIrp (IN CCHAR StackSize, IN BOOLEAN ChargeQuota)
+ 
+IopAllocateIrpMustSucceed (IN CCHAR StackSize)
+ 
+IoBuildAsynchronousFsdRequest (IN ULONG MajorFunction, pDeviceObject:PDEVICE_OBJECT, pBuffer, dwLength, IN PLARGE_INTEGER StartingOffset, IN pIoStatusBlock:PIO_STATUS_BLOCK)
+ 
+IoBuildDeviceIoControlRequest (IN ULONG IoControlCode, pDeviceObject:PDEVICE_OBJECT, pInputBuffer, IN ULONG InputBufferLength, IN PVOID OutputBuffer, IN ULONG OutputBufferLength, IN BOOLEAN InternalDeviceIoControl,pEvent:PKEVENT, IN pIoStatusBlock:PIO_STATUS_BLOCK)
+ 
+IoBuildSynchronousFsdRequest (IN ULONG MajorFunction, pDeviceObject:PDEVICE_OBJECT, pBuffer, dwLength, IN PLARGE_INTEGER StartingOffset,pEvent:PKEVENT, IN pIoStatusBlock:PIO_STATUS_BLOCK)
+ 
+IoCancelIrp (pIrp:PIRP)
+ 
+IoCancelThreadIo (IN PETHREAD Thread)
+ 
+IoCallDriver (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+IoCompleteRequest (pIrp:PIRP, IN CCHAR PriorityBoost)
+ 
+IoEnqueueIrp (pIrp:PIRP)
+ 
+IofCallDriver (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+IopClearStackLocation (pIoStackLocation:PIO_STACK_LOCATION)
+ 
+IofCompleteRequest (pIrp:PIRP, IN CCHAR PriorityBoost)
+ 
+IopSynchronousCompletion (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pContext)
+ 
+IoForwardIrpSynchronously (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+IoFreeIrp (pIrp:PIRP)
+ 
+IoGetPagingIoPriority (pIrp:PIRP)
+ 
+IoGetRequestorProcess (pIrp:PIRP)
+ 
+IoGetRequestorProcessId (pIrp:PIRP)
+ 
+IoGetRequestorSessionId (pIrp:PIRP, OUT PULONG pSessionId)
+ 
+IoGetTopLevelIrp
+ 
+IoInitializeIrp (pIrp:PIRP, IN USHORT PacketSize, IN CCHAR StackSize)
+ 
+IoIsOperationSynchronous (pIrp:PIRP)
+ 
+IoIsValidNameGraftingBuffer (pIrp:PIRP, IN PREPARSE_DATA_BUFFER ReparseBuffer)
+ 
+IoMakeAssociatedIrp (pIrp:PIRP, IN CCHAR StackSize)
+ 
+IoQueueThreadIrp (pIrp:PIRP)
+ 
+IoReuseIrp (IN OUT PIRP Irp, IN NTSTATUS Status)
+ 
+IoSetTopLevelIrp (pIrp:PIRP)
+
+
+;irq.c
+IoConnectInterrupt (OUT PKINTERRUPT *InterruptObject, IN PKSERVICE_ROUTINE ServiceRoutine, IN PVOID ServiceContext, IN PKSPIN_LOCK SpinLock, IN ULONG Vector, IN KIRQL Irql, IN KIRQL SynchronizeIrql, IN KINTERRUPT_MODE InterruptMode, IN BOOLEAN ShareVector, IN KAFFINITY ProcessorEnableMask, IN BOOLEAN FloatingSave)
+ 
+IoDisconnectInterrupt (PKINTERRUPT InterruptObject)
+
+
+;ramdisk.c
+IopStartRamdisk (IN PLOADER_PARAMETER_BLOCK LoaderBlock)
+
+
+rawfs.c
+
+RawInitializeVcb (IN OUT PVCB Vcb, IN PDEVICE_OBJECT TargetDeviceObject, IN PVPB Vpb)
+ 
+RawCheckForDismount (pVcb:PVCB, IN BOOLEAN CreateOperation)
+ 
+RawCompletionRoutine (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pContext)
+ 
+RawClose (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawCreate (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawReadWriteDeviceControl (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawMountVolume (pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawUserFsCtrl (pIoStackLocation:PIO_STACK_LOCATION, pVcb:PVCB)
+ 
+RawFileSystemControl (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawQueryInformation (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawSetInformation (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawQueryFsVolumeInfo (pVcb:PVCB, IN PFILE_FS_VOLUME_INFORMATION Buffer, IN OUT PULONG Length)
+ 
+RawQueryFsSizeInfo (pVcb:PVCB, IN PFILE_FS_SIZE_INFORMATION Buffer, IN OUT PULONG Length)
+ 
+RawQueryFsDeviceInfo (pVcb:PVCB, IN PFILE_FS_DEVICE_INFORMATION Buffer, IN OUT PULONG Length)
+ 
+RawQueryFsAttributeInfo (pVcb:PVCB, IN PFILE_FS_ATTRIBUTE_INFORMATION Buffer, IN OUT PULONG Length)
+ 
+RawQueryVolumeInformation (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawCleanup (pVcb:PVCB, pIrp:PIRP, pIoStackLocation:PIO_STACK_LOCATION)
+ 
+RawDispatch (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+RawShutdown (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+RawUnload (pDriverObject:PDRIVER_OBJECT)
+ 
+RawFsDriverEntry (pDriverObject:PDRIVER_OBJECT, pszUniRegistryPath:PUNICODE_STRING)
+
+
+
+
+
+
+
+
+;remlock.c
+IoInitializeRemoveLockEx (pRemoveLock:PIO_REMOVE_LOCK, IN ULONG AllocateTag, IN ULONG MaxLockedMinutes, IN ULONG HighWatermark, IN ULONG RemlockSize)
+ 
+IoAcquireRemoveLockEx (pRemoveLock:PIO_REMOVE_LOCK, IN OPTIONAL PVOID Tag, IN LPCSTR File, IN ULONG Line, IN ULONG RemlockSize)
+ 
+IoReleaseRemoveLockEx (pRemoveLock:PIO_REMOVE_LOCK, IN PVOID Tag, IN ULONG RemlockSize)
+ 
+IoReleaseRemoveLockAndWaitEx (pRemoveLock:PIO_REMOVE_LOCK, IN PVOID Tag, IN ULONG RemlockSize)
+
+
+
+
+;symlink.c
+IoCreateSymbolicLink (pszUniSymbolicLinkName:PUNICODE_STRING, IN PUNICODE_STRING DeviceName)
+ 
+IoCreateUnprotectedSymbolicLink (pszUniSymbolicLinkName:PUNICODE_STRING, IN PUNICODE_STRING DeviceName)
+ 
+IoDeleteSymbolicLink (pszUniSymbolicLinkName:PUNICODE_STRING)
+
+
+
+
+
+
+;util.c
+RtlpGetStackLimits (PULONG_PTR StackBase, PULONG_PTR StackLimit)
+ 
+IoComputeDesiredAccessFileObject (IN pFileObject:PFILE_OBJECT, IN PDesiredAccess:ACCESS_MASK)
+ 
+IoAcquireCancelSpinLock (OUT PKIRQL Irql)
+ 
+PIoGetInitialStack
+ 
+IoGetStackLimits (OUT PULONG_PTR LowLimit, OUT PULONG_PTR HighLimit)
+ 
+IoIsSystemThread (IN PETHREAD Thread)
+ 
+IoIsWdmVersionAvailable (IN UCHAR MajorVersion, IN UCHAR MinorVersion)
+ 
+IoGetCurrentProcess
+ 
+IoReleaseCancelSpinLock (IN KIRQL Irql)
+ 
+IoThreadToProcess (IN PETHREAD Thread)
+ 
+IoCheckDesiredAccess (IN OUT PDesiredAccess:ACCESS_MASK, IN ACCESS_MASK GrantedAccess)
+ 
+IoCheckEaBufferValidity (IN PFILE_FULL_EA_INFORMATION EaBuffer, IN ULONG EaLength, OUT PULONG ErrorOffset)
+ 
+IoCheckFunctionAccess (IN ACCESS_MASK GrantedAccess, IN UCHAR MajorFunction, IN UCHAR MinorFunction, IN ULONG IoControlCode, IN PVOID ExtraData OPTIONAL, IN PVOID ExtraData2 OPTIONAL)
+ 
+IoValidateDeviceIoControlAccess (pIrp:PIRP, IN ULONG RequiredAccess)
+ 
+IoSetDeviceToVerify (IN PETHREAD Thread, pDeviceObject:PDEVICE_OBJECT)
+ 
+IoSetHardErrorOrVerifyDevice (pIrp:PIRP, pDeviceObject:PDEVICE_OBJECT)
+ 
+IoGetDeviceToVerify (IN PETHREAD Thread)
+ 
+IoCheckQuerySetVolumeInformation (FsInformationClass:FS_INFORMATION_CLASS, dwLength, IN BOOLEAN SetOperation)
+
+
+
+;volume.c
+
+
+IopDecrementDeviceObjectRef (pDeviceObject:PDEVICE_OBJECT, IN BOOLEAN UnloadIfUnused)
+ 
+IopDecrementDeviceObjectHandleCount (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopCheckVpbMounted (IN POPEN_PACKET OpenPacket, pDeviceObject:PDEVICE_OBJECT, IN PUNICODE_STRING RemainingName, OUT PNTSTATUS Status)
+ 
+IopCreateVpb (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopDereferenceVpbAndFree (IN PVPB Vpb)
+ 
+IopReferenceVerifyVpb (pDeviceObject:PDEVICE_OBJECT, OUT PDEVICE_OBJECT *FileSystemObject, OUT PVPB *Vpb)
+ 
+IopMountInitializeVpb (pDeviceObject:PDEVICE_OBJECT, IN PDEVICE_OBJECT AttachedDeviceObject, IN BOOLEAN Raw)
+ 
+IopNotifyFileSystemChange (pDeviceObject:PDEVICE_OBJECT, IN BOOLEAN DriverActive)
+ 
+IopInterlockedIncrementUlong (IN KSPIN_LOCK_QUEUE_NUMBER Queue, IN PULONG Ulong)
+ 
+IopInterlockedDecrementUlong (IN KSPIN_LOCK_QUEUE_NUMBER Queue, IN PULONG Ulong)
+ 
+IopShutdownBaseFileSystems (IN PLIST_ENTRY ListHead)
+ 
+IopLoadFileSystemDriver (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopMountVolume (pDeviceObject:PDEVICE_OBJECT, IN BOOLEAN AllowRawMount, IN BOOLEAN DeviceIsLocked, IN BOOLEAN Alertable, OUT PVPB *Vpb)
+ 
+IopNotifyAlreadyRegisteredFileSystems (IN PLIST_ENTRY ListHead, IN PDRIVER_FS_NOTIFICATION DriverNotificationRoutine, BOOLEAN SkipRawFs)
+ 
+IoEnumerateRegisteredFiltersList (OUT PDRIVER_OBJECT *DriverObjectList, IN ULONG DriverObjectListSize, OUT PULONG ActualNumberDriverObjects)
+ 
+IoVerifyVolume (pDeviceObject:PDEVICE_OBJECT, IN BOOLEAN AllowRawMount)
+ 
+IoRegisterFileSystem (pDeviceObject:PDEVICE_OBJECT)
+ 
+IoUnregisterFileSystem (pDeviceObject:PDEVICE_OBJECT)
+ 
+IoRegisterFsRegistrationChange (pDriverObject:PDRIVER_OBJECT, IN PDRIVER_FS_NOTIFICATION DriverNotificationRoutine)
+ 
+IoUnregisterFsRegistrationChange (pDriverObject:PDRIVER_OBJECT, IN PDRIVER_FS_NOTIFICATION FSDNotificationProc)
+ 
+IoAcquireVpbSpinLock (OUT PKIRQL Irql)
+ 
+IoReleaseVpbSpinLock (IN KIRQL Irql)
+ 
+IoSetSystemPartition (IN PUNICODE_STRING VolumeNameString)
+ 
+IoVolumeDeviceToDosName (IN PVOID VolumeDeviceObject, OUT PUNICODE_STRING DosName)
+
+
+
+; plugplay.c
+
+IopInitPlugPlayEvents
+ 
+NIopQueueTargetDeviceEvent (const GUID *Guid, PUNICODE_STRING DeviceIds)
+ 
+IopRemovePlugPlayEvent
+ 
+IopTraverseDeviceNode (PDEVICE_NODE Node, PUNICODE_STRING DeviceInstance)
+ 
+IopGetDeviceObjectFromDeviceInstance (PUNICODE_STRING DeviceInstance)
+ 
+IopCaptureUnicodeString (PUNICODE_STRING DstName, PUNICODE_STRING SrcName)
+ 
+IopGetInterfaceDeviceList (PPLUGPLAY_CONTROL_INTERFACE_DEVICE_LIST_DATA DeviceList)
+ 
+IopGetDeviceProperty (PPLUGPLAY_CONTROL_PROPERTY_DATA PropertyData)
+ 
+IopGetRelatedDevice (PPLUGPLAY_CONTROL_RELATED_DEVICE_DATA RelatedDeviceData)
+ 
+IopGetDeviceNodeStatus (pDeviceNode:PDEVICE_NODE)
+ 
+IopDeviceStatus (PPLUGPLAY_CONTROL_STATUS_DATA StatusData)
+ 
+IopGetDeviceRelations (PPLUGPLAY_CONTROL_DEVICE_RELATIONS_DATA RelationsData)
+ 
+IopGetDeviceDepth (PPLUGPLAY_CONTROL_DEPTH_DATA DepthData)
+ 
+IopResetDevice (PPLUGPLAY_CONTROL_RESET_DEVICE_DATA ResetDeviceData)
+ 
+NtGetPlugPlayEvent (IN ULONG Reserved1, IN ULONG Reserved2, OUT PPLUGPLAY_EVENT_BLOCK Buffer, IN ULONG BufferSize)
+ 
+NtPlugPlayControl (IN PLUGPLAY_CONTROL_CLASS PlugPlayControlClass, IN pBuffer, dwBufferLength)
+
+
+
+; pnpdma.c
+
+IoGetDmaAdapter (IN pPhysicalDeviceObject:PDEVICE_OBJECT, IN PDEVICE_DESCRIPTION DeviceDescription, IN OUT PULONG NumberOfMapRegisters)
+
+
+
+; pnpinit.c
+
+IopDetermineDefaultInterfaceType
+ 
+IopInitializeArbiters
+ 
+PiInitCacheGroupInformation
+ 
+PpInitGetGroupOrderIndex (IN HANDLE ServiceHandle)
+ 
+PipGetDriverTagPriority (IN HANDLE ServiceHandle)
+ 
+PipCallDriverAddDevice (IN pDeviceNode:PDEVICE_NODE, IN BOOLEAN LoadDriver, pDriverObject:PDRIVER_OBJECT)
+ 
+IopInitializePlugPlayServices
+
+
+;pnpmgr.c
+IopCreateDeviceKeyPath (IN PCUNICODE_STRING RegistryPath, IN ULONG CreateOptions, pHandle:PHANDLE)
+ 
+NIopPrepareDeviceForRemoval (pDeviceObject:PDEVICE_OBJECT, BOOLEAN Force)
+ 
+IopGetDeviceObjectFromDeviceInstance (PUNICODE_STRING DeviceInstance)
+ 
+IopGetDeviceNode (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopFixupDeviceId (PWCHAR String)
+ 
+IopInstallCriticalDevice (pDeviceNode:PDEVICE_NODE)
+ 
+IopInitializeDevice (pDeviceNode:PDEVICE_NODE, pDriverObject:PDRIVER_OBJECT)
+ 
+IopSendEject (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopSendSurpriseRemoval (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopQueryRemoveDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopQueryStopDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopSendRemoveDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopCancelRemoveDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopSendStopDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopStartDevice2 (pDeviceObject:PDEVICE_OBJECT)
+ 
+IopStartAndEnumerateDevice (IN pDeviceNode:PDEVICE_NODE)
+ 
+NIopStopDevice (pDeviceNode:PDEVICE_NODE)
+ 
+NIopStartDevice (pDeviceNode:PDEVICE_NODE)
+ 
+IopQueryDeviceCapabilities (pDeviceNode:PDEVICE_NODE, PDEVICE_CAPABILITIES DeviceCaps)
+ 
+IopDeviceActionWorker (_In_ pContext)
+ 
+NIopGetSystemPowerDeviceObject (PDEVICE_OBJECT *DeviceObject)
+ 
+IopGetBusTypeGuidIndex (LPGUID BusTypeGuid)
+ 
+NIopCreateDeviceNode (PDEVICE_NODE ParentNode, pPhysicalDeviceObject:PDEVICE_OBJECT, PUNICODE_STRING ServiceName, PDEVICE_NODE *DeviceNode)
+ 
+NIopFreeDeviceNode (pDeviceNode:PDEVICE_NODE)
+ 
+IopSynchronousCall (pDeviceObject:PDEVICE_OBJECT, pIoStackLocation:PIO_STACK_LOCATION, OUT PVOID *Information)
+ 
+IopInitiatePnpIrp (pDeviceObject:PDEVICE_OBJECT, IN OUT pIoStatusBlock:PIO_STATUS_BLOCK, IN UCHAR MinorFunction, IN PIO_STACK_LOCATION Stack OPTIONAL)
+ 
+NIopTraverseDeviceTreeNode (PDEVICETREE_TRAVERSE_CONTEXT Context)
+ 
+NIopTraverseDeviceTree (PDEVICETREE_TRAVERSE_CONTEXT Context)
+ 
+NIopSetDeviceInstanceData (HANDLE InstanceKey, pDeviceNode:PDEVICE_NODE)
+ 
+NIopGetParentIdPrefix (pDeviceNode:PDEVICE_NODE, PUNICODE_STRING ParentIdPrefix)
+ 
+IopValidateID (_In_ PWCHAR Id, _In_ BUS_QUERY_ID_TYPE QueryType)
+ 
+NIopQueryHardwareIds (pDeviceNode:PDEVICE_NODE, HANDLE InstanceKey)
+ 
+NIopQueryCompatibleIds (pDeviceNode:PDEVICE_NODE, HANDLE InstanceKey)
+ 
+NIopCreateDeviceInstancePath (_In_ pDeviceNode:PDEVICE_NODE, _Out_ PUNICODE_STRING InstancePath)
+ 
+NIopActionInterrogateDeviceStack (pDeviceNode:PDEVICE_NODE, pContext)
+ 
+IopHandleDeviceRemoval (IN pDeviceNode:PDEVICE_NODE, IN PDEVICE_RELATIONS DeviceRelations)
+ 
+NIopEnumerateDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+NIopActionConfigureChildServices (pDeviceNode:PDEVICE_NODE, pContext)
+ 
+NIopActionInitChildServices (pDeviceNode:PDEVICE_NODE, pContext)
+ 
+NIopInitializePnpServices (IN pDeviceNode:PDEVICE_NODE)
+ 
+IopEnumerateDetectedDevices (IN HANDLE hBaseKey, IN PUNICODE_STRING RelativePath OPTIONAL, IN HANDLE hRootKey, IN BOOLEAN EnumerateSubKeys, IN PCM_FULL_RESOURCE_DESCRIPTOR ParentBootResources, IN ULONG ParentBootResourcesLength)
+ 
+IopIsFirmwareMapperDisabled
+ 
+IopUpdateRootKey
+ 
+IopOpenRegistryKeyEx (PHANDLE KeyHandle, HANDLE ParentKey, PUNICODE_STRING Name, DesiredAccess:ACCESS_MASK)
+ 
+IopCreateRegistryKeyEx (pHandle:PHANDLE, IN HANDLE RootHandle OPTIONAL, IN PUNICODE_STRING KeyName, IN DesiredAccess:ACCESS_MASK, IN ULONG CreateOptions, OUT PULONG Disposition OPTIONAL)
+ 
+IopGetRegistryValue (IN HANDLE Handle, IN PWSTR ValueName, OUT PKEY_VALUE_FULL_INFORMATION *Information)
+ 
+PiCompareInstancePath (IN PRTL_AVL_TABLE Table, IN PVOID FirstStruct, IN PVOID SecondStruct)
+ 
+PPiAllocateGenericTableEntry (IN PRTL_AVL_TABLE Table, IN CLONG ByteSize)
+ 
+PiFreeGenericTableEntry (IN PRTL_AVL_TABLE Table, pBuffer)
+ 
+PpInitializeDeviceReferenceTable
+ 
+PiInitPhase0
+ 
+PpInitSystem
+ 
+PipAllocateDeviceNode (IN pPhysicalDeviceObject:PDEVICE_OBJECT)
+ 
+PnpBusTypeGuidGet (IN USHORT Index, IN LPGUID BusTypeGuid)
+ 
+PnpDeviceObjectToDeviceInstance (pDeviceObject:PDEVICE_OBJECT, IN PHANDLE DeviceInstanceHandle, IN DesiredAccess:ACCESS_MASK)
+ 
+PnpDetermineResourceListSize (IN PCM_RESOURCE_LIST ResourceList)
+ 
+PiGetDeviceRegistryProperty (pDeviceObject:PDEVICE_OBJECT, IN ULONG ValueType, IN PWSTR ValueName, IN PWSTR KeyName, pBuffer, IN PULONG BufferLength)
+ 
+IoGetDeviceProperty (pDeviceObject:PDEVICE_OBJECT, IN DEVICE_REGISTRY_PROPERTY DeviceProperty, dwBufferLength, OUT PVOID PropertyBuffer, OUT PULONG ResultLength)
+ 
+IoInvalidateDeviceState (IN pPhysicalDeviceObject:PDEVICE_OBJECT)
+
+IopCancelPrepareDeviceForRemoval (pDeviceObject:PDEVICE_OBJECT)
+ 
+IoOpenDeviceRegistryKey (pDeviceObject:PDEVICE_OBJECT, IN ULONG DevInstKeyType, IN DesiredAccess:ACCESS_MASK, OUT PHANDLE DevInstRegKey)
+ 
+IopQueryRemoveChildDevices (pParentDeviceNode:PDEVICE_NODE, BOOLEAN Force)
+ 
+IopSendRemoveChildDevices (pParentDeviceNode:PDEVICE_NODE)
+ 
+IopCancelRemoveChildDevices (pParentDeviceNode:PDEVICE_NODE)
+ 
+IopQueryRemoveDeviceRelations (PDEVICE_RELATIONS DeviceRelations, BOOLEAN Force)
+ 
+IopSendRemoveDeviceRelations (PDEVICE_RELATIONS DeviceRelations)
+ 
+IopCancelRemoveDeviceRelations (PDEVICE_RELATIONS DeviceRelations)
+ 
+NIopPrepareDeviceForRemoval (pDeviceObject:PDEVICE_OBJECT, BOOLEAN Force)
+ 
+NIopRemoveDevice (pDeviceNode:PDEVICE_NODE)
+ 
+IoRequestDeviceEject (IN pPhysicalDeviceObject:PDEVICE_OBJECT)
+ 
+IoInvalidateDeviceRelations (pDeviceObject:PDEVICE_OBJECT, IN DEVICE_RELATION_TYPE Type)
+ 
+IoSynchronousInvalidateDeviceRelations (pDeviceObject:PDEVICE_OBJECT, IN DEVICE_RELATION_TYPE Type)
+ 
+IoTranslateBusAddress (IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber, IN PHYSICAL_ADDRESS BusAddress, IN OUT PULONG AddressSpace, OUT PPHYSICAL_ADDRESS TranslatedAddress)
+
+
+;pnpnotify.c 
+IopNotifyPlugPlayNotification (pDeviceObject:PDEVICE_OBJECT, IN IO_NOTIFICATION_EVENT_CATEGORY EventCategory, IN LPCGUID Event, IN PVOID EventCategoryData1, IN PVOID EventCategoryData2)
+ 
+IoPnPDeliverServicePowerNotification (ULONG VetoedPowerOperation OPTIONAL, ULONG PowerNotification, ULONG Unknown OPTIONAL, BOOLEAN Synchronous)
+ 
+IoRegisterPlugPlayNotification (IN IO_NOTIFICATION_EVENT_CATEGORY EventCategory, IN ULONG EventCategoryFlags, IN PVOID EventCategoryData OPTIONAL, pDriverObject:PDRIVER_OBJECT, IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine, pContext, OUT PVOID *NotificationEntry)
+ 
+IoUnregisterPlugPlayNotification (IN PVOID NotificationEntry)
+
+
+;pnpreport.c
+IopCreateDeviceKeyPath (IN PCUNICODE_STRING RegistryPath, IN ULONG CreateOptions, pHandle:PHANDLE)
+ 
+NIopSetDeviceInstanceData (HANDLE InstanceKey, pDeviceNode:PDEVICE_NODE)
+ 
+NIopActionInterrogateDeviceStack (pDeviceNode:PDEVICE_NODE, pContext)
+ 
+NPpSetCustomTargetEvent (pDeviceObject:PDEVICE_OBJECT, IN OUT PKEVENT SyncEvent OPTIONAL, IN OUT PNTSTATUS SyncStatus OPTIONAL, IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback OPTIONAL, pContext OPTIONAL, IN PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure)
+ 
+IopGetInterfaceTypeString (INTERFACE_TYPE IfType)
+ 
+IopReportTargetDeviceChangeAsyncWorker (pContext)
+ 
+IoReportDetectedDevice (pDriverObject:PDRIVER_OBJECT, IN INTERFACE_TYPE LegacyBusType, IN ULONG BusNumber, IN ULONG SlotNumber, IN PCM_RESOURCE_LIST ResourceList, IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements OPTIONAL, IN BOOLEAN ResourceAssigned, IN OUT PDEVICE_OBJECT *DeviceObject OPTIONAL)
+ 
+IoReportResourceForDetection (pDriverObject:PDRIVER_OBJECT, IN PCM_RESOURCE_LIST DriverList OPTIONAL, IN ULONG DriverListSize OPTIONAL, pDeviceObject:PDEVICE_OBJECT OPTIONAL, IN PCM_RESOURCE_LIST DeviceList OPTIONAL, IN ULONG DeviceListSize OPTIONAL, OUT PBOOLEAN ConflictDetected)
+ 
+IopSetEvent (pContext)
+ 
+IoReportTargetDeviceChange (IN pPhysicalDeviceObject:PDEVICE_OBJECT, IN PVOID NotificationStructure)
+ 
+IoReportTargetDeviceChangeAsynchronous (IN pPhysicalDeviceObject:PDEVICE_OBJECT, IN PVOID NotificationStructure, IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback OPTIONAL, pContext OPTIONAL)
+
+
+
+
+
+; pnpres.c
+
+IopCheckDescriptorForConflict (PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDesc, OPTIONAL PCM_PARTIAL_RESOURCE_DESCRIPTOR ConflictingDescriptor)
+ 
+IopFindBusNumberResource (pIoDesc:PIO_RESOURCE_DESCRIPTOR, pCmDesc:PCM_PARTIAL_RESOURCE_DESCRIPTOR)
+ 
+IopFindMemoryResource (pIoDesc:PIO_RESOURCE_DESCRIPTOR, pCmDesc:PCM_PARTIAL_RESOURCE_DESCRIPTOR)
+ 
+IopFindPortResource (pIoDesc:PIO_RESOURCE_DESCRIPTOR, pCmDesc:PCM_PARTIAL_RESOURCE_DESCRIPTOR)
+ 
+IopFindDmaResource (pIoDesc:PIO_RESOURCE_DESCRIPTOR, pCmDesc:PCM_PARTIAL_RESOURCE_DESCRIPTOR)
+ 
+IopFindInterruptResource (pIoDesc:PIO_RESOURCE_DESCRIPTOR, pCmDesc:PCM_PARTIAL_RESOURCE_DESCRIPTOR)
+ 
+IopFixupResourceListWithRequirements (IN PIO_RESOURCE_REQUIREMENTS_LIST RequirementsList, OUT PCM_RESOURCE_LIST *ResourceList)
+ 
+IopCheckResourceDescriptor (IN PCM_PARTIAL_RESOURCE_DESCRIPTOR ResDesc, IN PCM_RESOURCE_LIST ResourceList, IN BOOLEAN Silent, OUT OPTIONAL PCM_PARTIAL_RESOURCE_DESCRIPTOR ConflictingDescriptor)
+ 
+IopUpdateControlKeyWithResources (IN pDeviceNode:PDEVICE_NODE)
+ 
+IopFilterResourceRequirements (IN pDeviceNode:PDEVICE_NODE)
+ 
+NIopUpdateResourceMap (IN pDeviceNode:PDEVICE_NODE, PWCHAR Level1Key, PWCHAR Level2Key)
+ 
+NIopUpdateResourceMapForPnPDevice (IN pDeviceNode:PDEVICE_NODE)
+ 
+IopTranslateDeviceResources (IN pDeviceNode:PDEVICE_NODE)
+ 
+IopAssignDeviceResources (IN pDeviceNode:PDEVICE_NODE)
+ 
+IopCheckForResourceConflict (IN PCM_RESOURCE_LIST ResourceList1, IN PCM_RESOURCE_LIST ResourceList2, IN BOOLEAN Silent, OUT OPTIONAL PCM_PARTIAL_RESOURCE_DESCRIPTOR ConflictingDescriptor)
+ 
+IopDetectResourceConflict (IN PCM_RESOURCE_LIST ResourceList, IN BOOLEAN Silent, OUT OPTIONAL PCM_PARTIAL_RESOURCE_DESCRIPTOR ConflictingDescriptor)
+
+
+
+;pnproot.c
+LocateChildDevice (IN PPNPROOT_FDO_DEVICE_EXTENSION DeviceExtension, IN PCWSTR DeviceId, IN PCWSTR InstanceId, OUT PPNPROOT_DEVICE *ChildDevice)
+ 
+NPnpRootRegisterDevice (pDeviceObject:PDEVICE_OBJECT)
+ 
+NPnpRootCreateDevice (IN PUNICODE_STRING ServiceName, IN OPTIONAL pDriverObject:PDRIVER_OBJECT, pPhysicalDeviceObject:PDEVICE_OBJECT, OUT OPTIONAL PUNICODE_STRING FullInstancePath)
+ 
+QueryStringCallback (IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength, pContext, IN PVOID EntryContext)
+ 
+QueryBinaryValueCallback (IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength, pContext, IN PVOID EntryContext)
+ 
+EnumerateDevices (pDeviceObject:PDEVICE_OBJECT)
+ 
+PnpRootQueryDeviceRelations (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+PnpRootFdoPnpControl (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+PdoQueryDeviceRelations (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PdoQueryCapabilities (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PdoQueryResources (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PdoQueryResourceRequirements (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PdoQueryDeviceText (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PdoQueryId (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PdoQueryBusInformation (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP, pIrpSp:PIO_STACK_LOCATION)
+ 
+PnpRootPdoPnpControl (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+PnpRootPnpControl (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+PnpRootPowerControl (pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP)
+ 
+PnpRootAddDevice (pDriverObject:PDRIVER_OBJECT, IN pPhysicalDeviceObject:PDEVICE_OBJECT)
+ 
+PnpRootDriverEntry (pDriverObject:PDRIVER_OBJECT, pszUniRegistryPath:PUNICODE_STRING)
+
+
+
+; pnputil.c
+
+PnpFreeUnicodeStringList (IN PUNICODE_STRING UnicodeStringList, IN ULONG StringCount)
+ 
+PnpRegMultiSzToUnicodeStrings (IN PKEY_VALUE_FULL_INFORMATION KeyValueInformation, OUT PUNICODE_STRING *UnicodeStringList, OUT PULONG UnicodeStringCount)
+ 
+PnpRegSzToString (IN PWCHAR RegSzData, IN ULONG RegSzLength, OUT PUSHORT StringLength OPTIONAL)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

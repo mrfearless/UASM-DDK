@@ -136,65 +136,49 @@ DriverEntry PROC FRAME USES RBX RCX RDX pDriverObject:PDRIVER_OBJECT, pRegistryP
 	Invoke IoCreateDevice, pDriverObject, 0, Addr usDriverName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, Addr pDeviceObject
     mov NtStatus, eax
 	.IF (NtStatus == STATUS_SUCCESS)
+
+        ;----------------------------------------------------------------------
+        ; Initially set all dispatch routines for IRP_MJ_Xxx to DrvUnsupported
+        ;----------------------------------------------------------------------
 	    mov rbx, pDriverObject
-	    lea rbx, [rbx].DRIVER_OBJECT.MajorFunction
+	    lea rdx, DrvUnsupported
 		.FOR (rcx=0: rcx < IRP_MJ_MAXIMUM_FUNCTION: rcx++) ; rcx = uiIndex
-			lea rax, [rbx+rcx*SIZEOF QWORD]
-			lea rdx, DrvUnsupported
-			mov [rax], rdx
+			mov [rbx].DRIVER_OBJECT.MajorFunction[ rcx               * (SIZEOF QWORD) ], rdx
         .ENDFOR
-        
-		Invoke DbgPrint, Addr szFmt, "[*] Setting Devices major functions."
+
+		;----------------------------------------------------------------------
+		; Set up our required dispatch routines for IRP_MJ_Xxx requests
+        ;----------------------------------------------------------------------
+        Invoke DbgPrint, Addr szFmt, "[*] Setting Devices major functions."
 		mov rbx, pDriverObject
-		lea rbx, [rbx].DRIVER_OBJECT.MajorFunction
-
-		lea rax, [rbx+IRP_MJ_CLOSE*SIZEOF QWORD]
-		lea rdx, DrvClose
-		mov [rax], rdx
-
-		lea rax, [rbx+IRP_MJ_CREATE*SIZEOF QWORD]
-		lea rdx, DrvCreate
-		mov [rax], rdx
-
-		lea rax, [rbx+IRP_MJ_DEVICE_CONTROL*SIZEOF QWORD]
-		lea rdx, DrvIOCTLDispatcher
-		mov [rax], rdx
-
-		lea rax, [rbx+IRP_MJ_READ*SIZEOF QWORD]
-		lea rdx, DrvRead
-		mov [rax], rdx
-
-		lea rax, [rbx+IRP_MJ_WRITE*SIZEOF QWORD]
-		lea rdx, DrvWrite
-		mov [rax], rdx
 		
-		mov rbx, pDriverObject
-		lea rax, [rbx].DRIVER_OBJECT.DriverUnload
-		lea rdx, DrvUnload
-		mov [rax], rdx
+		lea rdx, DrvCreate
+		mov [rbx].DRIVER_OBJECT.MajorFunction[ IRP_MJ_CREATE         * (SIZEOF QWORD) ], rdx
+		
+		lea rdx, DrvRead
+		mov [rbx].DRIVER_OBJECT.MajorFunction[ IRP_MJ_READ           * (SIZEOF QWORD) ], rdx
+		
+		lea rdx, DrvWrite
+		mov [rbx].DRIVER_OBJECT.MajorFunction[ IRP_MJ_WRITE          * (SIZEOF QWORD) ], rdx
+		
+		lea rdx, DrvClose
+		mov [rbx].DRIVER_OBJECT.MajorFunction[ IRP_MJ_CLOSE          * (SIZEOF QWORD) ], rdx
 
+		lea rdx, DrvIOCTLDispatcher
+		mov [rbx].DRIVER_OBJECT.MajorFunction[ IRP_MJ_DEVICE_CONTROL * (SIZEOF QWORD) ], rdx
+		
+		lea rdx, DrvUnload
+		mov [rbx].DRIVER_OBJECT.DriverUnload, rdx
+		
+		;----------------------------------------------------------------------
+        ; Create symbolic link for CreateFile calls from userspace
+        ;----------------------------------------------------------------------
 		Invoke IoCreateSymbolicLink, Addr usDosDeviceName, Addr usDriverName
 	.ENDIF   
 
     mov eax, NtStatus
     ret
 DriverEntry ENDP
-
-;------------------------------------------------------------------------------
-; DrvUnload
-;------------------------------------------------------------------------------
-DrvUnload PROC FRAME USES RBX pDriverObject:PDRIVER_OBJECT  
-	LOCAL usDosDeviceName:UNICODE_STRING
-	
-	Invoke DbgPrint, Addr szFmt, "[*] DrvUnload Called."
-	Invoke RtlInitUnicodeString, Addr usDosDeviceName, L"\\Device\\[*PROJECTNAME*]"
-	Invoke IoDeleteSymbolicLink, Addr usDosDeviceName
-	mov rbx, pDriverObject
-	mov rax, [rbx].DRIVER_OBJECT.DeviceObject
-	Invoke IoDeleteDevice, rax
-	mov eax, STATUS_SUCCESS
-	ret	
-DrvUnload ENDP
 
 ;------------------------------------------------------------------------------
 ; DrvCreate
@@ -233,15 +217,6 @@ DrvClose PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
 DrvClose ENDP
 
 ;------------------------------------------------------------------------------
-; DrvUnsupported
-;------------------------------------------------------------------------------
-DrvUnsupported PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
-	Invoke DbgPrint, Addr szFmt, "[*] This function is not supported :( !"
-	mov eax, STATUS_SUCCESS
-	ret
-DrvUnsupported ENDP
-
-;------------------------------------------------------------------------------
 ; DrvIOCTLDispatcher
 ;------------------------------------------------------------------------------
 DrvIOCTLDispatcher PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
@@ -249,6 +224,30 @@ DrvIOCTLDispatcher PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
     ret
 DrvIOCTLDispatcher ENDP
 
+;------------------------------------------------------------------------------
+; DrvUnload
+;------------------------------------------------------------------------------
+DrvUnload PROC FRAME USES RBX pDriverObject:PDRIVER_OBJECT  
+	LOCAL usDosDeviceName:UNICODE_STRING
+	
+	Invoke DbgPrint, Addr szFmt, "[*] DrvUnload Called."
+	Invoke RtlInitUnicodeString, Addr usDosDeviceName, L"\\Device\\[*PROJECTNAME*]"
+	Invoke IoDeleteSymbolicLink, Addr usDosDeviceName
+	mov rbx, pDriverObject
+	mov rax, [rbx].DRIVER_OBJECT.DeviceObject
+	Invoke IoDeleteDevice, rax
+	mov eax, STATUS_SUCCESS
+	ret	
+DrvUnload ENDP
+
+;------------------------------------------------------------------------------
+; DrvUnsupported
+;------------------------------------------------------------------------------
+DrvUnsupported PROC FRAME pDeviceObject:PDEVICE_OBJECT, pIrp:PIRP
+	Invoke DbgPrint, Addr szFmt, "[*] This function is not supported :( !"
+	mov eax, STATUS_SUCCESS
+	ret
+DrvUnsupported ENDP
 
 END DriverEntry
 
